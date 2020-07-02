@@ -8,26 +8,26 @@ class Text extends Sprite {
         ]
         this.text = text;
         this.color = color;
-        this.align = align||'left';
-        
+        this.align = align || 'left';
+
         this.flashCtr = 0;
     }
 
     get colorOffset() {
-        switch(this.color) {
+        switch (this.color) {
             case 'red':
                 return 4 * 8;
             case 'pink':
-                return 8*8;
+                return 8 * 8;
             case 'blue':
-                return 12*8;
+                return 12 * 8;
             case 'orange':
-                return 16*8;
+                return 16 * 8;
             case 'peach':
-                return 20*8;
+                return 20 * 8;
             case 'yellow':
                 return 24 * 8;
-            default: 
+            default:
                 return 0;
         }
     }
@@ -36,7 +36,7 @@ class Text extends Sprite {
         for (var i = 0; i < this.textMap.length; i++) {
             var letterIndex = this.textMap[i].indexOf(letter);
             if (letterIndex > -1) {
-                return {x: letterIndex * 8, y: i * 8};
+                return { x: letterIndex * 8, y: i * 8 };
             }
         }
     }
@@ -50,7 +50,7 @@ class Text extends Sprite {
                 var letterCoords = this.getLetterCoordinates(this.text[i]),
                     alignX = 0;
                 if (this.align == 'right') {
-                    alignX = ((this.text.length-1) * 8);
+                    alignX = ((this.text.length - 1) * 8);
                 }
                 context.drawImage(RESOURCE.text,
                     letterCoords.x, letterCoords.y + this.colorOffset, 8, 8,

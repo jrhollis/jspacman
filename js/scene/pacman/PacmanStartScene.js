@@ -3,7 +3,7 @@ class PacmanStartScene extends Scene {
         super(context);
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
         this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
-        this.scoreOneText = new Text(this, ""+LAST_SCORES[0][0]||"00", 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
         this.scoreTwoText = new Text(this, ""+LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
         if (!LAST_SCORES[0][1]) {

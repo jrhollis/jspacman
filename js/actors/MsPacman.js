@@ -14,21 +14,15 @@ class MsPacman extends Pacman {
         ];
     }
 
-
     die() {
         Pacman.prototype.die.call(this);
         this.animation.curFrame = 1;
         this.direction = Vector.DOWN;
-        
     }
-
 
     draw() {
         if (this.hidden) return;
-        // if (!this.stopped) {
-            //animate
-            Actor.prototype.draw.call(this);
-        // }
+        Actor.prototype.draw.call(this);
         var context = this.scene.context,
             animation = this.animation,
             directionalOffsetY = 0;

@@ -11,7 +11,7 @@ class Blinky extends Ghost {
         this.startDirection = Vector.LEFT;
         this.scatterTargetTile = { x: 25, y: 0 };
         this.textureOffsetY = 0;
-
+        //add some extra animations for the pacman cut scenes
         this.animations = this.animations.concat([ 
             //rip sheet animation for cut scene 2
             { frames: 2, ticksPerFrame: 70, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 112 },
@@ -19,8 +19,7 @@ class Blinky extends Ghost {
             { frames: 2, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 112 },
             //naked cutscene 3
             { frames: 2, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 128 }
-
-        ])
+        ]);
         this.reset();
     }
 

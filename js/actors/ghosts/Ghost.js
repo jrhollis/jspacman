@@ -1,8 +1,5 @@
 // https://www.youtube.com/watch?v=sQK7PmR8kpQ ms pacman ghost ai
-
 //ghost movement https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
-// #274b
-
 class Ghost extends Actor {
     static MODE_CHASE = 0;
     static MODE_SCATTER = 1;
@@ -98,18 +95,9 @@ class Ghost extends Actor {
      * turn the ghost around at the next tile center, if possible
      */
     reverse() {
-        var reverse = Vector.inverse(this.direction),
-            nextTile = Vector.add(this.tile, reverse);
-        //if called when ghost is on tileCenter, need a special case since it might not be able to reverse there
-        // if (this.isTileCenter && !this.scene.mazeClass.isWallTile(nextTile)) {
-        //     //reverse immediately -- if possible
-        //     this.direction = reverse;
-        //     this.nextInstruction = this.direction;
-        // } else {
-            this.reverseInstruction = reverse;
-            this.reverseInstruction.reverse = true;
-        // }
-        // this.madeInstruction = false;
+        var reverse = Vector.inverse(this.direction);
+        this.reverseInstruction = reverse;
+        this.reverseInstruction.reverse = true;
     }
 
 
@@ -426,20 +414,6 @@ class Ghost extends Actor {
             animation.textureX + directionalOffsetX + (animation.curFrame * this.width), animation.textureY + offsetY, this.width, this.height, //clip from source
             this.position.x, this.position.y, this.width, this.height
         );
-
-        //draw center rect
-        // context.beginPath();
-        // context.lineWidth = 1;
-        // context.strokeStyle = "#FFFF00";
-        // var tile = this.targetTile;
-        // context.strokeRect(tile.x*8, tile.y*8, 8, 8);
-
-        // var px = this.centerPixel;
-        // context.lineWidth = 1;
-        // context.beginPath();
-        // context.strokeStyle = "#FFFFFF";
-        // context.strokeRect(px.x, px.y, 1, 1);
-
     }
 
     /**

@@ -110,7 +110,7 @@ class PacmanTitleScene extends ScriptScene {
 
 
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
-        this.scoreOneText = new Text(this, ""+LAST_SCORES[0][0]||"00", 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
         //if there's a score_two_pacman
         this.scoreTwoText = new Text(this, ""+LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
@@ -252,7 +252,7 @@ class PacmanTitleScene extends ScriptScene {
         Scene.prototype.draw.call(this);
         this.p1HighScoreP2.draw();
         this.highScoreText.draw();
-        this.scoreOneText.text = ""+LAST_SCORES[0][0]||"00";
+        this.scoreOneText.text = ""+(LAST_SCORES[0][0]||"00");
         this.scoreTwoText.text = ""+LAST_SCORES[0][1]||"00";
         if (LAST_SCORES[0][1]) {
             this.scoreTwoText.show();

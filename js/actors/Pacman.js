@@ -293,26 +293,6 @@ class Pacman extends Actor {
                 this.mode = Pacman.MODE_DEAD;
             }
         }
-
-        // //draw center rect
-        // context.beginPath();
-        // context.lineWidth = 1;
-        // context.strokeStyle = "#FF00FF";
-        // var tile = this.tile;
-        // context.strokeRect(tile.x*8, tile.y*8, 8, 8);
-
-        // context.beginPath();
-        // context.lineWidth = 1;
-        // context.strokeStyle = "#FF0000";
-        // var tile = this.hitBox;
-        // context.strokeRect(tile.x, tile.y, tile.w, tile.h);
-
-        // var px = this.centerPixel;
-        // context.lineWidth = 1;
-        // context.beginPath();
-        // context.strokeStyle = "#FF0000";
-        // context.strokeRect(px.x-0.5, px.y-0.5, 1, 1);
-
     }
 
 
