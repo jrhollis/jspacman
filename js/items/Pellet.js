@@ -1,0 +1,24 @@
+class Pellet extends Item {
+    constructor (scene, x, y) {
+        super(scene, x, y);
+        this.points = 10;
+        this.pellet = true;
+    }
+    
+    draw () {
+        if (this.hidden) return;
+        //doesn't animate, just draw
+        var context = this.scene.context;
+        context.beginPath();
+        context.fillStyle = this.color||(this.scene.maze||{}).pelletColor || "#fcb4aa";
+        context.fillRect(this.position.x + 3, (this.position.y) + 3, 2, 2);
+        context.fill();
+
+        // context.beginPath();
+        // context.lineWidth = 1;
+        // context.strokeStyle = "#FF0000";
+        // var tile = this.hitBox;
+        // context.strokeRect(tile.x, tile.y, tile.w, tile.h);
+
+    }
+}
