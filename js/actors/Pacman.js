@@ -139,11 +139,10 @@ class Pacman extends Actor {
         return !this.isDead && !this.isDying;
     }
 
-
+    //for pacman cut scene 1
     get isGiant() {
         return this.currentAnimation == Pacman.ANIM_GIANT;
     }
-
 
 
     tick() {
@@ -196,12 +195,10 @@ class Pacman extends Actor {
             oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
         this.direction = inputDirection;
 
-
         //when going up... movement is '01111121'
         if (changeDirection && !oppositeDirection && Vector.equals(this.direction, Vector.DOWN)) {
             this.y++;
         }
-
 
         //pause for a frame when changing direction
         if (!this.stopped && !oppositeDirection) {

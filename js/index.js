@@ -55,6 +55,7 @@ context.scale(scale, scale)
 
 //draw black background on canvas
 SCREEN.style.background = 'black';
+SCREEN.style.border = 'solid';
 document.body.appendChild(SCREEN);
 
 

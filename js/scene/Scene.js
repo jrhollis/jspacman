@@ -11,5 +11,4 @@ class Scene {
     draw() {
         this.context.clearRect(0, 0, SCREEN.width, SCREEN.height);
     }
-
 }

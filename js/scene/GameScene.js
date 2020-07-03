@@ -259,18 +259,18 @@ class GameScene extends Scene {
             return;
         }
 
-        //sound check - if there are retreating ghosts play retrea
-        if (Ghost.NUM_EATEN > 0) {
-            Sound.stop('power_pellet');
-            Sound.playLoop('retreating');
-        } else {
-            Sound.stop('retreating');
-            if (Ghost.NUM_FRIGHTENED > 0) {
-                Sound.stop('siren');
-                Sound.playLoop('power_pellet');
-            } else {
+        //sound check - if there are retreating ghosts play retreat
+        if (this.pacman.isAlive) {
+            if (Ghost.NUM_EATEN > 0) {
                 Sound.stop('power_pellet');
-                if (this.pacman.isAlive) {
+                Sound.playLoop('retreating');
+            } else {
+                Sound.stop('retreating');
+                if (Ghost.NUM_FRIGHTENED > 0) {
+                    Sound.stop('siren');
+                    Sound.playLoop('power_pellet');
+                } else {
+                    Sound.stop('power_pellet');
                     Sound.playLoop('siren');
                 }
             }

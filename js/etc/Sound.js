@@ -69,26 +69,21 @@ class Sound {
      */
     static checkSiren(pelletsLeft) {
         if (pelletsLeft > 108) {
-            this.siren = 0;
+            this.setSiren(0);
         } else if (pelletsLeft > 44) {
-            if (this.siren != 1) {
-                //siren change
-                this.stop('siren');
-            }
-            this.siren = 1;
+            this.setSiren(1);
         } else if (pelletsLeft > 12) {
-            if (this.siren != 2) {
-                //siren change
-                this.stop('siren');
-            }
-            this.siren = 2;
+            this.setSiren(2);
         } else {
-            if (this.siren != 3) {
-                //siren change
-                this.stop('siren');
-            }
-            this.siren = 3;
+            this.setSiren(3);
         }
+    }
+    static setSiren(siren) {
+        if (this.siren != siren) {
+            //siren change
+            this.stop('siren');
+        }
+        this.siren = siren;
     }
 
     //play a sfx in a loop
