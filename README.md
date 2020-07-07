@@ -10,9 +10,14 @@ I've also coded in a gameboard observing algorithm for potentioal use in an A.I.
 Controls are:
 ======================
 Shift: Insert Credit
+
 Enter: 1 Player Start
+
 2: 2 Players Start
+
 Move: Arrow Keys
 
+
 Space: Pause Game
+
 F: Advance Game One Frame
