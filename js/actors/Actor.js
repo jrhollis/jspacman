@@ -24,13 +24,14 @@ class Actor extends Sprite {
 
     tick() {
         if (!this.stopped) {
+            //update position of actor
             this.x += (this.speed * this.direction.x);
             this.y += (this.speed * this.direction.y);
 
             //counter used for speed control
             this.frameCtr = (this.frameCtr+1) % 32;
 
-            //tunnel wrap-around- if actor goes through tunnel, make them loop out from the other side
+            //warp tunnel wrap-around- if actor goes through tunnel, make them loop out from the other side
             if (this.tile.x == 29 && this.direction.x == 1) {
                 this.x = -16;
             } else if (this.tile.x == -2 && this.direction.x == -1) {

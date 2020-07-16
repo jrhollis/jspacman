@@ -347,35 +347,6 @@ class Maze {
         return this.scene.level <= 4 ? 240 : 180;
     }
 
-    get frightenDuration() {
-        var time = 0,
-            level = this.scene.level,
-            flashes = 0;
-        if (level <= 5) {
-            time = 7 - level;
-            flashes = 5;
-        } else if (level == 6 || level == 10) {
-            time = 5;
-            flashes = 5;
-        } else if (level <= 8 || level == 11) {
-            time = 2;
-            flashes = 5;
-        } else if (level == 14) {
-            time = 3;
-            flashes = 5;
-        } else if (level == 17 || level > 18) {
-            time = 0;
-            flashes = 0;
-        } else if (level == 9 || level <= 18) {
-            time = 1;
-            flashes = 3;
-        }
-        return {
-            ticks: time * 60,
-            flashes: flashes
-        }
-    }
-
     isFruitReady() {
         return this.fruitRelease.indexOf(this.scene.pelletsEaten) >= 0;
     }

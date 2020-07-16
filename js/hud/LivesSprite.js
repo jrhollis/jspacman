@@ -1,3 +1,8 @@
+/*
+the row of (ms) pacmans that appear below the maze indicating 
+how many tries the player has remaining
+*/
+
 class LivesSprite extends Sprite {
     constructor(scene) {
         super(scene);

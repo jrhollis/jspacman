@@ -1,3 +1,8 @@
+/*
+the row of fruit that appears below the maze indicating which level
+the player is on
+*/
+
 class MsPacmanLevelSprite extends Sprite {
     constructor(scene) {
         super(scene);

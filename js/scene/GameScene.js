@@ -483,8 +483,8 @@ class GameScene extends Scene {
         //suspend scatter/chase behavior while frigthened
         this.scatterChase.suspend();
         //set up timers based on duration and # flashes for current level
-        var duration = this.maze.frightenDuration.ticks,
-            numFlashes = this.maze.frightenDuration.flashes,
+        var duration = this.pacman.energizedDuration.ticks,
+            numFlashes = this.pacman.energizedDuration.flashes,
             flashDuration = numFlashes * 7 * 4;   //7 ticksPerFrame of flash animation, 4 is the numFrames
         this.frightenTimer.start(duration - flashDuration, () => {
             this.ghosts.forEach(ghost => {

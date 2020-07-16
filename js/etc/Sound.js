@@ -1,18 +1,10 @@
 class Sound {
-
-    /*
-            mspacman maze 1 siren change at pelletsLeft 108, 44, 12
-    */
-
-
-    //http://umlautllama.com/projects/pacdocs/ -- wave forms
     static initialize() {
         var AudioContext = window.AudioContext || window.webkitAudioContext;
         this.context = new AudioContext();
 
         this.loadSound('res/pacman/sfx.ogg').then(buffer => this.sfx_0 = buffer);
         this.loadSound('res/mspacman/sfx.ogg').then(buffer => this.sfx_1 = buffer);
-        //TOOD: make a sfx.mp3 file for mspacman
     }
 
     //list of currently running sounds. used for stopAll()
@@ -111,12 +103,11 @@ class Sound {
 
     }
 
-    //this counter is only for pacman. his sound fx flips and flips when he eats a pellet
+    //this counter is only for pacman. his sound fx flips back and forth each time he eats a pellet
     static munch = 0;
 
     //play a sfx one time
     static playOnce(fx) {
-        //only play this clip once
         if (fx == 'munch') {
             this.stop('munch');
             fx += this.munch;

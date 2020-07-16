@@ -224,6 +224,7 @@ class Pacman extends Actor {
         }
     }
 
+    //clip apart the sprite sheet at res/pacman/pacman.png
     draw() {
         if (this.hidden) return;
         Actor.prototype.draw.call(this);
@@ -293,6 +294,40 @@ class Pacman extends Actor {
     }
 
 
+        /**
+     * probably should put this chunk of code somewhere more relevant
+     * 
+     * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
+     */
+    get energizedDuration() {
+        var time = 0,
+            level = this.scene.level,
+            flashes = 0;
+        if (level <= 5) {
+            time = 7 - level;
+            flashes = 5;
+        } else if (level == 6 || level == 10) {
+            time = 5;
+            flashes = 5;
+        } else if (level <= 8 || level == 11) {
+            time = 2;
+            flashes = 5;
+        } else if (level == 14) {
+            time = 3;
+            flashes = 5;
+        } else if (level == 17 || level > 18) {
+            time = 0;
+            flashes = 0;
+        } else if (level == 9 || level <= 18) {
+            time = 1;
+            flashes = 3;
+        }
+        return {
+            ticks: time * 60,
+            flashes: flashes
+        }
+    }
+
     // for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
     get speedControl() {
         // TODO: something odd going on when pacman moves up. doesn't follow these patterns. pixel rounding??
@@ -317,6 +352,8 @@ class Pacman extends Actor {
             } else if (this.scene.level <= 20) {
                 return '01101101011011010110110101101101';
             } else {
+                //there is no "energized" state for pacman at this point as the 
+                //energizers don't frighten the ghosts- just use patrolling speed
                 return '11010101011010101101010101101010';
             }
         }

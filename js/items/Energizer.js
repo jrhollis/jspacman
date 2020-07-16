@@ -1,3 +1,6 @@
+/*
+    The big pellet. Energizes pacman and frightens/reverses the ghost when eaten
+*/
 class Energizer extends Item {
     constructor(scene, x, y) {
         super(scene, x, y);
