@@ -1,5 +1,7 @@
 class Actor extends Sprite {
 
+    static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
+
     constructor(board, x, y, width, height) {
         super(board, x, y, width, height);
         this.animations = [];
@@ -33,7 +35,7 @@ class Actor extends Sprite {
 
             //warp tunnel wrap-around- if actor goes through tunnel, make them loop out from the other side
             if (this.tile.x == 29 && this.direction.x == 1) {
-                this.x = -16;
+                this.x = (-2 * 8);
             } else if (this.tile.x == -2 && this.direction.x == -1) {
                 this.x = (29 * 8);
             }

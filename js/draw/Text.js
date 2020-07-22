@@ -1,11 +1,11 @@
 class Text extends Sprite {
+    static TEXT_MAP = [
+        "ABCDEFGHIJKLMNO ",
+        "PQRSTUVWXYZ!cpts",
+        '0123456789/-".'
+    ]
     constructor(scene, text, color, x, y, align) {
         super(scene, x, y);
-        this.textMap = [
-            "ABCDEFGHIJKLMNO ",
-            "PQRSTUVWXYZ!cpts",
-            '0123456789/-".'
-        ]
         this.text = text;
         this.color = color;
         this.align = align || 'left';
@@ -14,27 +14,12 @@ class Text extends Sprite {
     }
 
     get colorOffset() {
-        switch (this.color) {
-            case 'red':
-                return 4 * 8;
-            case 'pink':
-                return 8 * 8;
-            case 'blue':
-                return 12 * 8;
-            case 'orange':
-                return 16 * 8;
-            case 'peach':
-                return 20 * 8;
-            case 'yellow':
-                return 24 * 8;
-            default:
-                return 0;
-        }
+        return (['red','pink','blue','orange','peach','yellow'].indexOf(this.color) + 1) * 32;
     }
 
     getLetterCoordinates(letter) {
-        for (var i = 0; i < this.textMap.length; i++) {
-            var letterIndex = this.textMap[i].indexOf(letter);
+        for (var i = 0; i < Text.TEXT_MAP.length; i++) {
+            var letterIndex = Text.TEXT_MAP[i].indexOf(letter);
             if (letterIndex > -1) {
                 return { x: letterIndex * 8, y: i * 8 };
             }

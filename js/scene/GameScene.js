@@ -353,6 +353,7 @@ class GameScene extends Scene {
             this.collisionDetect();
         }
 
+        //check to see if pacman ate anything in the last updates
         if (this.atePellet || this.ateEnergizer) {
             if (this.ateEnergizer) {
                 //frighten ghosts
@@ -370,6 +371,7 @@ class GameScene extends Scene {
                 return;
             }
         } else {
+            //continue the countdown since the last pellet was eaten
             this.lastPelletEatenTimer.tick();
         }
 
@@ -387,13 +389,18 @@ class GameScene extends Scene {
     }
 
 
+    /**
+     * called twice per tick. collision occurs between ghosts when pacman and
+     * a ghost occupy the same tile. collision with items occurs when their
+     * bboxes overlap
+     */
     collisionDetect() {
-        //no point in collision detected if pacman just bit it
+        //no point in collision detected if pacman just kicked the bucket
         if (!this.pacman.isAlive) return;
 
         //pellet / energizer collision
         for (var i = 0; i < this.pellets.length; i++) {
-            //if center of pellet is in pacman hitbox, then eat
+            //if center of pellet is in pacman bbox, then eat
             if (this.pacman.collideItem(this.pellets[i])) {
                 this.atePellet = this.pellets[i];
                 this.pellets.splice(i, 1);
@@ -438,7 +445,6 @@ class GameScene extends Scene {
                     this.freezeTimer.start(45, () => {
                         this.ghosts.forEach(ghost => ghost.hide());
                         this.pacman.die();
-                        //TODO: end game if lives are gone
                     });
                 }
             }
@@ -449,7 +455,7 @@ class GameScene extends Scene {
     releaseNextGhost(reason) {
         for (var i = 3; i >= 0; i--) {
             var ghost = this.ghosts[i];
-            if (ghost.canLeaveHouse) {
+            if (ghost.isHome) {
                 if (i == 3 || i == 2) {
                     //blinky and pinky always leave immediately unless using global dot counter
                     ghost.leaveHouse();

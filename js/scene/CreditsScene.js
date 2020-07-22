@@ -107,7 +107,6 @@ class CreditsScene extends Scene {
 
     draw() {
         Scene.prototype.draw.call(this);
-
         this.pellets.forEach(p => p.draw());
         this.pacman.draw();
         this.pacman2.draw();

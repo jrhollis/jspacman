@@ -56,11 +56,11 @@ class ScatterChase {
     get phase2() {
         var chase;
         if (this.scene.level == 1) {
-            chase = 1200
+            chase = 1200;
         } else if (this.scene.level <= 4)
-            chase = 61980;
+            chase = 61980; //1033 seconds
         else {
-            chase = 5220;
+            chase = 62220; //1037 seconds
         }
         return {
             scatter: 420,

@@ -3,6 +3,8 @@ class MsPacmanFruit extends Actor {
     static MODE_LOOP = 1;
     static MODE_EXIT = 2;
 
+    static HOUSE_TARGET = { x: 13, y: 18 };
+
     static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
     constructor(scene) {
@@ -26,8 +28,8 @@ class MsPacmanFruit extends Actor {
         this.direction = this.x < 1 ? Vector.RIGHT : Vector.LEFT;
         this.x -= this.direction.x * 4; //nudge off the screen
         //skip the first tile in the sequence which is the spawn point (a warp tile)
-        this.targetTile = this.enterSequence[1];
         this.turn = 1;
+        this.targetTile = this.enterSequence[this.turn];
     }
 
 
@@ -78,8 +80,8 @@ class MsPacmanFruit extends Actor {
             closest = Infinity,
             validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
         //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < MsPacmanFruit.TURN_PREFERENCE.length; i++) {
-            var testDirection = MsPacmanFruit.TURN_PREFERENCE[i];
+        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
+            var testDirection = Actor.TURN_PREFERENCE[i];
             // can't reverse go back the way we just came
             if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
                 //calculate distance from testTile to targetTile and check if it's the closest
@@ -96,7 +98,7 @@ class MsPacmanFruit extends Actor {
                 }
             }
         }
-        return MsPacmanFruit.TURN_PREFERENCE[choice];
+        return Actor.TURN_PREFERENCE[choice];
     }
 
     tick() {
@@ -121,10 +123,11 @@ class MsPacmanFruit extends Actor {
                     //start looping
                     this.mode = MsPacmanFruit.MODE_LOOP;
                     //target ghost house
-                    this.targetTile = { x: 13, y: 18 };
+                    this.targetTile = MsPacmanFruit.HOUSE_TARGET;
                 }
                 this.madeInstruction = true;
             } else if (this.isLooping && Vector.equals(this.tile, this.loopTarget)) {
+                //completed a lap around the ghost house now
                 //randomly choose an exit sequence
                 this.exitSequence = this.scene.maze.chooseRandomFruitExit();
                 this.mode = MsPacmanFruit.MODE_EXIT;
@@ -134,12 +137,15 @@ class MsPacmanFruit extends Actor {
                     this.targetTile = this.exitSequence[++this.turn];
                 }
             } else if (this.isExiting && Vector.equals(this.tile, this.targetTile)) {
+                //made it to the next target of the exit sequence
                 if (this.turn < this.exitSequence.length - 1) {
                     this.targetTile = this.exitSequence[++this.turn];
                 }
             } else if (this.isExiting && (this.tile.x < 0 || this.tile.x > 27)) {
+                //fruit has left the building, delete it from the scene
                 delete this.scene.fruit;
             }
+            //navigate the maze
             var centerPoint = this.centerPixel,
                 nextPixel = { x: centerPoint.x + this.direction.x * 5, y: centerPoint.y + this.direction.y * 5 },
                 testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
@@ -151,6 +157,7 @@ class MsPacmanFruit extends Actor {
             }
         } else {
             if (!this.isTileCenter) {
+                //off tile center, clear the last instruction
                 delete this.madeInstruction;
             }
         }
@@ -176,6 +183,6 @@ class MsPacmanFruit extends Actor {
     }
 
     get speedControl() {
-        return '00100010001000100010001000100010'; //level 1
+        return '00100010001000100010001000100010';
     }
 }

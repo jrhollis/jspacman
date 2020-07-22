@@ -83,7 +83,9 @@ class MsPacmanCutScene1 extends ScriptScene {
 
             345: () => {
                 this.pinky.stop();
+                this.pinky.hide();
                 this.inky.stop();
+                this.inky.hide();
                 this.pinky.y = this.mspacman.y
                 this.pinky.direction = Vector.inverse(this.pinky.direction);
                 this.pinky.nextInstruction = Vector.inverse(this.pinky.nextInstruction);
@@ -97,6 +99,8 @@ class MsPacmanCutScene1 extends ScriptScene {
             },
 
             380: () => {
+                this.pinky.show();
+                this.inky.show();
                 this.pinky.start();
                 this.inky.start();
             },

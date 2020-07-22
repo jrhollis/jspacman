@@ -333,7 +333,10 @@ class Maze {
         this.resource = resource;
         this.context = scene.context;
         this.level = scene.level;
+
+        //default for the number of pellets eaten to release a fruit
         this.fruitRelease = [70, 170];
+        //flags for animating end of level flash
         this.complete = false;
         this.flashing = false;
         this.flashAnimation = { frames: 6, ticksPerFrame: 12, curFrame: 0, curFrameTicks: 0 };
@@ -362,7 +365,7 @@ class Maze {
     }
 
     finish() {
-        this.flashing = true; //mspacman only
+        this.flashing = true; 
     }
 
     draw() {

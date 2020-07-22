@@ -5,11 +5,9 @@ class MsPacmanPoints extends Sprite {
     static TYPE_FRUIT = 0;
     static TYPE_GHOST = 1;
     constructor (scene, x, y, score, type) {
-        super(scene, x, y); //always appear below ghost house
+        super(scene, x, y, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 504, y: 16};
         this.type = type;
-        this.width = 16;
-        this.height = 16;
         this.ticksToLive = 60; //TODO: what should this value be?
         this.score = score;        
     }
@@ -53,10 +51,9 @@ class MsPacmanPoints extends Sprite {
 
     draw() {
         if (this.ticksToLive > 0) {
-            var context = this.scene.context;
             //do x/y offset based on scene.level
             var offset = this.textureOffsets;
-            context.drawImage(RESOURCE.mspacman,
+            this.scene.context.drawImage(RESOURCE.mspacman,
                 this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, 16, 16,
                 this.position.x, this.position.y, 16, 16  
             );

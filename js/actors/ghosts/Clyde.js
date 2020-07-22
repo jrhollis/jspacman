@@ -1,7 +1,6 @@
 class Clyde extends Ghost {
     constructor(scene, x, y) {
         super(scene, x, y, 'Clyde');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = this.startPosition;
         this.enterTarget = this.startPosition;
         this.startDirection = Vector.UP;

@@ -6,7 +6,6 @@ class Blinky extends Ghost {
     static ANIM_NAKED = 6;
     constructor(scene, x, y) {
         super(scene, x, y, 'Blinky');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = { x: 13 * 8, y: 16.5 * 8 };
         this.startDirection = Vector.LEFT;
         this.scatterTargetTile = { x: 25, y: 0 };
@@ -28,11 +27,6 @@ class Blinky extends Ghost {
         //blinky starts outside of the house
         this.status = Ghost.STATUS_PATROL;
     }
-
-    get pelletLimit() {
-        return 0;
-    }
-
 
     get randomScatter() {
         return this.scene.scatterChase.randomScatter;

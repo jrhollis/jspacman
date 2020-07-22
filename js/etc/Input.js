@@ -75,3 +75,7 @@ class Input {
         }
     }
 }
+
+//swallow the key strokes
+document.onkeydown = Input.onKeyDown;
+document.onkeyup = Input.onKeyUp;

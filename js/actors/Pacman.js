@@ -72,7 +72,7 @@ class Pacman extends Actor {
 
     /**
      * pacman eats an item such as a pellet, energizer, or fruit. when eating a pellet, pacman
-     * freezes for one frame, and freezes for 3 when eating an energizer. The frame delay counter
+     * freezes for one frame, and freezes for 3 when eating an energizer. The freeze delay counter
      * is because the freeze happens after one tick.
      * @param {*} item 
      */
@@ -102,8 +102,8 @@ class Pacman extends Actor {
         var prevScore = this.score;
         this.score += points;
         //award extra life for every 10k increment of points
-        prevScore = Math.floor(prevScore/10000);
-        var newScore = Math.floor(this.score/10000);
+        prevScore = Math.floor(prevScore / 10000);
+        var newScore = Math.floor(this.score / 10000);
         if (prevScore != newScore) {
             Sound.playOnce('extra_life');
             this.lives++;
@@ -146,6 +146,9 @@ class Pacman extends Actor {
 
 
     tick() {
+        //pacman freezes when eating pellets (1 tick) and energizers (3 ticks)
+        //freeze delay timer is here because the actual freezing is delayed
+        //by a frame (2 ticks)
         if (!this.freezeDelay) {
             if (this.freezeHalfTicks) {
                 this.freezeHalfTicks--;
@@ -161,34 +164,32 @@ class Pacman extends Actor {
         }
 
         if (!this.scene.maze) return;  //we're scripting, no maze stuff here
-
-        //should only read input on every other "half" frame
+        if (this.isDying) return; //ignore inputs if pacman is dying
+        //get the direction for this frame by reading the input buffer or continue current direction if no input
         var inputDirection = Input.readBuffer() || this.direction;
-        if (!this.isDying) {
-            //check for wall contact
-            //look at 5 pixels over from center point in direction pac-man is moving. if it is a wall tile, then stop
-            var centerPoint = this.centerPixel,
-                nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 },
-                testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-            //this move would hit a wall, try to continue in same direction of travel
-            if (!this.scene.mazeClass.isWalkableTile(testTile)) {
-                inputDirection = this.direction;
-            } else {
-                this.unfreeze();
-                this.start();
-            }
-
-            //try again with original direction - if there's a wall here too, stop
-            nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 };
+        //check for wall contact
+        //look at 5 pixels over from center point in direction pac-man is moving. if it is a wall tile, then stop
+        var centerPoint = this.centerPixel,
+            nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 },
             testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-            //this move would hit a wall, try to continue in same direction of travel
-            if (!this.scene.mazeClass.isWalkableTile(testTile)) {
-                this.freeze();
-                this.stop();
-                //another interesting fact- pac man never seems to stop with his mouth closed
-                if (this.animation.curFrame == 0) {
-                    this.animation.curFrame = 2;
-                }
+        //this move would hit a wall, try to continue in same direction of travel
+        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+            inputDirection = this.direction;
+        } else {
+            this.unfreeze();
+            this.start();
+        }
+
+        //try again with original direction - if there's a wall here too, stop
+        nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 };
+        testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
+        //this move would hit a wall, try to continue in same direction of travel
+        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+            this.freeze();
+            this.stop();
+            //another interesting fact- pac man never seems to stop with his mouth closed
+            if (this.animation.curFrame == 0) {
+                this.animation.curFrame = 2;
             }
         }
         var changeDirection = !Vector.equals(inputDirection, this.direction),
@@ -203,10 +204,12 @@ class Pacman extends Actor {
         //pause for a frame when changing direction
         if (!this.stopped && !oppositeDirection) {
 
+            //get the coordinate of center lane
             var centerX = (this.tile.x * 8) + 3,
                 centerY = (this.tile.y * 8) + 3;
 
             //keep pac-man in his lane. fudge over to center line depending on direction of travel
+            //this code re-aligns pacman to the center of the maze lane after cutting a corner
             if (this.direction.x) {
                 if (this.centerPixel.y > centerY) {
                     this.y -= 0.5;
@@ -237,7 +240,7 @@ class Pacman extends Actor {
                 directionalOffsetY = 0,
                 width = 15,
                 height = 15;
-    
+
             if (curFrame == 0) {
                 //closed mouth uses only one texture, no matter direction
                 directionalOffsetY = 0;
@@ -294,8 +297,7 @@ class Pacman extends Actor {
     }
 
 
-        /**
-     * probably should put this chunk of code somewhere more relevant
+    /**
      * 
      * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
      */
@@ -338,9 +340,9 @@ class Pacman extends Actor {
             if (this.scene.level == 1) {
                 return '01010101010101010101010101010101';
             } else if (this.scene.level <= 4) {
-                return '11010101011010101101010101101010'
+                return '11010101011010101101010101101010' //18/32
             } else if (this.scene.level <= 20) {
-                return '01101101011011010110110101101101';
+                return '01101101011011010110110101101101'; //20/32
             } else {
                 return '11010101011010101101010101101010';
             }

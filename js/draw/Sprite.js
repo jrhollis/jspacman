@@ -67,6 +67,7 @@ class Sprite {
 
 
     draw() {
+        if (this.hidden) return;
         if (this.frozen) return;
         // update animations
         if (this.animations.length) {

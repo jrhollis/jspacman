@@ -3,10 +3,8 @@
  * */
 class PacmanPoints extends Sprite {
     constructor (scene, x, y, score) {
-        super(scene, x, y); //always appear below ghost house
+        super(scene, x, y, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 456, y: 144};
-        this.width = 16;
-        this.height = 16;
         this.ticksToLive = 120; 
         this.score = score;        
     }

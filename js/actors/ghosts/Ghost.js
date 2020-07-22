@@ -24,12 +24,11 @@ class Ghost extends Actor {
     static HOUSE_DOOR = { x: 13, y: 14 };
     static LEAVE_TARGET = { x: 13 * 8, y: 13.5 * 8 };
 
-    static TURN_PREFERENCE = [Vector.UP, Vector.LEFT, Vector.DOWN, Vector.RIGHT];
-
     constructor(scene, x, y, name) {
         super(scene, x, y, 16, 16);
         this.scene = scene;
         this.name = name;
+        this.startPosition = { x: x, y: y };
 
         this.animations = [
             //normal movement
@@ -61,12 +60,21 @@ class Ghost extends Actor {
     }
 
 
+    get pelletLimit() {
+        return 0;
+    }
+
+
     get inTunnel() {
         try {
             return this.scene.mazeClass.isTunnelTile(this.tile);
         } catch (ex) {
             return false;
         }
+    }
+
+    get isSlow() {
+        return this.isHome || this.isLeavingHome || this.inTunnel;
     }
 
     /**
@@ -179,11 +187,8 @@ class Ghost extends Actor {
             this.status = Ghost.STATUS_LEAVE_HOME;
         }
     }
-    get canLeaveHouse() {
-        return this.status == Ghost.STATUS_HOME;
-    }
     get isReadyToLeaveHouse() {
-        return this.canLeaveHouse && this.pelletCounter >= this.pelletLimit;
+        return this.isHome && this.pelletCounter >= this.pelletLimit;
     }
     get isHome() {
         return this.status == Ghost.STATUS_HOME;
@@ -207,10 +212,10 @@ class Ghost extends Actor {
             closest = Infinity,
             validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
         //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < Ghost.TURN_PREFERENCE.length; i++) {
-            var testDirection = Ghost.TURN_PREFERENCE[i];
+        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
+            var testDirection = Actor.TURN_PREFERENCE[i];
             // can't reverse go back the way we just came
-            if (!((testDirection.x && testDirection.x == -this.direction.x) || (testDirection.y && testDirection.y == -this.direction.y))) {
+            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
                 //calculate distance from testTile to targetTile and check if it's the closest
                 var testTile = Vector.add(atTile, testDirection),
                     distance = Vector.distance(testTile, this.targetTile);
@@ -230,7 +235,7 @@ class Ghost extends Actor {
             choice = validChoices[Math.floor(Math.random() * validChoices.length)];
         }
         //set next direction to be the choice the ghost just made
-        return Ghost.TURN_PREFERENCE[choice];
+        return Actor.TURN_PREFERENCE[choice];
     }
 
 
@@ -428,8 +433,8 @@ class Ghost extends Actor {
         try {
             if (this.isEaten) {
                 return '11111111111111111111111111111111'
-            } else if (this.isHome || this.isLeavingHome || this.inTunnel) {
-                //tunnel
+            } else if (this.isSlow) {
+                //tunnel, home
                 if (this.scene.level == 1) {
                     return '00100010001000100010001000100010';
                 } else if (this.scene.level <= 4) {

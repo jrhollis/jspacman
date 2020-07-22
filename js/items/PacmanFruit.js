@@ -1,5 +1,6 @@
 //instead of making a subclass for each fruit, just jam all info into this single class for everything
-class PacmanFruit extends Item {
+class PacmanFruit extends Sprite {
+    static POINTS = [100, 300, 500, 700, 1000, 2000, 3000, 5000];
     static getFruitIndex(level) {
         switch(level) {
             case 1:
@@ -27,40 +28,17 @@ class PacmanFruit extends Item {
     }
 
     constructor (scene) {
-        super(scene, 13*8, 19.5*8); //always appear below ghost house
+        super(scene, 13*8, 19.5*8, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 488, y: 48};
-        this.width = 16;
-        this.height = 16;
         //60 fps == 60 ticks per sec
         this.halfTicksToLive = 2 * 60 * ((Math.random() * (2/3)) + (28/3));   //10ish second timer (should be random between 9.33333 and 10)
-        this.points = this.setPoints();
+        // this.points = this.setPoints();
         this.fruit = true;
     }
 
-    setPoints() {
-        switch(this.scene.level) {
-            case 1:
-                return 100;     //cherry
-            case 2: 
-                return 300;     //strawberry
-            case 3:
-            case 4:
-                return 500;     //orange
-            case 5:
-            case 6:
-                return 700;     //apple
-            case 7:
-            case 8:
-                return 1000;    //melon
-            case 9:
-            case 10:
-                return 2000;    //galaxian boss
-            case 11:
-            case 12:
-                return 3000;    //bell
-            default:
-                return 5000;    //keys
-        }
+
+    get points() {
+        return PacmanFruit.POINTS[PacmanFruit.getFruitIndex(this.scene.level)];
     }
 
     get hitBox() {

@@ -23,7 +23,6 @@ js/actors/ghosts/Pinky.js \
 js/actors/ghosts/Inky.js \
 js/actors/ghosts/Clyde.js \
 js/actors/ghosts/ScatterChase.js \
-js/items/Item.js \
 js/items/Pellet.js \
 js/items/Energizer.js \
 js/items/MsPacmanFruit.js \

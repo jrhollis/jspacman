@@ -74,7 +74,11 @@ class Input {
             return null;
         }
     }
-}class Sound {
+}
+
+//swallow the key strokes
+document.onkeydown = Input.onKeyDown;
+document.onkeyup = Input.onKeyUp;class Sound {
     static initialize() {
         var AudioContext = window.AudioContext || window.webkitAudioContext;
         this.context = new AudioContext();
@@ -342,12 +346,9 @@ class Vector {
 }class Scene {
     constructor(context) {
         this.context = context;
-        this.mazeClass = Maze;
     }
     
-    tick() {
-
-    }
+    tick() {}
 
     draw() {
         this.context.clearRect(0, 0, SCREEN.width, SCREEN.height);
@@ -516,7 +517,6 @@ class Vector {
 
     draw() {
         Scene.prototype.draw.call(this);
-
         this.pellets.forEach(p => p.draw());
         this.pacman.draw();
         this.pacman2.draw();
@@ -882,6 +882,7 @@ class Vector {
             this.collisionDetect();
         }
 
+        //check to see if pacman ate anything in the last updates
         if (this.atePellet || this.ateEnergizer) {
             if (this.ateEnergizer) {
                 //frighten ghosts
@@ -899,6 +900,7 @@ class Vector {
                 return;
             }
         } else {
+            //continue the countdown since the last pellet was eaten
             this.lastPelletEatenTimer.tick();
         }
 
@@ -916,13 +918,18 @@ class Vector {
     }
 
 
+    /**
+     * called twice per tick. collision occurs between ghosts when pacman and
+     * a ghost occupy the same tile. collision with items occurs when their
+     * bboxes overlap
+     */
     collisionDetect() {
-        //no point in collision detected if pacman just bit it
+        //no point in collision detected if pacman just kicked the bucket
         if (!this.pacman.isAlive) return;
 
         //pellet / energizer collision
         for (var i = 0; i < this.pellets.length; i++) {
-            //if center of pellet is in pacman hitbox, then eat
+            //if center of pellet is in pacman bbox, then eat
             if (this.pacman.collideItem(this.pellets[i])) {
                 this.atePellet = this.pellets[i];
                 this.pellets.splice(i, 1);
@@ -967,7 +974,6 @@ class Vector {
                     this.freezeTimer.start(45, () => {
                         this.ghosts.forEach(ghost => ghost.hide());
                         this.pacman.die();
-                        //TODO: end game if lives are gone
                     });
                 }
             }
@@ -978,7 +984,7 @@ class Vector {
     releaseNextGhost(reason) {
         for (var i = 3; i >= 0; i--) {
             var ghost = this.ghosts[i];
-            if (ghost.canLeaveHouse) {
+            if (ghost.isHome) {
                 if (i == 3 || i == 2) {
                     //blinky and pinky always leave immediately unless using global dot counter
                     ghost.leaveHouse();
@@ -1217,7 +1223,9 @@ class MsPacmanCutScene1 extends ScriptScene {
 
             345: () => {
                 this.pinky.stop();
+                this.pinky.hide();
                 this.inky.stop();
+                this.inky.hide();
                 this.pinky.y = this.mspacman.y
                 this.pinky.direction = Vector.inverse(this.pinky.direction);
                 this.pinky.nextInstruction = Vector.inverse(this.pinky.nextInstruction);
@@ -1231,6 +1239,8 @@ class MsPacmanCutScene1 extends ScriptScene {
             },
 
             380: () => {
+                this.pinky.show();
+                this.inky.show();
                 this.pinky.start();
                 this.inky.start();
             },
@@ -2941,7 +2951,10 @@ class PacmanCutScene3 extends ScriptScene {
         this.resource = resource;
         this.context = scene.context;
         this.level = scene.level;
+
+        //default for the number of pellets eaten to release a fruit
         this.fruitRelease = [70, 170];
+        //flags for animating end of level flash
         this.complete = false;
         this.flashing = false;
         this.flashAnimation = { frames: 6, ticksPerFrame: 12, curFrame: 0, curFrameTicks: 0 };
@@ -2970,7 +2983,7 @@ class PacmanCutScene3 extends ScriptScene {
     }
 
     finish() {
-        this.flashing = true; //mspacman only
+        this.flashing = true; 
     }
 
     draw() {
@@ -3358,7 +3371,16 @@ MsPacman3.initialize();class MsPacman4 extends Maze {
 }
 //inherit statics and load map data
 Object.assign(MsPacman4, Maze);
-MsPacman4.initialize();class Pacman1 extends Maze {
+MsPacman4.initialize();//. = wall
+//0 = open tile
+//1 = pellet
+//2 = pellet + decision
+//3 = energizer
+//4 = decision only
+//5 = tunnel (slow tile)
+//6 = ghost house (slow tile)
+
+class Pacman1 extends Maze {
     static wallMap = [
         '............................', //0
         '............................', //1
@@ -3480,6 +3502,7 @@ Pacman1.initialize();class Sprite {
 
 
     draw() {
+        if (this.hidden) return;
         if (this.frozen) return;
         // update animations
         if (this.animations.length) {
@@ -3499,13 +3522,13 @@ Pacman1.initialize();class Sprite {
         }
     }
 }class Text extends Sprite {
+    static TEXT_MAP = [
+        "ABCDEFGHIJKLMNO ",
+        "PQRSTUVWXYZ!cpts",
+        '0123456789/-".'
+    ]
     constructor(scene, text, color, x, y, align) {
         super(scene, x, y);
-        this.textMap = [
-            "ABCDEFGHIJKLMNO ",
-            "PQRSTUVWXYZ!cpts",
-            '0123456789/-".'
-        ]
         this.text = text;
         this.color = color;
         this.align = align || 'left';
@@ -3514,27 +3537,12 @@ Pacman1.initialize();class Sprite {
     }
 
     get colorOffset() {
-        switch (this.color) {
-            case 'red':
-                return 4 * 8;
-            case 'pink':
-                return 8 * 8;
-            case 'blue':
-                return 12 * 8;
-            case 'orange':
-                return 16 * 8;
-            case 'peach':
-                return 20 * 8;
-            case 'yellow':
-                return 24 * 8;
-            default:
-                return 0;
-        }
+        return (['red','pink','blue','orange','peach','yellow'].indexOf(this.color) + 1) * 32;
     }
 
     getLetterCoordinates(letter) {
-        for (var i = 0; i < this.textMap.length; i++) {
-            var letterIndex = this.textMap[i].indexOf(letter);
+        for (var i = 0; i < Text.TEXT_MAP.length; i++) {
+            var letterIndex = Text.TEXT_MAP[i].indexOf(letter);
             if (letterIndex > -1) {
                 return { x: letterIndex * 8, y: i * 8 };
             }
@@ -3571,11 +3579,9 @@ class MsPacmanPoints extends Sprite {
     static TYPE_FRUIT = 0;
     static TYPE_GHOST = 1;
     constructor (scene, x, y, score, type) {
-        super(scene, x, y); //always appear below ghost house
+        super(scene, x, y, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 504, y: 16};
         this.type = type;
-        this.width = 16;
-        this.height = 16;
         this.ticksToLive = 60; //TODO: what should this value be?
         this.score = score;        
     }
@@ -3619,10 +3625,9 @@ class MsPacmanPoints extends Sprite {
 
     draw() {
         if (this.ticksToLive > 0) {
-            var context = this.scene.context;
             //do x/y offset based on scene.level
             var offset = this.textureOffsets;
-            context.drawImage(RESOURCE.mspacman,
+            this.scene.context.drawImage(RESOURCE.mspacman,
                 this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, 16, 16,
                 this.position.x, this.position.y, 16, 16  
             );
@@ -3633,10 +3638,8 @@ class MsPacmanPoints extends Sprite {
  * */
 class PacmanPoints extends Sprite {
     constructor (scene, x, y, score) {
-        super(scene, x, y); //always appear below ghost house
+        super(scene, x, y, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 456, y: 144};
-        this.width = 16;
-        this.height = 16;
         this.ticksToLive = 120; 
         this.score = score;        
     }
@@ -3699,7 +3702,7 @@ class LivesSprite extends Sprite {
     constructor(scene) {
         super(scene);
         this.resource = GAME_MODE == GAME_PACMAN?RESOURCE.pacman:RESOURCE.mspacman;
-        this.textureOffset = {x: 472, y: 0};
+        this.textureOffset = {x: 472, y: GAME_MODE == GAME_PACMAN?16:0};
         this.width = 16;
         this.height = 16;
     }
@@ -3770,6 +3773,8 @@ class PacmanLevelSprite extends Sprite {
     }
 }class Actor extends Sprite {
 
+    static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
+
     constructor(board, x, y, width, height) {
         super(board, x, y, width, height);
         this.animations = [];
@@ -3803,7 +3808,7 @@ class PacmanLevelSprite extends Sprite {
 
             //warp tunnel wrap-around- if actor goes through tunnel, make them loop out from the other side
             if (this.tile.x == 29 && this.direction.x == 1) {
-                this.x = -16;
+                this.x = (-2 * 8);
             } else if (this.tile.x == -2 && this.direction.x == -1) {
                 this.x = (29 * 8);
             }
@@ -3891,7 +3896,7 @@ class PacmanLevelSprite extends Sprite {
 
     /**
      * pacman eats an item such as a pellet, energizer, or fruit. when eating a pellet, pacman
-     * freezes for one frame, and freezes for 3 when eating an energizer. The frame delay counter
+     * freezes for one frame, and freezes for 3 when eating an energizer. The freeze delay counter
      * is because the freeze happens after one tick.
      * @param {*} item 
      */
@@ -3921,8 +3926,8 @@ class PacmanLevelSprite extends Sprite {
         var prevScore = this.score;
         this.score += points;
         //award extra life for every 10k increment of points
-        prevScore = Math.floor(prevScore/10000);
-        var newScore = Math.floor(this.score/10000);
+        prevScore = Math.floor(prevScore / 10000);
+        var newScore = Math.floor(this.score / 10000);
         if (prevScore != newScore) {
             Sound.playOnce('extra_life');
             this.lives++;
@@ -3965,6 +3970,9 @@ class PacmanLevelSprite extends Sprite {
 
 
     tick() {
+        //pacman freezes when eating pellets (1 tick) and energizers (3 ticks)
+        //freeze delay timer is here because the actual freezing is delayed
+        //by a frame (2 ticks)
         if (!this.freezeDelay) {
             if (this.freezeHalfTicks) {
                 this.freezeHalfTicks--;
@@ -3980,34 +3988,32 @@ class PacmanLevelSprite extends Sprite {
         }
 
         if (!this.scene.maze) return;  //we're scripting, no maze stuff here
-
-        //should only read input on every other "half" frame
+        if (this.isDying) return; //ignore inputs if pacman is dying
+        //get the direction for this frame by reading the input buffer or continue current direction if no input
         var inputDirection = Input.readBuffer() || this.direction;
-        if (!this.isDying) {
-            //check for wall contact
-            //look at 5 pixels over from center point in direction pac-man is moving. if it is a wall tile, then stop
-            var centerPoint = this.centerPixel,
-                nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 },
-                testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-            //this move would hit a wall, try to continue in same direction of travel
-            if (!this.scene.mazeClass.isWalkableTile(testTile)) {
-                inputDirection = this.direction;
-            } else {
-                this.unfreeze();
-                this.start();
-            }
-
-            //try again with original direction - if there's a wall here too, stop
-            nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 };
+        //check for wall contact
+        //look at 5 pixels over from center point in direction pac-man is moving. if it is a wall tile, then stop
+        var centerPoint = this.centerPixel,
+            nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 },
             testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-            //this move would hit a wall, try to continue in same direction of travel
-            if (!this.scene.mazeClass.isWalkableTile(testTile)) {
-                this.freeze();
-                this.stop();
-                //another interesting fact- pac man never seems to stop with his mouth closed
-                if (this.animation.curFrame == 0) {
-                    this.animation.curFrame = 2;
-                }
+        //this move would hit a wall, try to continue in same direction of travel
+        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+            inputDirection = this.direction;
+        } else {
+            this.unfreeze();
+            this.start();
+        }
+
+        //try again with original direction - if there's a wall here too, stop
+        nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 };
+        testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
+        //this move would hit a wall, try to continue in same direction of travel
+        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+            this.freeze();
+            this.stop();
+            //another interesting fact- pac man never seems to stop with his mouth closed
+            if (this.animation.curFrame == 0) {
+                this.animation.curFrame = 2;
             }
         }
         var changeDirection = !Vector.equals(inputDirection, this.direction),
@@ -4022,10 +4028,12 @@ class PacmanLevelSprite extends Sprite {
         //pause for a frame when changing direction
         if (!this.stopped && !oppositeDirection) {
 
+            //get the coordinate of center lane
             var centerX = (this.tile.x * 8) + 3,
                 centerY = (this.tile.y * 8) + 3;
 
             //keep pac-man in his lane. fudge over to center line depending on direction of travel
+            //this code re-aligns pacman to the center of the maze lane after cutting a corner
             if (this.direction.x) {
                 if (this.centerPixel.y > centerY) {
                     this.y -= 0.5;
@@ -4056,7 +4064,7 @@ class PacmanLevelSprite extends Sprite {
                 directionalOffsetY = 0,
                 width = 15,
                 height = 15;
-    
+
             if (curFrame == 0) {
                 //closed mouth uses only one texture, no matter direction
                 directionalOffsetY = 0;
@@ -4113,8 +4121,7 @@ class PacmanLevelSprite extends Sprite {
     }
 
 
-        /**
-     * probably should put this chunk of code somewhere more relevant
+    /**
      * 
      * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
      */
@@ -4157,9 +4164,9 @@ class PacmanLevelSprite extends Sprite {
             if (this.scene.level == 1) {
                 return '01010101010101010101010101010101';
             } else if (this.scene.level <= 4) {
-                return '11010101011010101101010101101010'
+                return '11010101011010101101010101101010' //18/32
             } else if (this.scene.level <= 20) {
-                return '01101101011011010110110101101101';
+                return '01101101011011010110110101101101'; //20/32
             } else {
                 return '11010101011010101101010101101010';
             }
@@ -4238,7 +4245,7 @@ class PacmanLevelSprite extends Sprite {
             );
         } else {
             //dying animation- should spin, down,left,up,right, down,left,up,right, down,left,up
-            this.direction = Ghost.TURN_PREFERENCE[3 - (animation.curFrame + 2) % 4];
+            this.direction = Actor.TURN_PREFERENCE[3 - (animation.curFrame + 2) % 4];
             context.drawImage(RESOURCE.mspacman,
                 animation.textureX, directionalOffsetY, 16, 16,
                 this.position.x, this.position.y, 16, 16
@@ -4277,12 +4284,11 @@ class Ghost extends Actor {
     static HOUSE_DOOR = { x: 13, y: 14 };
     static LEAVE_TARGET = { x: 13 * 8, y: 13.5 * 8 };
 
-    static TURN_PREFERENCE = [Vector.UP, Vector.LEFT, Vector.DOWN, Vector.RIGHT];
-
     constructor(scene, x, y, name) {
         super(scene, x, y, 16, 16);
         this.scene = scene;
         this.name = name;
+        this.startPosition = { x: x, y: y };
 
         this.animations = [
             //normal movement
@@ -4314,12 +4320,21 @@ class Ghost extends Actor {
     }
 
 
+    get pelletLimit() {
+        return 0;
+    }
+
+
     get inTunnel() {
         try {
             return this.scene.mazeClass.isTunnelTile(this.tile);
         } catch (ex) {
             return false;
         }
+    }
+
+    get isSlow() {
+        return this.isHome || this.isLeavingHome || this.inTunnel;
     }
 
     /**
@@ -4432,11 +4447,8 @@ class Ghost extends Actor {
             this.status = Ghost.STATUS_LEAVE_HOME;
         }
     }
-    get canLeaveHouse() {
-        return this.status == Ghost.STATUS_HOME;
-    }
     get isReadyToLeaveHouse() {
-        return this.canLeaveHouse && this.pelletCounter >= this.pelletLimit;
+        return this.isHome && this.pelletCounter >= this.pelletLimit;
     }
     get isHome() {
         return this.status == Ghost.STATUS_HOME;
@@ -4460,10 +4472,10 @@ class Ghost extends Actor {
             closest = Infinity,
             validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
         //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < Ghost.TURN_PREFERENCE.length; i++) {
-            var testDirection = Ghost.TURN_PREFERENCE[i];
+        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
+            var testDirection = Actor.TURN_PREFERENCE[i];
             // can't reverse go back the way we just came
-            if (!((testDirection.x && testDirection.x == -this.direction.x) || (testDirection.y && testDirection.y == -this.direction.y))) {
+            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
                 //calculate distance from testTile to targetTile and check if it's the closest
                 var testTile = Vector.add(atTile, testDirection),
                     distance = Vector.distance(testTile, this.targetTile);
@@ -4483,7 +4495,7 @@ class Ghost extends Actor {
             choice = validChoices[Math.floor(Math.random() * validChoices.length)];
         }
         //set next direction to be the choice the ghost just made
-        return Ghost.TURN_PREFERENCE[choice];
+        return Actor.TURN_PREFERENCE[choice];
     }
 
 
@@ -4681,8 +4693,8 @@ class Ghost extends Actor {
         try {
             if (this.isEaten) {
                 return '11111111111111111111111111111111'
-            } else if (this.isHome || this.isLeavingHome || this.inTunnel) {
-                //tunnel
+            } else if (this.isSlow) {
+                //tunnel, home
                 if (this.scene.level == 1) {
                     return '00100010001000100010001000100010';
                 } else if (this.scene.level <= 4) {
@@ -4751,7 +4763,6 @@ class Blinky extends Ghost {
     static ANIM_NAKED = 6;
     constructor(scene, x, y) {
         super(scene, x, y, 'Blinky');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = { x: 13 * 8, y: 16.5 * 8 };
         this.startDirection = Vector.LEFT;
         this.scatterTargetTile = { x: 25, y: 0 };
@@ -4773,11 +4784,6 @@ class Blinky extends Ghost {
         //blinky starts outside of the house
         this.status = Ghost.STATUS_PATROL;
     }
-
-    get pelletLimit() {
-        return 0;
-    }
-
 
     get randomScatter() {
         return this.scene.scatterChase.randomScatter;
@@ -4861,22 +4867,11 @@ class Blinky extends Ghost {
 }class Pinky extends Ghost {
     constructor(scene, x ,y) {
         super(scene, x, y, 'Pinky');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = this.startPosition;
         this.startDirection = Vector.DOWN;
         this.textureOffsetY = 16;
         this.scatterTargetTile = { x: 2, y: 0 };
         this.reset();
-    }
-
-    reset() {
-        this.status = Ghost.STATUS_HOME;
-        //blinky starts outside of the house
-        Ghost.prototype.reset.call(this);
-    }
-
-    get pelletLimit() {
-        return 0;
     }
 
     get randomScatter() {
@@ -4910,7 +4905,6 @@ class Blinky extends Ghost {
 }class Inky extends Ghost {
     constructor(scene, x, y) {
         super(scene, x, y, 'Inky');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = this.startPosition;
         this.startDirection = Vector.UP;
         this.textureOffsetY = 32;
@@ -4950,7 +4944,6 @@ class Blinky extends Ghost {
 }class Clyde extends Ghost {
     constructor(scene, x, y) {
         super(scene, x, y, 'Clyde');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = this.startPosition;
         this.enterTarget = this.startPosition;
         this.startDirection = Vector.UP;
@@ -5046,11 +5039,11 @@ class ScatterChase {
     get phase2() {
         var chase;
         if (this.scene.level == 1) {
-            chase = 1200
+            chase = 1200;
         } else if (this.scene.level <= 4)
-            chase = 61980;
+            chase = 61980; //1033 seconds
         else {
-            chase = 5220;
+            chase = 62220; //1037 seconds
         }
         return {
             scatter: 420,
@@ -5090,32 +5083,27 @@ class ScatterChase {
             }
         }
     }
-}/**
- * items are power ups that pac-man can safely eat. They are worth points.
- * Unlike Entities, they don't move but can be animated
- */
-class Item extends Sprite {
-    constructor(scene, x, y) {
-        super(scene, x, y);
-        this.width = 8;
-        this.height = 8;
-    }
-    get hitBox() {
-        return {x: this.position.x + 3, y: this.position.y + 3, w: 2, h: 2}
-    }
-}class Pellet extends Item {
+}class Pellet extends Sprite {
     constructor (scene, x, y) {
-        super(scene, x, y);
+        super(scene, x, y, 8, 8);
         this.points = 10;
         this.pellet = true;
     }
     
+    get pelletColor() {
+        return this.color||(this.scene.maze||{}).pelletColor || "#fcb4aa";
+    }
+
+    get hitBox() {
+        return {x: this.position.x + 3, y: this.position.y + 3, w: 2, h: 2}
+    }
+
     draw () {
         if (this.hidden) return;
         //doesn't animate, just draw
         var context = this.scene.context;
         context.beginPath();
-        context.fillStyle = this.color||(this.scene.maze||{}).pelletColor || "#fcb4aa";
+        context.fillStyle = this.pelletColor;
         context.fillRect(this.position.x + 3, (this.position.y) + 3, 2, 2);
         context.fill();
 
@@ -5129,7 +5117,7 @@ class Item extends Sprite {
 }/*
     The big pellet. Energizes pacman and frightens/reverses the ghost when eaten
 */
-class Energizer extends Item {
+class Energizer extends Pellet {
     constructor(scene, x, y) {
         super(scene, x, y);
         this.animations = [
@@ -5137,20 +5125,21 @@ class Energizer extends Item {
             {frames: 2, ticksPerFrame: 10, curFrame: 0, curFrameTicks: 0}
         ]
         this.points = 50;
+        this.pellet = false;
         this.energizer = true;
     }
 
     draw() {
         if (this.hidden) return;
         //animate this thing
-        Item.prototype.draw.call(this);
+        Sprite.prototype.draw.call(this);
         var animation = this.animation;
         //since energizers flash, only draw when animation frame is 0
         //there is no sprite sheet / texture involved here
         if (animation.curFrame == 0) {
             //draw energizer on the canvas
             var context = this.scene.context;
-            context.fillStyle = this.color||(this.scene.maze||{}).pelletColor || "#fcb4aa";
+            context.fillStyle = this.pelletColor;
             // drawing a circle anti-aliases on canvas. doesn't fit aesthetic.. use rectangles
             context.fillRect(this.position.x + 1, (this.position.y) + 1, 6, 6);
             context.fillRect(this.position.x, (this.position.y) + 2, 8, 4);
@@ -5163,6 +5152,8 @@ class Energizer extends Item {
     static MODE_ENTER = 0;
     static MODE_LOOP = 1;
     static MODE_EXIT = 2;
+
+    static HOUSE_TARGET = { x: 13, y: 18 };
 
     static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
@@ -5187,8 +5178,8 @@ class Energizer extends Item {
         this.direction = this.x < 1 ? Vector.RIGHT : Vector.LEFT;
         this.x -= this.direction.x * 4; //nudge off the screen
         //skip the first tile in the sequence which is the spawn point (a warp tile)
-        this.targetTile = this.enterSequence[1];
         this.turn = 1;
+        this.targetTile = this.enterSequence[this.turn];
     }
 
 
@@ -5239,8 +5230,8 @@ class Energizer extends Item {
             closest = Infinity,
             validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
         //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < MsPacmanFruit.TURN_PREFERENCE.length; i++) {
-            var testDirection = MsPacmanFruit.TURN_PREFERENCE[i];
+        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
+            var testDirection = Actor.TURN_PREFERENCE[i];
             // can't reverse go back the way we just came
             if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
                 //calculate distance from testTile to targetTile and check if it's the closest
@@ -5257,7 +5248,7 @@ class Energizer extends Item {
                 }
             }
         }
-        return MsPacmanFruit.TURN_PREFERENCE[choice];
+        return Actor.TURN_PREFERENCE[choice];
     }
 
     tick() {
@@ -5282,10 +5273,11 @@ class Energizer extends Item {
                     //start looping
                     this.mode = MsPacmanFruit.MODE_LOOP;
                     //target ghost house
-                    this.targetTile = { x: 13, y: 18 };
+                    this.targetTile = MsPacmanFruit.HOUSE_TARGET;
                 }
                 this.madeInstruction = true;
             } else if (this.isLooping && Vector.equals(this.tile, this.loopTarget)) {
+                //completed a lap around the ghost house now
                 //randomly choose an exit sequence
                 this.exitSequence = this.scene.maze.chooseRandomFruitExit();
                 this.mode = MsPacmanFruit.MODE_EXIT;
@@ -5295,12 +5287,15 @@ class Energizer extends Item {
                     this.targetTile = this.exitSequence[++this.turn];
                 }
             } else if (this.isExiting && Vector.equals(this.tile, this.targetTile)) {
+                //made it to the next target of the exit sequence
                 if (this.turn < this.exitSequence.length - 1) {
                     this.targetTile = this.exitSequence[++this.turn];
                 }
             } else if (this.isExiting && (this.tile.x < 0 || this.tile.x > 27)) {
+                //fruit has left the building, delete it from the scene
                 delete this.scene.fruit;
             }
+            //navigate the maze
             var centerPoint = this.centerPixel,
                 nextPixel = { x: centerPoint.x + this.direction.x * 5, y: centerPoint.y + this.direction.y * 5 },
                 testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
@@ -5312,6 +5307,7 @@ class Energizer extends Item {
             }
         } else {
             if (!this.isTileCenter) {
+                //off tile center, clear the last instruction
                 delete this.madeInstruction;
             }
         }
@@ -5337,10 +5333,11 @@ class Energizer extends Item {
     }
 
     get speedControl() {
-        return '00100010001000100010001000100010'; //level 1
+        return '00100010001000100010001000100010';
     }
 }//instead of making a subclass for each fruit, just jam all info into this single class for everything
-class PacmanFruit extends Item {
+class PacmanFruit extends Sprite {
+    static POINTS = [100, 300, 500, 700, 1000, 2000, 3000, 5000];
     static getFruitIndex(level) {
         switch(level) {
             case 1:
@@ -5368,40 +5365,17 @@ class PacmanFruit extends Item {
     }
 
     constructor (scene) {
-        super(scene, 13*8, 19.5*8); //always appear below ghost house
+        super(scene, 13*8, 19.5*8, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 488, y: 48};
-        this.width = 16;
-        this.height = 16;
         //60 fps == 60 ticks per sec
         this.halfTicksToLive = 2 * 60 * ((Math.random() * (2/3)) + (28/3));   //10ish second timer (should be random between 9.33333 and 10)
-        this.points = this.setPoints();
+        // this.points = this.setPoints();
         this.fruit = true;
     }
 
-    setPoints() {
-        switch(this.scene.level) {
-            case 1:
-                return 100;     //cherry
-            case 2: 
-                return 300;     //strawberry
-            case 3:
-            case 4:
-                return 500;     //orange
-            case 5:
-            case 6:
-                return 700;     //apple
-            case 7:
-            case 8:
-                return 1000;    //melon
-            case 9:
-            case 10:
-                return 2000;    //galaxian boss
-            case 11:
-            case 12:
-                return 3000;    //bell
-            default:
-                return 5000;    //keys
-        }
+
+    get points() {
+        return PacmanFruit.POINTS[PacmanFruit.getFruitIndex(this.scene.level)];
     }
 
     get hitBox() {
@@ -5524,6 +5498,3 @@ SceneManager.pushScene(creditsScene);
 
 var pauseGame = false,
     wasPaused = false;
-
-document.onkeydown = Input.onKeyDown;
-document.onkeyup = Input.onKeyUp;

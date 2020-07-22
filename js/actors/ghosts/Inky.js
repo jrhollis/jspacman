@@ -1,7 +1,6 @@
 class Inky extends Ghost {
     constructor(scene, x, y) {
         super(scene, x, y, 'Inky');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = this.startPosition;
         this.startDirection = Vector.UP;
         this.textureOffsetY = 32;

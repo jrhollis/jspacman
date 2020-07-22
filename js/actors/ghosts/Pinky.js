@@ -1,22 +1,11 @@
 class Pinky extends Ghost {
     constructor(scene, x ,y) {
         super(scene, x, y, 'Pinky');
-        this.startPosition = { x: x, y: y };
         this.houseTarget = this.startPosition;
         this.startDirection = Vector.DOWN;
         this.textureOffsetY = 16;
         this.scatterTargetTile = { x: 2, y: 0 };
         this.reset();
-    }
-
-    reset() {
-        this.status = Ghost.STATUS_HOME;
-        //blinky starts outside of the house
-        Ghost.prototype.reset.call(this);
-    }
-
-    get pelletLimit() {
-        return 0;
     }
 
     get randomScatter() {

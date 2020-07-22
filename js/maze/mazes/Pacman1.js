@@ -1,3 +1,12 @@
+//. = wall
+//0 = open tile
+//1 = pellet
+//2 = pellet + decision
+//3 = energizer
+//4 = decision only
+//5 = tunnel (slow tile)
+//6 = ghost house (slow tile)
+
 class Pacman1 extends Maze {
     static wallMap = [
         '............................', //0

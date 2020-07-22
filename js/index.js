@@ -85,6 +85,3 @@ SceneManager.pushScene(creditsScene);
 
 var pauseGame = false,
     wasPaused = false;
-
-document.onkeydown = Input.onKeyDown;
-document.onkeyup = Input.onKeyUp;
