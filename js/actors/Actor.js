@@ -1,5 +1,8 @@
 class Actor extends Sprite {
 
+    //turn preferences priority list- used by ghosts and ms pacman fruit.
+    //if there's a tie for which valid turns to make at a decision point, choose the first 
+    //one of the matches in this list
     static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
     constructor(board, x, y, width, height) {
@@ -9,7 +12,7 @@ class Actor extends Sprite {
         this.frameCtr = 0;
     }
 
-    //location stuff
+    //is this actor centered on a tile?
     get isTileCenter() {
         var tile = this.tile,
             pixel = this.position;

@@ -31,6 +31,7 @@ class PacmanFruit extends Sprite {
         super(scene, 13*8, 19.5*8, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 488, y: 48};
         //60 fps == 60 ticks per sec
+        //half ticks because fruit is updated twice per tick
         this.halfTicksToLive = 2 * 60 * ((Math.random() * (2/3)) + (28/3));   //10ish second timer (should be random between 9.33333 and 10)
         // this.points = this.setPoints();
         this.fruit = true;
@@ -65,10 +66,9 @@ class PacmanFruit extends Sprite {
 
     draw() {
         if (this.halfTicksToLive > 0) {
-            var context = this.scene.context;
             //do x/y offset based on board.level
             var offsetX = PacmanFruit.getFruitIndex(this.scene.level) * 16;
-            context.drawImage(RESOURCE.pacman,
+            this.scene.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
                 this.position.x, this.position.y, 16, 16  
             );

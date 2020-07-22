@@ -524,8 +524,9 @@ class GameScene extends Scene {
 
     eatGhost(ghost) {
         Sound.playOnce('eat_ghost');
-
+        //when pacman eats a ghost, hide pacman and freeze other ghosts for a second
         this.pacman.hide();
+        //immediately display the score
         this.ghostScore = new Points(this, ghost.position.x, ghost.position.y, this.numGhostsEaten, 1);
         this.ghosts.forEach(g => {
             if (g != ghost && !g.isEaten) {
@@ -533,6 +534,7 @@ class GameScene extends Scene {
             }
         });
         this.freezeTimer.start(60, () => {
+            //unfreeze everything, resume play
             Ghost.NUM_EATEN++;
             Ghost.NUM_FRIGHTENED--;
             ghost.show();
@@ -541,6 +543,7 @@ class GameScene extends Scene {
             delete this.ghostScore;
             this.ghosts.forEach(g => g.unfreeze());
         });
+        //increment score multiplier and add points to score
         this.numGhostsEaten++;
         this.pacman.addPoints(Math.pow(2, this.numGhostsEaten) * 100);
         if (this.numGhostsEaten == 4) {
@@ -555,12 +558,12 @@ class GameScene extends Scene {
         this.lastPelletEatenTimer.reset(this.lastPelletEatenTimeout + 1);
         this.globalPelletCounter++;
 
-        //check to see if eating this pellet triggers a fruit release
-        if (this.maze.isFruitReady()) {
+        //check to see if eating this pellet triggers a fruit release (if fruit isn't already on the maze)
+        if (!this.fruit && this.maze.isFruitReady()) {
             this.fruit = new Fruit(this);
         }
 
-        //check the house to see if ghosts are ready to leave
+        //check the house to see if ghosts are ready to leave due to pellet counter
         if (this.useGlobalPelletLimit) {
             if (this.globalPelletCounter == 7) {
                 this.ghosts.Pinky.leaveHouse();
@@ -584,7 +587,7 @@ class GameScene extends Scene {
         Scene.prototype.draw.call(this);
 
         this.oneUpLabel.flash = this.curPlayer == 0;
-        this.twoUpLabel.flash = this.curPlayer == 1
+        this.twoUpLabel.flash = this.curPlayer == 1;
 
         this.maze.draw();
 
@@ -607,6 +610,7 @@ class GameScene extends Scene {
         //actors
         this.pacman.draw();
         this.ghosts.forEach(g => g.draw());
+
         if (this.ghostScore) this.ghostScore.draw();
     }
 }

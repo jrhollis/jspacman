@@ -39,22 +39,7 @@ class MsPacmanFruit extends Actor {
     }
 
     get points() {
-        switch (this.level) {
-            case 1:
-                return 100;     //cherry
-            case 2:
-                return 200;     //strawberry
-            case 3:
-                return 500;     //orange
-            case 4:
-                return 700;     //pretzel
-            case 5:
-                return 1000;    //apple
-            case 6:
-                return 2000;    //pear
-            case 7:
-                return 5000;    //banana
-        }
+        return [100,200,500,700,1000,2000,5000][this.level-1];
     }
 
     eaten() {
@@ -165,13 +150,12 @@ class MsPacmanFruit extends Actor {
 
     draw() {
         Actor.prototype.draw.call(this);
-        var context = this.scene.context,
-            offsetX = (this.level - 1) * 16,
+        var offsetX = (this.level - 1) * 16,
             offsetBounce = 1.5 * Math.sin((this.bounceCtr / 16) * Math.PI) - 0.5;  //bounce the fruit up and down
-        context.drawImage(RESOURCE.mspacman,
-            this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
-            this.position.x, this.position.y + offsetBounce, 16, 16
-        );
+            this.scene.context.drawImage(RESOURCE.mspacman,
+                this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
+                this.position.x, this.position.y + offsetBounce, 16, 16
+            );
 
 
         // context.beginPath();

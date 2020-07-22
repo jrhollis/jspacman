@@ -1,3 +1,7 @@
+/**
+ * this class keeps a two frame buffer since controls are delayed in the game
+ * 
+ */
 class Input {
     static lastKey = null;
     static buffer = [];
@@ -41,8 +45,12 @@ class Input {
         Input.keyDown = false;
     }
 
+    /**
+     * called every tick. keeps track of which keys
+     * are pressed at this time and queues up the next direction
+     * into the two frame delay buffer
+     */
     static watch() {
-        //two frame delay- stop- change direction
         var nextDirection;
         if (Input.keyState['37']) {
             nextDirection = Vector.LEFT;
@@ -60,6 +68,9 @@ class Input {
     }
 
 
+    /**
+     * returns the last key pressed
+     */
     static readKeyPress() {
         var k = this.keyPress;
         delete this.keyPress;
@@ -67,6 +78,9 @@ class Input {
     }
 
 
+    /**
+     * reads the key press from two frames ago
+     */
     static readBuffer() {
         if (Input.buffer.length == 2) {
             return Input.buffer[1];

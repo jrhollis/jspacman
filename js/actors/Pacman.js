@@ -99,10 +99,9 @@ class Pacman extends Actor {
     }
 
     addPoints(points) {
-        var prevScore = this.score;
+        var prevScore = Math.floor(this.score / 10000);
         this.score += points;
         //award extra life for every 10k increment of points
-        prevScore = Math.floor(prevScore / 10000);
         var newScore = Math.floor(this.score / 10000);
         if (prevScore != newScore) {
             Sound.playOnce('extra_life');
@@ -116,11 +115,13 @@ class Pacman extends Actor {
 
 
     die() {
-        //cache the scene's pellets/energizer
+        //point up and open mouth to begin die animation
         this.animation.curFrame = 2;
         this.direction = Vector.UP;
+        //cache the scene's pellets/energizer in side this pacman instance
         this.pellets = Array.from(this.scene.pellets);
         this.energizers = Array.from(this.scene.energizers);
+        //after getting caught, the game freezes for 0.5 seconds before starting die animation
         this.scene.freezeTimer.start(30, () => {
             Sound.playOnce('die');
             this.unfreeze();

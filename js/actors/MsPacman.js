@@ -18,6 +18,7 @@ class MsPacman extends Pacman {
         Pacman.prototype.die.call(this);
         this.animation.curFrame = 1;
         this.direction = Vector.DOWN;
+        this.nextDirection = Vector.DOWN;
     }
 
     draw() {
@@ -59,7 +60,7 @@ class MsPacman extends Pacman {
             );
         } else {
             //dying animation- should spin, down,left,up,right, down,left,up,right, down,left,up
-            this.direction = Actor.TURN_PREFERENCE[3 - (animation.curFrame + 2) % 4];
+            this.direction = Actor.TURN_PREFERENCE[animation.curFrame % 4];
             context.drawImage(RESOURCE.mspacman,
                 animation.textureX, directionalOffsetY, 16, 16,
                 this.position.x, this.position.y, 16, 16

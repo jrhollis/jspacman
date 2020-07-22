@@ -10,12 +10,6 @@ class Sprite {
         this.currentAnimation = 0;
     }
 
-    get size() {
-        return {
-            width: this.width,
-            height: this.height
-        }
-    }
     get position() {
         return {x: this.x, y: this.y};
     }
@@ -26,34 +20,37 @@ class Sprite {
     get centerPixel() {
         return {x: this.position.x + (this.width/2), y: this.position.y + (this.height/2)}; 
     }
+    //determine which tile this actor occupies. look at their center pixel coordinate
     get tile() {
         var center = this.centerPixel;
         return {x: Math.floor((center.x) / 8), y: Math.floor((center.y) / 8)};
     }
 
+    //don't draw this sprite
     hide() {
         this.hidden = true;
     }
-
+    //draw it
     show() {
         this.hidden = false;
     }
 
+    //stop this sprite from animating
     freeze() {
         this.frozen = true;
     }
-
+    //resume animation
     unfreeze() {
         this.frozen = false;
     }
 
-
-    collide(entity) {
-        return (this.tile.x == entity.tile.x && this.tile.y == entity.tile.y)
+    //actors collide if they occupy the same tile
+    collide(actor) {
+        return (this.tile.x == actor.tile.x && this.tile.y == actor.tile.y)
     }
 
 
-    //animation stuff
+    //set a new current animation and reset animation counters
     set animation(index) {
         this.currentAnimation = index;
         //reset animation info
@@ -61,15 +58,16 @@ class Sprite {
         this.animation.curFrameTicks = 0;
         this.frameCtr = 0;
     }
+    //gets the current animation
     get animation() {
         return this.animations[this.currentAnimation];
     }
 
 
     draw() {
-        if (this.hidden) return;
-        if (this.frozen) return;
-        // update animations
+        //don't animate if hidden or frozen
+        if (this.hidden || this.frozen) return;
+        // update animation counters if there this is animated
         if (this.animations.length) {
             var currentAnimation = this.animations[this.currentAnimation];
             //if animating...

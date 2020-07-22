@@ -31,9 +31,9 @@ var LAST_SCORES = [
 
 //load resources (sprite sheets)
 var RESOURCE = {
-    mspacman: document.createElement('img'),
-    pacman: document.createElement('img'),
-    text: document.createElement('img')
+    mspacman: new Image(),
+    pacman: new Image(),
+    text: new Image()
 }
 RESOURCE.mspacman.src = 'res/mspacman/mspacman.png';
 RESOURCE.pacman.src = 'res/pacman/pacman.png';

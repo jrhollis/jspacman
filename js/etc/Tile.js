@@ -13,10 +13,11 @@ class Tile {
         this.y = y;
         this.type = type;
     }
-
+    //maze wall
     get wall() {
         return this.type == '.';
     }
+    //open tile. no pellets or anythign else on it
     get open() {
         return this.type == '0';
     }
@@ -26,15 +27,20 @@ class Tile {
     get energizer() {
         return this.type == '3';
     }
+    //tunnel tile - slows the ghosts
     get tunnel() {
         return this.type == '5';
     }
+    //ghost house tile - slows the ghosts
     get house() {
         return this.type == '6';
     }
+    //decision tiles are where the ghosts make their next move depending on their AI
+    //these occur at most (but not all) intersections in the maze
     get decision() {
         return this.type == '4' || this.type == '2';
     }
+    //can pac-man move over this tile
     get walkable() {
         return !this.house && !this.wall;
     }

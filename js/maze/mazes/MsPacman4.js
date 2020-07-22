@@ -38,35 +38,35 @@ class MsPacman4 extends Maze {
       // 0123456789012345678901234567  
     ];
 
+    //warp tiles (could find these programmatically)
+    static WARP_TILES = [
+        {x: -1, y: 15.5},
+        {x: -1, y: 18.5},
+        {x: 28, y: 15.5},
+        {x: 28, y: 18.5}
+    ];
+
+    // fruit entrance sequences
+    static ENTER_TARGETS = [
+        [{x: 7, y: 8}, {x: 13, y: 14}], //upper left--
+        [{x: 6, y: 21}, {x: 14, y: 26}, {x: 15, y: 20}], //lower left
+        [{x: 18, y: 18}], //upper right--
+        [{x: 20, y: 23}, {x: 15, y: 20}] //lower right--
+    ];
+
+    // fruit exit sequences
+    static EXIT_TARGETS = [
+        [{x: 7, y: 17}], //upper left --
+        [{x: 11, y: 23}], //lower left --
+        [{x: 15, y: 20}, {x: 18, y: 23}, {x: 22, y: 14}], //upper right
+        [{x: 15, y: 20}, {x: 18, y: 23}] //lower right --
+    ];
+
     static tiles = [];
     static tileHash = {};
 
     constructor(board) {
         super(board, RESOURCE.mspacman);
-        
-        //warp tiles (could find these programmatically)
-        this.warpTiles = [
-            {x: -1, y: 15.5},
-            {x: -1, y: 18.5},
-            {x: 28, y: 15.5},
-            {x: 28, y: 18.5}
-    ];
-
-        // fruit entrance sequences
-        this.enterTargets = [
-            [{x: 7, y: 8}, {x: 13, y: 14}], //upper left--
-            [{x: 6, y: 21}, {x: 14, y: 26}, {x: 15, y: 20}], //lower left
-            [{x: 18, y: 18}], //upper right--
-            [{x: 20, y: 23}, {x: 15, y: 20}] //lower right--
-        ];
-
-        // fruit exit sequences
-        this.exitTargets = [
-            [{x: 7, y: 17}], //upper left --
-            [{x: 11, y: 23}], //lower left --
-            [{x: 15, y: 20}, {x: 18, y: 23}, {x: 22, y: 14}], //upper right
-            [{x: 15, y: 20}, {x: 18, y: 23}] //lower right --
-        ];
     }
 
     get isAlternateVersion() {

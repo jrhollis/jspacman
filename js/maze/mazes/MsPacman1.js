@@ -40,37 +40,35 @@ class MsPacman1 extends Maze {
     static tiles = [];
     static tileHash = {};
 
+    //warp tiles (could find these programmatically)
+    static WARP_TILES = [
+        {x: -1, y: 10.5},
+        {x: -1, y: 19.5},
+        {x: 28, y: 10.5},
+        {x: 28, y: 19.5}
+    ];
+
+    //fruit entrance sequences
+    static ENTER_TARGETS = [
+        [{x: 9, y: 11},{x: 9, y: 14}], //upper left
+        [{x: 4, y: 26}, {x: 18, y: 26}, {x: 15, y: 20}], //lower left
+        [{x: 24, y: 20}, {x: 18, y: 17}], //upper right
+        [{x: 22, y: 23}, {x: 15, y: 20}] //lower right
+    ];
+
+    //fruit exit sequences
+    static EXIT_TARGETS = [
+        [{x: 9, y: 14}], //upper left
+        [{x: 12, y: 20}, {x: 10, y: 23}], //lower left
+        [{x: 15, y: 20}, {x: 18, y: 23}], //upper right
+        [{x: 15, y: 20}, {x: 18, y: 23}] //lower right
+    ];
+
     constructor(board) {
         super(board, RESOURCE.mspacman);
-
         this.pelletColor = '#dedffe';
-
         //release a fruit at these many pellets eaten (including energizers)
         this.fruitRelease = [64, 172];
-
-        //warp tiles (could find these programmatically)
-        this.warpTiles = [
-            {x: -1, y: 10.5},
-            {x: -1, y: 19.5},
-            {x: 28, y: 10.5},
-            {x: 28, y: 19.5}
-        ];
-
-        //fruit entrance sequences
-        this.enterTargets = [
-            [{x: 9, y: 11},{x: 9, y: 14}], //upper left
-            [{x: 4, y: 26}, {x: 18, y: 26}, {x: 15, y: 20}], //lower left
-            [{x: 24, y: 20}, {x: 18, y: 17}], //upper right
-            [{x: 22, y: 23}, {x: 15, y: 20}] //lower right
-        ];
-
-        //fruit exit sequences
-        this.exitTargets = [
-            [{x: 9, y: 14}], //upper left
-            [{x: 12, y: 20}, {x: 10, y: 23}], //lower left
-            [{x: 15, y: 20}, {x: 18, y: 23}], //upper right
-            [{x: 15, y: 20}, {x: 18, y: 23}] //lower right
-        ];
     }
 
     get textureOffset() {
