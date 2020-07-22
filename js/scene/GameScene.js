@@ -586,6 +586,7 @@ class GameScene extends Scene {
     draw() {
         Scene.prototype.draw.call(this);
 
+        //flash the score label of the current player
         this.oneUpLabel.flash = this.curPlayer == 0;
         this.twoUpLabel.flash = this.curPlayer == 1;
 
