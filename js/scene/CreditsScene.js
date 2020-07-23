@@ -53,7 +53,7 @@ class CreditsScene extends Scene {
 
         if (Input.lastKey == 13) { //enter
             //assign common class names to game distinct class for easy instantiation
-            if (GAME_MODE == GAME_PACMAN) {
+            if (Game.GAME_MODE == Game.GAME_PACMAN) {
                 TitleScene = PacmanTitleScene;
                 StartScene = PacmanStartScene;
                 CutScene1 = PacmanCutScene1;
@@ -81,13 +81,13 @@ class CreditsScene extends Scene {
         }
         
         if ((Input.lastKey == 38 || Input.lastKey == 40) && this.canSelectGame) {
-            GAME_MODE = (GAME_MODE + 1) % 2;
+            Game.GAME_MODE = (Game.GAME_MODE + 1) % 2;
             this.canSelectGame = false;
         } else if (!Input.lastKey) {
             this.canSelectGame = true;
         }
 
-        if (GAME_MODE == GAME_PACMAN) {
+        if (Game.GAME_MODE == Game.GAME_PACMAN) {
             this.pacman.unfreeze();
             this.mspacman.freeze();
             this.pacman2.unfreeze();

@@ -2,7 +2,7 @@ class Maze {
 
     static getMazeIndex(scene) {
         //get the version of the maze based on the current level
-        if (GAME_MODE == GAME_MSPACMAN) {
+        if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
             if (scene.level <= 2) {
                 return 0;
             } else if (scene.level <= 5) {
@@ -28,7 +28,7 @@ class Maze {
     }
 
     static getMaze(scene) {
-        if (GAME_MODE == GAME_MSPACMAN) {
+        if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
             //based on level, create a maze instance and return it
             switch (Maze.getMazeIndex(scene)) {
                 case 0:

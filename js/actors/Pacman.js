@@ -15,7 +15,7 @@ class Pacman extends Actor {
         this.startPosition = { x: x, y: y };
         this.animations = [
             //normal
-            { frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
+            { frames: 4, ticksPerFrame: [3,2,2,2], curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
             //die
             { frames: 14, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 504, textureY: 0 },
             //giant 32 x 32
@@ -29,14 +29,10 @@ class Pacman extends Actor {
     }
 
     reset() {
-        this.show();
+        Actor.prototype.reset.call(this);
         this.stop();
-        this.position = Vector.clone(this.startPosition);
-        this.direction = Vector.clone(this.startDirection);
         this.animation = Pacman.ANIM_NORMAL;
         this.mode = Pacman.MODE_PATROL;
-        this.frameCtr = 0;
-        this.freeze();
     }
 
 
@@ -109,7 +105,7 @@ class Pacman extends Actor {
         }
         //set high score
         if (this.score > this.scene.highScore) {
-            localStorage['highscore_' + GAME_MODE] = this.score;
+            localStorage['highscore_' + Game.GAME_MODE] = this.score;
         }
     }
 

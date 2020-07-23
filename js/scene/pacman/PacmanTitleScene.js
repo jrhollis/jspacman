@@ -110,11 +110,11 @@ class PacmanTitleScene extends ScriptScene {
 
 
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
-        this.scoreOneText = new Text(this, ""+(LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
         //if there's a score_two_pacman
-        this.scoreTwoText = new Text(this, ""+LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
+        this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
-        if (!LAST_SCORES[0][1]) {
+        if (!Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.hide();
         }
         this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
@@ -166,7 +166,7 @@ class PacmanTitleScene extends ScriptScene {
 
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
 
 
         //the action
@@ -186,7 +186,7 @@ class PacmanTitleScene extends ScriptScene {
         var keyPress = Input.readKeyPress();
         if (keyPress == 16) {
             //insert credit
-            CREDITS++;
+            Game.CREDITS++;
             Sound.playOnce('credit');
             SceneManager.pushScene(new PacmanStartScene(this.context));
             return;
@@ -197,7 +197,7 @@ class PacmanTitleScene extends ScriptScene {
         }
 
         ScriptScene.prototype.tick.call(this);
-        this.credits.text = ""+CREDITS;
+        this.credits.text = ""+Game.CREDITS;
 
         if (this.pauseUpdatesTimer.tick()) {
             return;
@@ -252,9 +252,9 @@ class PacmanTitleScene extends ScriptScene {
         Scene.prototype.draw.call(this);
         this.p1HighScoreP2.draw();
         this.highScoreText.draw();
-        this.scoreOneText.text = ""+(LAST_SCORES[0][0]||"00");
-        this.scoreTwoText.text = ""+LAST_SCORES[0][1]||"00";
-        if (LAST_SCORES[0][1]) {
+        this.scoreOneText.text = ""+(Game.LAST_SCORES[0][0]||"00");
+        this.scoreTwoText.text = ""+Game.LAST_SCORES[0][1]||"00";
+        if (Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.show();
         }
 

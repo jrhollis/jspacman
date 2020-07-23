@@ -13,7 +13,7 @@ class ScatterChase {
 
      get randomScatter() {
          //only applicable for ms pacman
-        return GAME_MODE == GAME_MSPACMAN && this.phase == 0 &&  this.phaseTimesRemaining.scatter > 0;
+        return Game.GAME_MODE == Game.GAME_MSPACMAN && this.phase == 0 &&  this.phaseTimesRemaining.scatter > 0;
     }
 
     reset() {

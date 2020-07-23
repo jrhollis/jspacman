@@ -23,7 +23,7 @@ class GameScene extends Scene {
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
         this.creditLabel.hide();
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
         this.credits.hide();
         
         this.textSprites = [
@@ -40,11 +40,12 @@ class GameScene extends Scene {
             this.credits
         ];
 
-        this.curPlayer = 0;
         this.scoreText = [
             this.scoreOneText,
             this.scoreTwoText
-        ]
+        ];
+
+        this.curPlayer = 0;
         //level will get incremented in nextLevel call at end of constructor
         this.level = 1;
         //pellet arrays
@@ -56,7 +57,7 @@ class GameScene extends Scene {
         for (var i = 0; i < this.numPlayers; i++){
             var pacman = new PacClass(this, 13.125 * 8, 25.5 * 8);
             pacman.level = -i;   //second player at level (not zero) so there's no beginning song and dance
-            pacman.lives = 3-i; //start with three lives for first player only
+            pacman.lives = 3; //start with three lives for first player only
             this.players.push(pacman);
         }
         //create ghost array / hash
@@ -99,21 +100,19 @@ class GameScene extends Scene {
     }
 
     get highScore() {
-        var score = parseInt(localStorage['highscore_' + GAME_MODE]||'0');
+        var score = parseInt(localStorage['highscore_' + Game.GAME_MODE]||'0');
         return !score?"":score;
     }
 
     loadPlayer(player) {
         this.curPlayer = player;
-        //if this players[player].lives <= 0, then try other player
         this.pacman = this.players[player];
         this.playerLabel.text = 'PLAYER ' + (!player?"ONE":"TWO");
         this.level = this.pacman.level;
         if (this.level < 1) {
-            var newGame = !this.level;
             this.level = 1;
             this.pacman.level = 1;
-            this.nextLevel(newGame); //only play song on first ever start
+            this.nextLevel(true); //only play song on first ever start
         } else {
             //load in cached pellets
             this.pellets = this.pacman.pellets;
@@ -159,7 +158,6 @@ class GameScene extends Scene {
         this.readyText.show();
         this.useGlobalPelletLimit = true;
         this.eatenGhosts = [];
-        this.tickCount = 0;
         this.globalPelletCounter = 0;
         //put entities back to their starting positions
         this.pacman.reset();
@@ -179,9 +177,7 @@ class GameScene extends Scene {
         this.startLevelTimer.start(1.25 * 60, () => {
             this.levelComplete = false;
             this.readyText.hide();
-            this.energizers.forEach(e => {
-                e.unfreeze();
-            });
+            this.energizers.forEach(e => e.unfreeze());
             this.pacman.unfreeze();
             this.pacman.start();
             this.ghosts.forEach(g => {
@@ -237,8 +233,6 @@ class GameScene extends Scene {
 
 
     tick() {
-        this.tickCount++;
-
         //wait for the start level timer before doing anything
         if (this.startLevelTimer.tick()) return;
 
@@ -287,8 +281,8 @@ class GameScene extends Scene {
                 var otherPlayer = (this.curPlayer+1)%this.numPlayers;
                 if (this.pacman.lives < 0) {
                     //gloabls updates
-                    LAST_SCORES[GAME_MODE][this.curPlayer] = this.pacman.score;
-                    CREDITS--;
+                    Game.LAST_SCORES[Game.GAME_MODE][this.curPlayer] = this.pacman.score;
+                    Game.CREDITS--;
                     //game over for this player
                     if (this.numPlayers == 2) {
                         //if two players and other player has lives, show playerlabel text
@@ -307,11 +301,11 @@ class GameScene extends Scene {
 
                     //show the credits before exiting game scene
                     this.creditLabel.show();
-                    this.credits.text = ""+CREDITS;
+                    this.credits.text = ""+Game.CREDITS;
                     this.credits.show();
 
                     this.freezeTimer.start(60, () => {
-                        if (!CREDITS) {
+                        if (!Game.CREDITS) {
                             //out of credits, go to title screen
                             SceneManager.replaceScene(new TitleScene(this.context));
                         } else {
@@ -362,9 +356,9 @@ class GameScene extends Scene {
 
             //feed pacman
             this.eatPellet(this.atePellet || this.ateEnergizer);
-            this.lastPelletEatenTimer.reset();
             this.atePellet = false;
             this.ateEnergizer = false;
+            //check to see if that was the last pellet
             if (!this.pelletsLeft) {
                 Sound.stopAll();
                 this.endLevel();
@@ -568,12 +562,20 @@ class GameScene extends Scene {
             if (this.globalPelletCounter == 7) {
                 this.ghosts.Pinky.leaveHouse();
             } else if (this.globalPelletCounter == 17) {
+                this.ghosts.Pinky.leaveHouse();
                 this.ghosts.Inky.leaveHouse();
-            } else if (this.globalPelletCounter == 32) {
-                if (this.ghosts.Clyde.inHome) {
+            } else if ((this.level == 1 && this.globalPelletCounter == 92) ||
+                       (this.level == 2 && this.globalPelletCounter == 75) || 
+                       (this.level > 2 && this.globalPelletCounter == 32)) {
+                //level 1 = 92
+                //level 2 = 75
+                //then 32
+                if (this.ghosts.Clyde.isHome) {
                     //stop using the global dot limit and use personal dot counters again
                     this.useGlobalPelletLimit = false;
                 }
+                this.ghosts.Pinky.leaveHouse();
+                this.ghosts.Inky.leaveHouse();
                 this.ghosts.Clyde.leaveHouse();
             }
         } else {

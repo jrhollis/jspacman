@@ -6,8 +6,12 @@ how many tries the player has remaining
 class LivesSprite extends Sprite {
     constructor(scene) {
         super(scene);
-        this.resource = GAME_MODE == GAME_PACMAN?RESOURCE.pacman:RESOURCE.mspacman;
-        this.textureOffset = {x: 472, y: GAME_MODE == GAME_PACMAN?16:0};
+        this.resource = Game.GAME_MODE == Game.GAME_PACMAN?RESOURCE.pacman:RESOURCE.mspacman;
+        if (Game.GAME_MODE == Game.GAME_PACMAN) {
+            this.textureOffset = {x: 587, y: 16};
+        } else {
+            this.textureOffset = {x: 472, y: 0}
+        }
         this.width = 16;
         this.height = 16;
     }

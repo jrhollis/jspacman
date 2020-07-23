@@ -7,8 +7,14 @@ class Actor extends Sprite {
 
     constructor(board, x, y, width, height) {
         super(board, x, y, width, height);
-        this.animations = [];
-        this.currentAnimation = 0;
+        this.frameCtr = 0;
+    }
+
+    reset() {
+        this.show();
+        this.freeze();
+        this.position = Vector.clone(this.startPosition);
+        this.direction = Vector.clone(this.startDirection);
         this.frameCtr = 0;
     }
 

@@ -84,19 +84,19 @@ class Sound {
             fx += this.siren;
         }
         //only play this clip once
-        if (this.sfx[GAME_MODE][fx].source) return;
+        if (this.sfx[Game.GAME_MODE][fx].source) return;
         this.playing[fx] = true;
         var source = this.context.createBufferSource();
-        source.buffer = this['sfx_' + GAME_MODE];
+        source.buffer = this['sfx_' + Game.GAME_MODE];
         source.loop = true;
-        var loop = this.sfx[GAME_MODE][fx];
+        var loop = this.sfx[Game.GAME_MODE][fx];
         source.loopStart = loop.start;
         source.loopEnd = loop.end;
         source.connect(this.context.destination);
         source.start(0, loop.start);
-        this.sfx[GAME_MODE][fx].source = source;
+        this.sfx[Game.GAME_MODE][fx].source = source;
         source.addEventListener('ended', () => {
-            delete this.sfx[GAME_MODE][fx].source;
+            delete this.sfx[Game.GAME_MODE][fx].source;
             delete this.playing[fx];
         });
         return source;
@@ -113,16 +113,16 @@ class Sound {
             fx += this.munch;
             this.munch = (this.munch + 1) % 2;
         }
-        if (this.sfx[GAME_MODE][fx].source) return;
+        if (this.sfx[Game.GAME_MODE][fx].source) return;
         var source = this.context.createBufferSource();
-        source.buffer = this['sfx_' + GAME_MODE];
-        var clip = this.sfx[GAME_MODE][fx];
+        source.buffer = this['sfx_' + Game.GAME_MODE];
+        var clip = this.sfx[Game.GAME_MODE][fx];
         source.connect(this.context.destination);
         source.start(0, clip.start, clip.end - clip.start);
-        this.sfx[GAME_MODE][fx].playing = true;
-        this.sfx[GAME_MODE][fx].source = source;
+        this.sfx[Game.GAME_MODE][fx].playing = true;
+        this.sfx[Game.GAME_MODE][fx].source = source;
         source.addEventListener('ended', () => {
-            delete this.sfx[GAME_MODE][fx].source;
+            delete this.sfx[Game.GAME_MODE][fx].source;
         });
         return source;
     }
@@ -132,8 +132,8 @@ class Sound {
         if (fx == 'siren') {
             fx += this.siren;
         }
-        if (this.sfx[GAME_MODE][fx] && this.sfx[GAME_MODE][fx].source) {
-            this.sfx[GAME_MODE][fx].source.stop();
+        if (this.sfx[Game.GAME_MODE][fx] && this.sfx[Game.GAME_MODE][fx].source) {
+            this.sfx[Game.GAME_MODE][fx].source.stop();
         }
     }
 

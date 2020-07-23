@@ -20,12 +20,12 @@ class Input {
         }
 
         if (e.keyCode == 32) {
-            pauseGame = !pauseGame;
+            GAME.pauseGame = !GAME.pauseGame;
             e.preventDefault();
             return false;
         }
         if (e.keyCode == 70) {
-            pauseGame = true;
+            GAME.pauseGame = true;
             //render next frame
             SceneManager.update();
             e.preventDefault();

@@ -8,6 +8,9 @@ class Pinky extends Ghost {
         this.reset();
     }
 
+    /**
+     * in ms pac-man pinky starts each level in random scatter mode
+     */
     get randomScatter() {
         return this.scene.scatterChase.randomScatter;
     }

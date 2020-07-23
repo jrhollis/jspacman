@@ -3,10 +3,10 @@ class PacmanStartScene extends Scene {
         super(context);
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
         this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
-        this.scoreOneText = new Text(this, ""+(LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
-        this.scoreTwoText = new Text(this, ""+LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
-        if (!LAST_SCORES[0][1]) {
+        if (!Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.hide();
         }
 
@@ -18,15 +18,15 @@ class PacmanStartScene extends Scene {
 
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
     }
 
     tick() {
         var keyPress = Input.readKeyPress();
-        if (CREDITS > 0 && keyPress == 13) { //enter
+        if (Game.CREDITS > 0 && keyPress == 13) { //enter
             SceneManager.replaceScene(new GameScene(this.context, 1));
             return;
-        } else if (CREDITS > 1 && keyPress == 50) { //#2
+        } else if (Game.CREDITS > 1 && keyPress == 50) { //#2
             SceneManager.replaceScene(new GameScene(this.context, 2));
             return;
         } else if (keyPress == 27) {
@@ -34,12 +34,12 @@ class PacmanStartScene extends Scene {
             SceneManager.popScene();
             return;
         } else if (keyPress == 16) {
-            CREDITS++;
+            Game.CREDITS++;
             Sound.playOnce('credit');
         }
 
-        this.credits.text = ""+CREDITS;
-        if (CREDITS > 1) {
+        this.credits.text = ""+Game.CREDITS;
+        if (Game.CREDITS > 1) {
             this.twoPlayers.show();
             this.onePlayerOnly.hide();
         } else {

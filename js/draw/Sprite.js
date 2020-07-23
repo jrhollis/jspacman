@@ -56,7 +56,6 @@ class Sprite {
         //reset animation info
         this.animation.curFrame = 0;
         this.animation.curFrameTicks = 0;
-        this.frameCtr = 0;
     }
     //gets the current animation
     get animation() {
@@ -71,12 +70,14 @@ class Sprite {
         if (this.animations.length) {
             var currentAnimation = this.animations[this.currentAnimation];
             //if animating...
-            if (currentAnimation.ticksPerFrame > 0 && currentAnimation.frames > 1) {
+            var ticksPerFrame = typeof(currentAnimation.ticksPerFrame) == 'number'?
+                currentAnimation.ticksPerFrame:currentAnimation.ticksPerFrame[currentAnimation.curFrame];
+            if (ticksPerFrame > 0 && currentAnimation.frames > 1) {
                 //increment time spent on the current frame (milliseconds)
                 currentAnimation.curFrameTicks++;
                 //convert secPerFrame to milliseconds for comparison
                 //is the time on the current frame more than secPerFrame? if so, time to move on to next frame
-                if (currentAnimation.curFrameTicks == currentAnimation.ticksPerFrame) {
+                if (currentAnimation.curFrameTicks >= ticksPerFrame) {
                     //go to the next frame in the animation
                     currentAnimation.curFrame = (currentAnimation.curFrame + 1) % currentAnimation.frames;
                     currentAnimation.curFrameTicks = 0;

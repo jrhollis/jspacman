@@ -9,6 +9,10 @@ class Clyde extends Ghost {
         this.reset();
     }
 
+    /**
+     * Clyde leaves the house after 60 pellets are eaten on level 1
+     * and after 50 on level 2
+     */
     get pelletLimit() {
         if (this.scene.level == 1) {
             return 60;
@@ -19,7 +23,7 @@ class Clyde extends Ghost {
     }
 
     /**
-     * Sue will target pacman directly when more than 8 tiles away from him. if he
+     * Clyde will target pacman directly when more than 8 tiles away from him. if he
      * gets closer, he will target his scatter tile
      */
     calculateTargetTile() {

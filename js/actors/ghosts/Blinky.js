@@ -1,9 +1,11 @@
 //TODO:  on reversal there is a ms pacman patch that makes blinky go after ms pacman to "avoid parking"
 
 class Blinky extends Ghost {
+    //extra animations for cut scenes
     static ANIM_RIP = 4;
     static ANIM_PATCH = 5;
     static ANIM_NAKED = 6;
+    
     constructor(scene, x, y) {
         super(scene, x, y, 'Blinky');
         this.houseTarget = { x: 13 * 8, y: 16.5 * 8 };
@@ -28,6 +30,10 @@ class Blinky extends Ghost {
         this.status = Ghost.STATUS_PATROL;
     }
 
+
+    /**
+     * in ms pac-man blinky starts each level in random scatter mode
+     */
     get randomScatter() {
         return this.scene.scatterChase.randomScatter;
     }

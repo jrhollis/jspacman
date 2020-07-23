@@ -103,10 +103,10 @@ class MsPacmanTitleScene extends ScriptScene {
         });
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
         this.highScoreText = new Text(this, localStorage['highscore_1'], 'white', 16*8, 8, 'right');
-        this.scoreOneText = new Text(this, ""+(LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
-        this.scoreTwoText = new Text(this, ""+LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
-        if (!LAST_SCORES[1][1]) {
+        if (!Game.LAST_SCORES[1][1]) {
             this.scoreTwoText.hide();
         }
 
@@ -119,7 +119,7 @@ class MsPacmanTitleScene extends ScriptScene {
 
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
 
         this.with = new Text(this, "WITH", 'white', 10*8, 13.5*8);
         this.actorName = new Text(this, "BLINKY", 'red', 12*8, 17*8)
@@ -165,7 +165,7 @@ class MsPacmanTitleScene extends ScriptScene {
         var keyPress = Input.readKeyPress();
         if (keyPress == 16) {
             //insert credit
-            CREDITS++;
+            Game.CREDITS++;
             Sound.playOnce('credit');
             SceneManager.pushScene(new MsPacmanStartScene(this.context));
             return;
@@ -174,7 +174,7 @@ class MsPacmanTitleScene extends ScriptScene {
             SceneManager.popScene();
             return;
         }
-        this.credits.text = ""+CREDITS;
+        this.credits.text = ""+Game.CREDITS;
         ScriptScene.prototype.tick.call(this);
         this.pelletCounters = this.pelletCounters.map(i => {
             this.pellets[i].color = '#fc0d1b';
@@ -198,9 +198,9 @@ class MsPacmanTitleScene extends ScriptScene {
 
         this.p1HighScoreP2.draw();
         this.highScoreText.draw();
-        this.scoreOneText.text = ""+(LAST_SCORES[1][0]||"00");
-        this.scoreTwoText.text = ""+LAST_SCORES[1][1]||"00";
-        if (LAST_SCORES[1][1]) {
+        this.scoreOneText.text = ""+(Game.LAST_SCORES[1][0]||"00");
+        this.scoreTwoText.text = ""+Game.LAST_SCORES[1][1]||"00";
+        if (Game.LAST_SCORES[1][1]) {
             this.scoreTwoText.show();
         }
         this.scoreOneText.draw();

@@ -8,12 +8,15 @@ class Inky extends Ghost {
         this.reset();
     }
 
+    /**
+     * inky leave the ghost house after 30 pellets eaten on level 1 only
+     */
     get pelletLimit() {
         return this.scene.level==1?30:0;
     }
 
     calculateTargetTile() {
-        //inky targets two tiles in front of pacman, draws a vector from blinky to that target and doubles it
+        //inky looks two tiles in front of pacman, draws a vector from blinky to that spot and doubles it
         if (this.isChasing) {
             var blinkyTile = this.scene.ghosts.Blinky.tile,
                 pacmanTile = this.scene.pacman.tile,

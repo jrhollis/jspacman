@@ -46,20 +46,20 @@ class Ghost extends Actor {
 
 
     reset() {
-        this.show();
-        this.frozen = true;
-        this.frameCtr = 0;
-        this.direction = Vector.clone(this.startDirection);
-        this.position = Vector.clone(this.startPosition);
+        Actor.prototype.reset.call(this);
         this.nextInstruction = Vector.clone(this.direction);
         this.status = Ghost.STATUS_HOME; // EXCEPT BLINKY
         this.mode = Ghost.MODE_SCATTER;
         this.animation = Ghost.ANIM_SCATTER_CHASE;
         this.targetTile = this.calculateTargetTile();
         delete this.reverseInstruction;
+
     }
 
-
+    /**
+     * number of pellets that must be eaten before this ghost
+     * can leave the house
+     */
     get pelletLimit() {
         return 0;
     }
@@ -205,7 +205,7 @@ class Ghost extends Actor {
     /**
      * look at a tile on the map and determine what the ghost's next move should be 
      * if/when it reaches that tile
-     * @param {*} atTile 
+     * @param {*} atTile  the tile at which to base the calculation
      */
     calculateNextInstruction(atTile) {
         var choice = -1,
@@ -311,6 +311,7 @@ class Ghost extends Actor {
                         this.nextInstruction = Vector.LEFT;
                     }
                     if (!this.isFrightened) {
+                        //inherit the current scatter/chase mode
                         this.mode = this.scene.globalChaseMode;
                     }
                     this.targetTile = this.calculateTargetTile();
@@ -409,6 +410,7 @@ class Ghost extends Actor {
             } else if (eyes.y == 1) {
                 directionalOffsetX = 96;
             }
+            //get the eyes only
             if (this.mode == Ghost.MODE_EATEN) {
                 offsetY = 0;
                 directionalOffsetX /= 2;
