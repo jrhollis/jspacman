@@ -7,7 +7,8 @@ class Blinky extends Ghost {
     static ANIM_NAKED = 6;
     
     constructor(scene, x, y) {
-        super(scene, x, y, 'Blinky');
+        super(scene, x, y);
+        //since blinky doesn't start in the house, need to assign him a target inside
         this.houseTarget = { x: 13 * 8, y: 16.5 * 8 };
         this.startDirection = Vector.LEFT;
         this.scatterTargetTile = { x: 25, y: 0 };

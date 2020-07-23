@@ -16,19 +16,19 @@ class Ghost extends Actor {
     static ANIM_FRIGHT_FLASH = 2;
     static ANIM_EATEN = 3;
 
+    //global counters to keep track during one frighten period
     static NUM_EATEN = 0;
     static NUM_FRIGHTENED = 0;
-
 
     //entrance and exit to the ghost house
     static HOUSE_DOOR = { x: 13, y: 14 };
     static LEAVE_TARGET = { x: 13 * 8, y: 13.5 * 8 };
 
-    constructor(scene, x, y, name) {
+    constructor(scene, x, y) {
         super(scene, x, y, 16, 16);
         this.scene = scene;
-        this.name = name;
         this.startPosition = { x: x, y: y };
+        this.houseTarget = this.startPosition;
 
         this.animations = [
             //normal movement
@@ -71,10 +71,6 @@ class Ghost extends Actor {
         } catch (ex) {
             return false;
         }
-    }
-
-    get isSlow() {
-        return this.isHome || this.isLeavingHome || this.inTunnel;
     }
 
     /**
@@ -244,7 +240,7 @@ class Ghost extends Actor {
             } else if (this.position.x > this.houseTarget.x) {
                 this.direction = Vector.LEFT;
             } else {
-                //back to home target
+                //back on the home target- turn back to ghost
                 this.status = Ghost.STATUS_HOME;
                 this.animation = Ghost.ANIM_SCATTER_CHASE;
                 this.direction = Vector.UP;
@@ -397,15 +393,15 @@ class Ghost extends Actor {
 
         try {
             if (this.isEaten) {
-                return '11111111111111111111111111111111'
-            } else if (this.isSlow) {
+                return '11111111111111111111111111111111';
+            } else if (this.isHome||this.isLeavingHome) {
+                return '00010001000100010001000100010001';
+            } else if (this.inTunnel) {
                 //tunnel, home
                 if (this.scene.level == 1) {
                     return '00100010001000100010001000100010';
                 } else if (this.scene.level <= 4) {
                     return '01001000001001000010001010010001';
-                } else if (this.scene.level <= 20) {
-                    return '10010010001001001001001000100100';
                 } else {
                     return '10010010001001001001001000100100';
                 }
@@ -427,8 +423,6 @@ class Ghost extends Actor {
                     return '10101010101010101010101010101010';
                 } else if (this.scene.level <= 4) {
                     return '11010101011010101101010101101010';
-                } else if (this.scene.level <= 20) {
-                    return '01101101011011010110110101101101';
                 } else {
                     return '01101101011011010110110101101101';
                 }
@@ -438,8 +432,6 @@ class Ghost extends Actor {
                     return '101010100110101001010101110101010';
                 } else if (this.scene.level <= 4) {
                     return '101101011001011010101011011011010';
-                } else if (this.scene.level <= 20) {
-                    return '101101100110110101101101110110110';
                 } else {
                     return '101101100110110101101101110110110';
                 }

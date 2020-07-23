@@ -94,5 +94,4 @@ class Actor extends Sprite {
             return 0;
         }
     }
-
 }

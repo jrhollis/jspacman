@@ -166,8 +166,9 @@ class Pacman extends Actor {
 
         Actor.prototype.tick.call(this);
 
-        if (!this.scene.maze) return;  //we're scripting, no maze stuff here
-        if (this.isDying) return; //ignore inputs if pacman is dying
+        //scripting or dead, no maze stuff here
+        if (!this.scene.maze || !this.isAlive) return;  
+
         //get the direction for this frame by reading the input buffer or continue current direction if no input
         var inputDirection = Input.readBuffer() || this.direction;
         //check for wall contact
@@ -175,10 +176,11 @@ class Pacman extends Actor {
         var centerPoint = this.centerPixel,
             nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 },
             nextTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-        //this move would hit a wall, try to continue in same direction of travel
         if (!this.scene.mazeClass.isWalkableTile(nextTile)) {
+            //this move would hit a wall, try to continue in same direction of travel
             inputDirection = this.direction;
         } else {
+            //path is open, start moving again
             this.unfreeze();
             this.start();
         }
@@ -186,8 +188,8 @@ class Pacman extends Actor {
         //try again with original direction - if there's a wall here too, stop
         nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 };
         nextTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-        //this move would hit a wall, try to continue in same direction of travel
         if (!this.scene.mazeClass.isWalkableTile(nextTile)) {
+            //this move would hit a wall, try to continue in same direction of travel
             this.freeze();
             this.stop();
             //pac man never seems to stop with his mouth closed
@@ -195,19 +197,11 @@ class Pacman extends Actor {
                 this.animation.curFrame = 2;
             }
         }
-
-
-        var changeDirection = !Vector.equals(inputDirection, this.direction),
-            oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
+        //finally set the direction
         this.direction = inputDirection;
 
-        //when going up... movement is '01111121'
-        if (changeDirection && !oppositeDirection && Vector.equals(this.direction, Vector.DOWN)) {
-            this.y++;
-        }
-
-        //pause for a frame when changing direction
-        if (!this.stopped && !oppositeDirection) {
+        //TODO: pause for a frame when changing direction
+        if (!this.stopped) {
 
             //get the coordinate of center lane
             var centerX = (this.tile.x * 8) + 3,

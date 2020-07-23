@@ -1,7 +1,6 @@
 class Pinky extends Ghost {
     constructor(scene, x ,y) {
-        super(scene, x, y, 'Pinky');
-        this.houseTarget = this.startPosition;
+        super(scene, x, y);
         this.startDirection = Vector.DOWN;
         this.textureOffsetY = 16;
         this.scatterTargetTile = { x: 2, y: 0 };
@@ -38,5 +37,4 @@ class Pinky extends Ghost {
             return Ghost.prototype.calculateTargetTile.call(this);
         }
     }
-
 }

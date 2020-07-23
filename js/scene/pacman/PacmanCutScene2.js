@@ -111,11 +111,11 @@ class PacmanCutScene2 extends ScriptScene {
         ScriptScene.prototype.draw.call(this)
         this.pacman.draw();
         //draw the nail
-        context.drawImage(RESOURCE.pacman,
+        this.context.drawImage(RESOURCE.pacman,
             584, 96, 16, 16, 14*8, (19.5*8)-1, 16, 16
         );
         if (this.rip) {
-            context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 600 + ((this.rip-1) * 16), 96, 16, 16, 14*8, (19.5*8)-1, 16, 16
             );    
         }

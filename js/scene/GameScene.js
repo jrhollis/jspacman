@@ -46,8 +46,6 @@ class GameScene extends Scene {
         ];
 
         this.curPlayer = 0;
-        //level will get incremented in nextLevel call at end of constructor
-        this.level = 1;
         //pellet arrays
         this.pellets = [];
         this.energizers = [];
