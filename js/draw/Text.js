@@ -30,14 +30,13 @@ class Text extends Sprite {
         if (this.hidden) return;
 
         if (this.flashCtr < 16) {
-            var context = this.context;
             for (var i = 0; i < this.text.length; i++) {
                 var letterCoords = this.getLetterCoordinates(this.text[i]),
                     alignX = 0;
                 if (this.align == 'right') {
                     alignX = ((this.text.length - 1) * 8);
                 }
-                context.drawImage(RESOURCE.text,
+                this.context.drawImage(RESOURCE.text,
                     letterCoords.x, letterCoords.y + this.colorOffset, 8, 8,
                     this.x + (i * 8) - alignX, this.y, 8, 8
                 );

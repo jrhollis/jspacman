@@ -1,3 +1,234 @@
+class AI {
+    //create a node/edge graph representation of the maze. this will be used for path finding by the ai agents
+    static generatePathGraph() {
+        var directions = [Vector.UP, Vector.DOWN, Vector.LEFT, Vector.RIGHT];
+        //inspect the maze- every intersection is a node
+        //special cases 12,14 and 15,14 and 12,26 and 15,26, not decision tiles, but are intersections
+        var nodes = {};
+        //finally all the decision tiles are nodes 
+        Maze.tiles.filter(t => t.decision).forEach((t) => {
+            nodes[t.x + ',' + t.y] = {};
+        });
+        //"crawl" the maze from each node to generate path graph edge weights
+        for (var coords in nodes) {
+            var tile = { x: parseInt(coords.split(',')[0]), y: parseInt(coords.split(',')[1]) };
+            //find the 3 or 4 open directions out from this node and travel along
+            // the path until reaching another node
+            for (var i = 0; i < directions.length; i++) {
+                var tempTile = Vector.add(tile, directions[i]),
+                    sceneTile = Maze.tileHash[tempTile.x + ',' + tempTile.y];
+                if (!sceneTile || (sceneTile && (!sceneTile.walkable || sceneTile.tunnel))) {
+                    continue;
+                }
+                //found a traversable tile. see where it leads
+                var lastDirection = Vector.clone(directions[i]),
+                    distance = 1;
+                while (!nodes[tempTile.x + ',' + tempTile.y]) {
+                    for (var j = 0; j < directions.length; j++) {
+                        //don't double back
+                        if (Vector.equals(Vector.inverse(lastDirection), directions[j])) {
+                            continue;
+                        }
+                        var testTile = Vector.add(tempTile, directions[j]);
+                        //find the open tile
+                        var sceneTile = this.tileHash[testTile.x + ',' + testTile.y];
+                        if (!sceneTile || sceneTile.walkable) {
+                            //!scenetile would be a warp
+                            distance++;
+                            tempTile = testTile;
+                            lastDirection = directions[j];
+                            break;
+                        }
+                    }
+                }
+                var tempTileHashKey = tempTile.x + ',' + tempTile.y;
+                nodes[coords][tempTileHashKey] = distance;
+            }
+        }
+        this.graph = nodes;
+    }
+
+    static shortestPathBFS(fromTile, toTile) {
+        var searchQueue = [fromTile],
+            tileLookup = {},
+            directions = [Vector.UP, Vector.DOWN, Vector.LEFT, Vector.RIGHT];
+        fromTile.path = [];
+        tileLookup[fromTile.x + ',' + fromTile.y] = fromTile;
+        while (searchQueue.length) {
+            var searchTile = searchQueue.shift();
+            if (Vector.equals(searchTile, toTile)) {
+                searchQueue = [];
+                return {
+                    path: searchTile.path,
+                    distance: searchTile.path.length
+                }
+            }
+            for (var i = 0; i < directions.length; i++) {
+                var testTile = Vector.add(searchTile, directions[i]);
+                //special case warps
+                if (testTile.x < 0) {
+                    testTile.x = 27;
+                } else if (testTile.x > 27) {
+                    testTile.x = 0;
+                }
+                var tileKey = testTile.x + ',' + testTile.y;
+                if (Maze.tileHash[tileKey].walkable && !tileLookup[tileKey]) {
+                    testTile.path = searchTile.path.concat(directions[i]);
+                    tileLookup[tileKey] = testTile;
+                    searchQueue.push(testTile);
+                }
+            }
+        }
+    }
+
+
+    //non-recursivce BFS of the maze. search until all objects are
+    //found. keep track of initial direction from the passed in tile for
+    //each searched tile
+    static analyze(tile, scene) {
+        var tileLookup = {},
+            directions = [Vector.UP, Vector.DOWN, Vector.LEFT, Vector.RIGHT],
+            firstGeneration = true,
+            searchQueue = [tile],
+            nearestPellets = {},
+            pelletHash = {},
+            energizerHash = {},
+            nearestEnergizers = {},
+            nearestFruit = false,
+            ghostHash = {},
+            nearestFrightenedGhosts = {},
+            nearestGhosts = {},
+            allGhosts = {},
+            nearestIntersections = {};
+        //create a hash of things in the maze so we don't have to keep searching their array for them
+        scene.energizers.forEach(e => {
+            energizerHash[e.tile.x + ',' + e.tile.y] = e;
+        });
+        scene.pellets.forEach(p => {
+            pelletHash[p.tile.x + ',' + p.tile.y] = p;
+        });
+        scene.ghosts.forEach(g => {
+            var ghostHashKey = g.tile.x + ',' + g.tile.y;
+            ghostHash[ghostHashKey] = ghostHash[ghostHashKey] || {};
+            ghostHash[ghostHashKey][g.name] = g;
+        })
+        //check the initial tile for things? or no need to
+        tile.distance = 0;
+        tile.path = [];
+        tileLookup[tile.x + ',' + tile.y] = tile;
+        while (searchQueue.length) {
+            //take tile off front of search queue
+            var searchTile = searchQueue.shift(),
+                searchDirection = searchTile.direction ? searchTile.direction.x + ',' + searchTile.direction.y : '0,0',
+                searchTileKey = searchTile.x + ',' + searchTile.y;
+
+            if (this.graph[searchTileKey] && !Vector.equals(scene.pacman.tile, searchTile)) {
+                if (!nearestIntersections[searchDirection]) {
+                    nearestIntersections[searchDirection] = searchTile;
+                }
+            }
+            if (energizerHash[searchTileKey]) {
+                if (!nearestEnergizers[searchDirection]) {
+                    nearestEnergizers[searchDirection] = searchTile;
+                }
+            }
+            if (pelletHash[searchTileKey]) {
+                if (!nearestPellets[searchDirection]) {
+                    nearestPellets[searchDirection] = searchTile;
+                }
+            }
+            if (!nearestFruit && scene.fruit && Vector.equals(scene.fruit, searchTile)) {
+                nearestFruit = searchTile;
+            }
+            var ghosts = ghostHash[searchTileKey];
+            if (ghosts) {
+                for (var name in ghosts) {
+                    var ghost = ghosts[name];
+                    if (ghost.isFrightened) {
+                        if (!nearestFrightenedGhosts[searchDirection]) {
+                            nearestFrightenedGhosts[searchDirection] = searchTile
+                        }
+                    } else if (!ghost.isEaten && !ghost.isFrightened) {
+                        if (!nearestGhosts[searchDirection]) {
+                            nearestGhosts[searchDirection] = searchTile;
+                        }
+                    }
+                    if (!ghost.isFrightened) {
+                        allGhosts[name] = {
+                            distance: searchTile.distance,
+                            direction: searchTile.direction
+                        };
+                    }
+                }
+                searchTile.ghosts = ghosts;
+            }
+
+            for (var i = 0; i < directions.length; i++) {
+                var testTile = Vector.add(searchTile, directions[i]);
+                //special case warps
+                if (testTile.x < 0) {
+                    testTile.x = 27;
+                } else if (testTile.x > 27) {
+                    testTile.x = 0;
+                }
+                var tileKey = testTile.x + ',' + testTile.y;
+                if (this.tileHash[tileKey].walkable && !tileLookup[tileKey]) {
+                    testTile.distance = searchTile.distance + 1;
+                    if (firstGeneration) {
+                        testTile.direction = directions[i];
+                    } else {
+                        testTile.direction = searchTile.direction;
+                    }
+                    testTile.path = searchTile.path.concat(directions[i]);
+                    tileLookup[tileKey] = testTile;
+                    searchQueue.push(testTile);
+                }
+            }
+            firstGeneration = false;
+        }
+
+        //figure out which direction (if any) moves pacman away from ALL ghosts on average
+        //look at each ghost and determine which first direction is on the shortest path to it
+        //plus the distance
+        var ghostDistance = {},
+            allGhostCount = Object.keys(allGhosts).length;
+        if (allGhostCount) {
+            for (var name in allGhosts) {
+                directions.forEach(d => {
+                    var testTile = Vector.add(d, tile);
+                    if (Maze.isWalkableTile(testTile)) {
+                        var directionKey = d.x + ',' + d.y;
+                        if (!ghostDistance[directionKey]) {
+                            ghostDistance[directionKey] = {
+                                direction: testTile,
+                                distance: 0
+                            };
+                        }
+                        ghostDistance[directionKey].distance += (this.shortestPathBFS(testTile, scene.ghosts[name].tile).distance / allGhostCount);
+                    }
+                });
+            }
+        }
+
+        //dot density cloud
+
+
+
+        return {
+            energizers: Object.values(nearestEnergizers).sort((a, b) => a.distance - b.distance),
+            pellets: Object.values(nearestPellets).sort((a, b) => a.distance - b.distance),
+            fruit: nearestFruit,
+            ghosts: Object.values(nearestGhosts).sort((a, b) => a.distance - b.distance),
+            allghosts: allGhosts,
+            avgghostdistance: ghostDistance,
+            frightenedGhosts: Object.values(nearestFrightenedGhosts).sort((a, b) => a.distance - b.distance),
+            intersections: Object.values(nearestIntersections).sort((a, b) => a.distance - b.distance)
+        }
+    }
+}/**
+ * this class keeps a two frame buffer since controls are delayed in the game
+ * 
+ */
 class Input {
     static lastKey = null;
     static buffer = [];
@@ -16,12 +247,12 @@ class Input {
         }
 
         if (e.keyCode == 32) {
-            pauseGame = !pauseGame;
+            GAME.pauseGame = !GAME.pauseGame;
             e.preventDefault();
             return false;
         }
         if (e.keyCode == 70) {
-            pauseGame = true;
+            GAME.pauseGame = true;
             //render next frame
             SceneManager.update();
             e.preventDefault();
@@ -41,8 +272,12 @@ class Input {
         Input.keyDown = false;
     }
 
+    /**
+     * called every tick. keeps track of which keys
+     * are pressed at this time and queues up the next direction
+     * into the two frame delay buffer
+     */
     static watch() {
-        //two frame delay- stop- change direction
         var nextDirection;
         if (Input.keyState['37']) {
             nextDirection = Vector.LEFT;
@@ -60,6 +295,9 @@ class Input {
     }
 
 
+    /**
+     * returns the last key pressed
+     */
     static readKeyPress() {
         var k = this.keyPress;
         delete this.keyPress;
@@ -67,6 +305,9 @@ class Input {
     }
 
 
+    /**
+     * reads the key press from two frames ago
+     */
     static readBuffer() {
         if (Input.buffer.length == 2) {
             return Input.buffer[1];
@@ -164,19 +405,19 @@ document.onkeyup = Input.onKeyUp;class Sound {
             fx += this.siren;
         }
         //only play this clip once
-        if (this.sfx[GAME_MODE][fx].source) return;
+        if (this.sfx[Game.GAME_MODE][fx].source) return;
         this.playing[fx] = true;
         var source = this.context.createBufferSource();
-        source.buffer = this['sfx_' + GAME_MODE];
+        source.buffer = this['sfx_' + Game.GAME_MODE];
         source.loop = true;
-        var loop = this.sfx[GAME_MODE][fx];
+        var loop = this.sfx[Game.GAME_MODE][fx];
         source.loopStart = loop.start;
         source.loopEnd = loop.end;
         source.connect(this.context.destination);
         source.start(0, loop.start);
-        this.sfx[GAME_MODE][fx].source = source;
+        this.sfx[Game.GAME_MODE][fx].source = source;
         source.addEventListener('ended', () => {
-            delete this.sfx[GAME_MODE][fx].source;
+            delete this.sfx[Game.GAME_MODE][fx].source;
             delete this.playing[fx];
         });
         return source;
@@ -193,16 +434,16 @@ document.onkeyup = Input.onKeyUp;class Sound {
             fx += this.munch;
             this.munch = (this.munch + 1) % 2;
         }
-        if (this.sfx[GAME_MODE][fx].source) return;
+        if (this.sfx[Game.GAME_MODE][fx].source) return;
         var source = this.context.createBufferSource();
-        source.buffer = this['sfx_' + GAME_MODE];
-        var clip = this.sfx[GAME_MODE][fx];
+        source.buffer = this['sfx_' + Game.GAME_MODE];
+        var clip = this.sfx[Game.GAME_MODE][fx];
         source.connect(this.context.destination);
         source.start(0, clip.start, clip.end - clip.start);
-        this.sfx[GAME_MODE][fx].playing = true;
-        this.sfx[GAME_MODE][fx].source = source;
+        this.sfx[Game.GAME_MODE][fx].playing = true;
+        this.sfx[Game.GAME_MODE][fx].source = source;
         source.addEventListener('ended', () => {
-            delete this.sfx[GAME_MODE][fx].source;
+            delete this.sfx[Game.GAME_MODE][fx].source;
         });
         return source;
     }
@@ -212,8 +453,8 @@ document.onkeyup = Input.onKeyUp;class Sound {
         if (fx == 'siren') {
             fx += this.siren;
         }
-        if (this.sfx[GAME_MODE][fx] && this.sfx[GAME_MODE][fx].source) {
-            this.sfx[GAME_MODE][fx].source.stop();
+        if (this.sfx[Game.GAME_MODE][fx] && this.sfx[Game.GAME_MODE][fx].source) {
+            this.sfx[Game.GAME_MODE][fx].source.stop();
         }
     }
 
@@ -263,10 +504,11 @@ document.onkeyup = Input.onKeyUp;class Sound {
         this.y = y;
         this.type = type;
     }
-
+    //maze wall
     get wall() {
         return this.type == '.';
     }
+    //open tile. no pellets or anythign else on it
     get open() {
         return this.type == '0';
     }
@@ -276,15 +518,20 @@ document.onkeyup = Input.onKeyUp;class Sound {
     get energizer() {
         return this.type == '3';
     }
+    //tunnel tile - slows the ghosts
     get tunnel() {
         return this.type == '5';
     }
+    //ghost house tile - slows the ghosts
     get house() {
         return this.type == '6';
     }
+    //decision tiles are where the ghosts make their next move depending on their AI
+    //these occur at most (but not all) intersections in the maze
     get decision() {
         return this.type == '4' || this.type == '2';
     }
+    //can pac-man move over this tile
     get walkable() {
         return !this.house && !this.wall;
     }
@@ -328,6 +575,7 @@ class Vector {
     static RIGHT = {x: 1, y: 0};
     static UP = {x: 0, y: -1};
     static DOWN = {x: 0, y: 1};
+    
     static add(t1, t2) {
         return { x: t1.x + t2.x, y: t1.y + t2.y };
     }
@@ -351,7 +599,7 @@ class Vector {
     tick() {}
 
     draw() {
-        this.context.clearRect(0, 0, SCREEN.width, SCREEN.height);
+        this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
     }
 }class ScriptScene extends Scene {
     constructor(context, keyFrames) {
@@ -463,7 +711,7 @@ class Vector {
 
         if (Input.lastKey == 13) { //enter
             //assign common class names to game distinct class for easy instantiation
-            if (GAME_MODE == GAME_PACMAN) {
+            if (Game.GAME_MODE == Game.GAME_PACMAN) {
                 TitleScene = PacmanTitleScene;
                 StartScene = PacmanStartScene;
                 CutScene1 = PacmanCutScene1;
@@ -491,13 +739,13 @@ class Vector {
         }
         
         if ((Input.lastKey == 38 || Input.lastKey == 40) && this.canSelectGame) {
-            GAME_MODE = (GAME_MODE + 1) % 2;
+            Game.GAME_MODE = (Game.GAME_MODE + 1) % 2;
             this.canSelectGame = false;
         } else if (!Input.lastKey) {
             this.canSelectGame = true;
         }
 
-        if (GAME_MODE == GAME_PACMAN) {
+        if (Game.GAME_MODE == Game.GAME_PACMAN) {
             this.pacman.unfreeze();
             this.mspacman.freeze();
             this.pacman2.unfreeze();
@@ -552,7 +800,7 @@ class Vector {
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
         this.creditLabel.hide();
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
         this.credits.hide();
         
         this.textSprites = [
@@ -569,11 +817,12 @@ class Vector {
             this.credits
         ];
 
-        this.curPlayer = 0;
         this.scoreText = [
             this.scoreOneText,
             this.scoreTwoText
-        ]
+        ];
+
+        this.curPlayer = 0;
         //level will get incremented in nextLevel call at end of constructor
         this.level = 1;
         //pellet arrays
@@ -585,7 +834,7 @@ class Vector {
         for (var i = 0; i < this.numPlayers; i++){
             var pacman = new PacClass(this, 13.125 * 8, 25.5 * 8);
             pacman.level = -i;   //second player at level (not zero) so there's no beginning song and dance
-            pacman.lives = 3-i; //start with three lives for first player only
+            pacman.lives = 3; //start with three lives for first player only
             this.players.push(pacman);
         }
         //create ghost array / hash
@@ -628,21 +877,19 @@ class Vector {
     }
 
     get highScore() {
-        var score = parseInt(localStorage['highscore_' + GAME_MODE]||'0');
+        var score = parseInt(localStorage['highscore_' + Game.GAME_MODE]||'0');
         return !score?"":score;
     }
 
     loadPlayer(player) {
         this.curPlayer = player;
-        //if this players[player].lives <= 0, then try other player
         this.pacman = this.players[player];
         this.playerLabel.text = 'PLAYER ' + (!player?"ONE":"TWO");
         this.level = this.pacman.level;
         if (this.level < 1) {
-            var newGame = !this.level;
             this.level = 1;
             this.pacman.level = 1;
-            this.nextLevel(newGame); //only play song on first ever start
+            this.nextLevel(true); //only play song on first ever start
         } else {
             //load in cached pellets
             this.pellets = this.pacman.pellets;
@@ -688,7 +935,6 @@ class Vector {
         this.readyText.show();
         this.useGlobalPelletLimit = true;
         this.eatenGhosts = [];
-        this.tickCount = 0;
         this.globalPelletCounter = 0;
         //put entities back to their starting positions
         this.pacman.reset();
@@ -708,9 +954,7 @@ class Vector {
         this.startLevelTimer.start(1.25 * 60, () => {
             this.levelComplete = false;
             this.readyText.hide();
-            this.energizers.forEach(e => {
-                e.unfreeze();
-            });
+            this.energizers.forEach(e => e.unfreeze());
             this.pacman.unfreeze();
             this.pacman.start();
             this.ghosts.forEach(g => {
@@ -766,8 +1010,6 @@ class Vector {
 
 
     tick() {
-        this.tickCount++;
-
         //wait for the start level timer before doing anything
         if (this.startLevelTimer.tick()) return;
 
@@ -816,8 +1058,8 @@ class Vector {
                 var otherPlayer = (this.curPlayer+1)%this.numPlayers;
                 if (this.pacman.lives < 0) {
                     //gloabls updates
-                    LAST_SCORES[GAME_MODE][this.curPlayer] = this.pacman.score;
-                    CREDITS--;
+                    Game.LAST_SCORES[Game.GAME_MODE][this.curPlayer] = this.pacman.score;
+                    Game.CREDITS--;
                     //game over for this player
                     if (this.numPlayers == 2) {
                         //if two players and other player has lives, show playerlabel text
@@ -836,11 +1078,11 @@ class Vector {
 
                     //show the credits before exiting game scene
                     this.creditLabel.show();
-                    this.credits.text = ""+CREDITS;
+                    this.credits.text = ""+Game.CREDITS;
                     this.credits.show();
 
                     this.freezeTimer.start(60, () => {
-                        if (!CREDITS) {
+                        if (!Game.CREDITS) {
                             //out of credits, go to title screen
                             SceneManager.replaceScene(new TitleScene(this.context));
                         } else {
@@ -891,9 +1133,9 @@ class Vector {
 
             //feed pacman
             this.eatPellet(this.atePellet || this.ateEnergizer);
-            this.lastPelletEatenTimer.reset();
             this.atePellet = false;
             this.ateEnergizer = false;
+            //check to see if that was the last pellet
             if (!this.pelletsLeft) {
                 Sound.stopAll();
                 this.endLevel();
@@ -1053,8 +1295,9 @@ class Vector {
 
     eatGhost(ghost) {
         Sound.playOnce('eat_ghost');
-
+        //when pacman eats a ghost, hide pacman and freeze other ghosts for a second
         this.pacman.hide();
+        //immediately display the score
         this.ghostScore = new Points(this, ghost.position.x, ghost.position.y, this.numGhostsEaten, 1);
         this.ghosts.forEach(g => {
             if (g != ghost && !g.isEaten) {
@@ -1062,6 +1305,7 @@ class Vector {
             }
         });
         this.freezeTimer.start(60, () => {
+            //unfreeze everything, resume play
             Ghost.NUM_EATEN++;
             Ghost.NUM_FRIGHTENED--;
             ghost.show();
@@ -1070,6 +1314,7 @@ class Vector {
             delete this.ghostScore;
             this.ghosts.forEach(g => g.unfreeze());
         });
+        //increment score multiplier and add points to score
         this.numGhostsEaten++;
         this.pacman.addPoints(Math.pow(2, this.numGhostsEaten) * 100);
         if (this.numGhostsEaten == 4) {
@@ -1084,22 +1329,30 @@ class Vector {
         this.lastPelletEatenTimer.reset(this.lastPelletEatenTimeout + 1);
         this.globalPelletCounter++;
 
-        //check to see if eating this pellet triggers a fruit release
-        if (this.maze.isFruitReady()) {
+        //check to see if eating this pellet triggers a fruit release (if fruit isn't already on the maze)
+        if (!this.fruit && this.maze.isFruitReady()) {
             this.fruit = new Fruit(this);
         }
 
-        //check the house to see if ghosts are ready to leave
+        //check the house to see if ghosts are ready to leave due to pellet counter
         if (this.useGlobalPelletLimit) {
             if (this.globalPelletCounter == 7) {
                 this.ghosts.Pinky.leaveHouse();
             } else if (this.globalPelletCounter == 17) {
+                this.ghosts.Pinky.leaveHouse();
                 this.ghosts.Inky.leaveHouse();
-            } else if (this.globalPelletCounter == 32) {
-                if (this.ghosts.Clyde.inHome) {
+            } else if ((this.level == 1 && this.globalPelletCounter == 92) ||
+                       (this.level == 2 && this.globalPelletCounter == 75) || 
+                       (this.level > 2 && this.globalPelletCounter == 32)) {
+                //level 1 = 92
+                //level 2 = 75
+                //then 32
+                if (this.ghosts.Clyde.isHome) {
                     //stop using the global dot limit and use personal dot counters again
                     this.useGlobalPelletLimit = false;
                 }
+                this.ghosts.Pinky.leaveHouse();
+                this.ghosts.Inky.leaveHouse();
                 this.ghosts.Clyde.leaveHouse();
             }
         } else {
@@ -1112,8 +1365,9 @@ class Vector {
     draw() {
         Scene.prototype.draw.call(this);
 
+        //flash the score label of the current player
         this.oneUpLabel.flash = this.curPlayer == 0;
-        this.twoUpLabel.flash = this.curPlayer == 1
+        this.twoUpLabel.flash = this.curPlayer == 1;
 
         this.maze.draw();
 
@@ -1136,6 +1390,7 @@ class Vector {
         //actors
         this.pacman.draw();
         this.ghosts.forEach(g => g.draw());
+
         if (this.ghostScore) this.ghostScore.draw();
     }
 }//after level 2
@@ -1652,10 +1907,10 @@ class MsPacmanCutScene3 extends ScriptScene {
         super(context);
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
         this.highScoreText = new Text(this, localStorage['highscore_1'], 'white', 16*8, 8, 'right');
-        this.scoreOneText = new Text(this, ""+(LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
-        this.scoreTwoText = new Text(this, ""+LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
-        if (!LAST_SCORES[1][1]) {
+        if (!Game.LAST_SCORES[1][1]) {
             this.scoreTwoText.hide();
         }
 
@@ -1669,15 +1924,15 @@ class MsPacmanCutScene3 extends ScriptScene {
 
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
     }
 
     tick() {
         var keyPress = Input.readKeyPress();
-        if (CREDITS > 0 && keyPress == 13) { //enter
+        if (Game.CREDITS > 0 && keyPress == 13) { //enter
             SceneManager.replaceScene(new GameScene(this.context, 1));
             return;
-        } else if (CREDITS > 1 && keyPress == 50) { //#2
+        } else if (Game.CREDITS > 1 && keyPress == 50) { //#2
             SceneManager.replaceScene(new GameScene(this.context, 2));
             return;
         } else if (keyPress == 27) {
@@ -1685,12 +1940,12 @@ class MsPacmanCutScene3 extends ScriptScene {
             SceneManager.popScene();
             return;
         } else if (keyPress == 16) {
-            CREDITS++;
+            Game.CREDITS++;
             Sound.playOnce('credit');
         }
 
-        this.credits.text = ""+CREDITS;
-        if (CREDITS > 1) {
+        this.credits.text = ""+Game.CREDITS;
+        if (Game.CREDITS > 1) {
             this.twoPlayers.show();
             this.onePlayerOnly.hide();
         } else {
@@ -1715,10 +1970,10 @@ class MsPacmanCutScene3 extends ScriptScene {
         this.copyright.draw();
         this.dates.draw();
 
-        context.drawImage(RESOURCE.mspacman,
+        this.context.drawImage(RESOURCE.mspacman,
             472, 0, 16, 16, 12*8, 23*8, 16, 16
         );
-        context.drawImage(RESOURCE.mspacman,
+        this.context.drawImage(RESOURCE.mspacman,
             456, 248, 32, 32, 5*8, 28*8, 32, 32
         );
 
@@ -1832,10 +2087,10 @@ class MsPacmanCutScene3 extends ScriptScene {
         });
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
         this.highScoreText = new Text(this, localStorage['highscore_1'], 'white', 16*8, 8, 'right');
-        this.scoreOneText = new Text(this, ""+(LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
-        this.scoreTwoText = new Text(this, ""+LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
-        if (!LAST_SCORES[1][1]) {
+        if (!Game.LAST_SCORES[1][1]) {
             this.scoreTwoText.hide();
         }
 
@@ -1848,7 +2103,7 @@ class MsPacmanCutScene3 extends ScriptScene {
 
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
 
         this.with = new Text(this, "WITH", 'white', 10*8, 13.5*8);
         this.actorName = new Text(this, "BLINKY", 'red', 12*8, 17*8)
@@ -1894,7 +2149,7 @@ class MsPacmanCutScene3 extends ScriptScene {
         var keyPress = Input.readKeyPress();
         if (keyPress == 16) {
             //insert credit
-            CREDITS++;
+            Game.CREDITS++;
             Sound.playOnce('credit');
             SceneManager.pushScene(new MsPacmanStartScene(this.context));
             return;
@@ -1903,7 +2158,7 @@ class MsPacmanCutScene3 extends ScriptScene {
             SceneManager.popScene();
             return;
         }
-        this.credits.text = ""+CREDITS;
+        this.credits.text = ""+Game.CREDITS;
         ScriptScene.prototype.tick.call(this);
         this.pelletCounters = this.pelletCounters.map(i => {
             this.pellets[i].color = '#fc0d1b';
@@ -1927,9 +2182,9 @@ class MsPacmanCutScene3 extends ScriptScene {
 
         this.p1HighScoreP2.draw();
         this.highScoreText.draw();
-        this.scoreOneText.text = ""+(LAST_SCORES[1][0]||"00");
-        this.scoreTwoText.text = ""+LAST_SCORES[1][1]||"00";
-        if (LAST_SCORES[1][1]) {
+        this.scoreOneText.text = ""+(Game.LAST_SCORES[1][0]||"00");
+        this.scoreTwoText.text = ""+Game.LAST_SCORES[1][1]||"00";
+        if (Game.LAST_SCORES[1][1]) {
             this.scoreTwoText.show();
         }
         this.scoreOneText.draw();
@@ -1943,7 +2198,7 @@ class MsPacmanCutScene3 extends ScriptScene {
         this.with.draw();
         this.actorName.draw();
         //midway logo
-        context.drawImage(RESOURCE.mspacman,
+        this.context.drawImage(RESOURCE.mspacman,
             456, 248, 32, 32, 5*8, 28*8, 32, 32
         );
 
@@ -2254,10 +2509,10 @@ class PacmanCutScene3 extends ScriptScene {
         super(context);
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
         this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
-        this.scoreOneText = new Text(this, ""+(LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
-        this.scoreTwoText = new Text(this, ""+LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
-        if (!LAST_SCORES[0][1]) {
+        if (!Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.hide();
         }
 
@@ -2269,15 +2524,15 @@ class PacmanCutScene3 extends ScriptScene {
 
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
     }
 
     tick() {
         var keyPress = Input.readKeyPress();
-        if (CREDITS > 0 && keyPress == 13) { //enter
+        if (Game.CREDITS > 0 && keyPress == 13) { //enter
             SceneManager.replaceScene(new GameScene(this.context, 1));
             return;
-        } else if (CREDITS > 1 && keyPress == 50) { //#2
+        } else if (Game.CREDITS > 1 && keyPress == 50) { //#2
             SceneManager.replaceScene(new GameScene(this.context, 2));
             return;
         } else if (keyPress == 27) {
@@ -2285,12 +2540,12 @@ class PacmanCutScene3 extends ScriptScene {
             SceneManager.popScene();
             return;
         } else if (keyPress == 16) {
-            CREDITS++;
+            Game.CREDITS++;
             Sound.playOnce('credit');
         }
 
-        this.credits.text = ""+CREDITS;
-        if (CREDITS > 1) {
+        this.credits.text = ""+Game.CREDITS;
+        if (Game.CREDITS > 1) {
             this.twoPlayers.show();
             this.onePlayerOnly.hide();
         } else {
@@ -2430,11 +2685,11 @@ class PacmanCutScene3 extends ScriptScene {
 
 
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
-        this.scoreOneText = new Text(this, ""+(LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
+        this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
         //if there's a score_two_pacman
-        this.scoreTwoText = new Text(this, ""+LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
+        this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
-        if (!LAST_SCORES[0][1]) {
+        if (!Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.hide();
         }
         this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
@@ -2486,7 +2741,7 @@ class PacmanCutScene3 extends ScriptScene {
 
         //credit
         this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
-        this.credits = new Text(this, ""+CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
 
 
         //the action
@@ -2506,7 +2761,7 @@ class PacmanCutScene3 extends ScriptScene {
         var keyPress = Input.readKeyPress();
         if (keyPress == 16) {
             //insert credit
-            CREDITS++;
+            Game.CREDITS++;
             Sound.playOnce('credit');
             SceneManager.pushScene(new PacmanStartScene(this.context));
             return;
@@ -2517,7 +2772,7 @@ class PacmanCutScene3 extends ScriptScene {
         }
 
         ScriptScene.prototype.tick.call(this);
-        this.credits.text = ""+CREDITS;
+        this.credits.text = ""+Game.CREDITS;
 
         if (this.pauseUpdatesTimer.tick()) {
             return;
@@ -2572,9 +2827,9 @@ class PacmanCutScene3 extends ScriptScene {
         Scene.prototype.draw.call(this);
         this.p1HighScoreP2.draw();
         this.highScoreText.draw();
-        this.scoreOneText.text = ""+(LAST_SCORES[0][0]||"00");
-        this.scoreTwoText.text = ""+LAST_SCORES[0][1]||"00";
-        if (LAST_SCORES[0][1]) {
+        this.scoreOneText.text = ""+(Game.LAST_SCORES[0][0]||"00");
+        this.scoreTwoText.text = ""+Game.LAST_SCORES[0][1]||"00";
+        if (Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.show();
         }
 
@@ -2619,7 +2874,8 @@ class PacmanCutScene3 extends ScriptScene {
 }class Maze {
 
     static getMazeIndex(scene) {
-        if (GAME_MODE == GAME_MSPACMAN) {
+        //get the version of the maze based on the current level
+        if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
             if (scene.level <= 2) {
                 return 0;
             } else if (scene.level <= 5) {
@@ -2639,12 +2895,13 @@ class PacmanCutScene3 extends ScriptScene {
                 }
             }
         } else {
+            //pacman always returns the same maze
             return 0;
         }
     }
 
     static getMaze(scene) {
-        if (GAME_MODE == GAME_MSPACMAN) {
+        if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
             //based on level, create a maze instance and return it
             switch (Maze.getMazeIndex(scene)) {
                 case 0:
@@ -2661,244 +2918,17 @@ class PacmanCutScene3 extends ScriptScene {
         }
     }
 
-    //create a node/edge graph representation of the maze. this will be used for path finding by the ai agents
-    static generatePathGraph() {
-        var directions = [Vector.UP, Vector.DOWN, Vector.LEFT, Vector.RIGHT];
-        //inspect the maze- every intersection is a node
-        //special cases 12,14 and 15,14 and 12,26 and 15,26, not decision tiles, but are intersections
-        var nodes = {};
-        //finally all the decision tiles are nodes 
-        this.tiles.filter(t => t.decision).forEach((t) => {
-            nodes[t.x + ',' + t.y] = {};
-        });
-        //"crawl" the maze from each node to generate path graph edge weights
-        for (var coords in nodes) {
-            var tile = { x: parseInt(coords.split(',')[0]), y: parseInt(coords.split(',')[1]) };
-            //find the 3 or 4 open directions out from this node and travel along
-            // the path until reaching another node
-            for (var i = 0; i < directions.length; i++) {
-                var tempTile = Vector.add(tile, directions[i]),
-                    sceneTile = this.tileHash[tempTile.x + ',' + tempTile.y];
-                if (!sceneTile || (sceneTile && (!sceneTile.walkable || sceneTile.tunnel))) {
-                    continue;
-                }
-                //found a traversable tile. see where it leads
-                var lastDirection = Vector.clone(directions[i]),
-                    distance = 1;
-                while (!nodes[tempTile.x + ',' + tempTile.y]) {
-                    for (var j = 0; j < directions.length; j++) {
-                        //don't double back
-                        if (Vector.equals(Vector.inverse(lastDirection), directions[j])) {
-                            continue;
-                        }
-                        var testTile = Vector.add(tempTile, directions[j]);
-                        //find the open tile
-                        var sceneTile = this.tileHash[testTile.x + ',' + testTile.y];
-                        if (!sceneTile || sceneTile.walkable) {
-                            //!scenetile would be a warp
-                            distance++;
-                            tempTile = testTile;
-                            lastDirection = directions[j];
-                            break;
-                        }
-                    }
-                }
-                var tempTileHashKey = tempTile.x + ',' + tempTile.y;
-                nodes[coords][tempTileHashKey] = distance;
-            }
-        }
-        this.graph = nodes;
-    }
-
-    static shortestPathBFS(fromTile, toTile) {
-        var searchQueue = [fromTile],
-            tileLookup = {},
-            directions = [Vector.UP, Vector.DOWN, Vector.LEFT, Vector.RIGHT];
-        fromTile.path = [];
-        tileLookup[fromTile.x + ',' + fromTile.y] = fromTile;
-        while (searchQueue.length) {
-            var searchTile = searchQueue.shift();
-            if (Vector.equals(searchTile, toTile)) {
-                searchQueue = [];
-                return {
-                    path: searchTile.path,
-                    distance: searchTile.path.length
-                }
-            }
-            for (var i = 0; i < directions.length; i++) {
-                var testTile = Vector.add(searchTile, directions[i]);
-                //special case warps
-                if (testTile.x < 0) {
-                    testTile.x = 27;
-                } else if (testTile.x > 27) {
-                    testTile.x = 0;
-                }
-                var tileKey = testTile.x + ',' + testTile.y;
-                if (this.tileHash[tileKey].walkable && !tileLookup[tileKey]) {
-                    testTile.path = searchTile.path.concat(directions[i]);
-                    tileLookup[tileKey] = testTile;
-                    searchQueue.push(testTile);
-                }
-            }
-        }
-    }
-
-
-    //non-recursivce BFS of the maze. search until all objects are
-    //found. keep track of initial direction from the passed in tile for
-    //each searched tile
-    static analyze(tile, scene) {
-        var tileLookup = {},
-            directions = [Vector.UP, Vector.DOWN, Vector.LEFT, Vector.RIGHT],
-            firstGeneration = true,
-            searchQueue = [tile],
-            nearestPellets = {},
-            pelletHash = {},
-            energizerHash = {},
-            nearestEnergizers = {},
-            nearestFruit = false,
-            ghostHash = {},
-            nearestFrightenedGhosts = {},
-            nearestGhosts = {},
-            allGhosts = {},
-            nearestIntersections = {};
-        //create a hash of things in the maze so we don't have to keep searching their array for them
-        scene.energizers.forEach(e => {
-            energizerHash[e.tile.x + ',' + e.tile.y] = e;
-        });
-        scene.pellets.forEach(p => {
-            pelletHash[p.tile.x + ',' + p.tile.y] = p;
-        });
-        scene.ghosts.forEach(g => {
-            var ghostHashKey = g.tile.x + ',' + g.tile.y;
-            ghostHash[ghostHashKey] = ghostHash[ghostHashKey] || {};
-            ghostHash[ghostHashKey][g.name] = g;
-        })
-        //check the initial tile for things? or no need to
-        tile.distance = 0;
-        tile.path = [];
-        tileLookup[tile.x + ',' + tile.y] = tile;
-        while (searchQueue.length) {
-            //take tile off front of search queue
-            var searchTile = searchQueue.shift(),
-                searchDirection = searchTile.direction ? searchTile.direction.x + ',' + searchTile.direction.y : '0,0',
-                searchTileKey = searchTile.x + ',' + searchTile.y;
-
-            if (this.graph[searchTileKey] && !Vector.equals(scene.pacman.tile, searchTile)) {
-                if (!nearestIntersections[searchDirection]) {
-                    nearestIntersections[searchDirection] = searchTile;
-                }
-            }
-            if (energizerHash[searchTileKey]) {
-                if (!nearestEnergizers[searchDirection]) {
-                    nearestEnergizers[searchDirection] = searchTile;
-                }
-            }
-            if (pelletHash[searchTileKey]) {
-                if (!nearestPellets[searchDirection]) {
-                    nearestPellets[searchDirection] = searchTile;
-                }
-            }
-            if (!nearestFruit && scene.fruit && Vector.equals(scene.fruit, searchTile)) {
-                nearestFruit = searchTile;
-            }
-            var ghosts = ghostHash[searchTileKey];
-            if (ghosts) {
-                for (var name in ghosts) {
-                    var ghost = ghosts[name];
-                    if (ghost.isFrightened) {
-                        if (!nearestFrightenedGhosts[searchDirection]) {
-                            nearestFrightenedGhosts[searchDirection] = searchTile
-                        }
-                    } else if (!ghost.isEaten && !ghost.isFrightened) {
-                        if (!nearestGhosts[searchDirection]) {
-                            nearestGhosts[searchDirection] = searchTile;
-                        }
-                    }
-                    if (!ghost.isFrightened) {
-                        allGhosts[name] = {
-                            distance: searchTile.distance,
-                            direction: searchTile.direction
-                        };
-                    }
-                }
-                searchTile.ghosts = ghosts;
-            }
-
-            for (var i = 0; i < directions.length; i++) {
-                var testTile = Vector.add(searchTile, directions[i]);
-                //special case warps
-                if (testTile.x < 0) {
-                    testTile.x = 27;
-                } else if (testTile.x > 27) {
-                    testTile.x = 0;
-                }
-                var tileKey = testTile.x + ',' + testTile.y;
-                if (this.tileHash[tileKey].walkable && !tileLookup[tileKey]) {
-                    testTile.distance = searchTile.distance + 1;
-                    if (firstGeneration) {
-                        testTile.direction = directions[i];
-                    } else {
-                        testTile.direction = searchTile.direction;
-                    }
-                    testTile.path = searchTile.path.concat(directions[i]);
-                    tileLookup[tileKey] = testTile;
-                    searchQueue.push(testTile);
-                }
-            }
-            firstGeneration = false;
-        }
-
-        //figure out which direction (if any) moves pacman away from ALL ghosts on average
-        //look at each ghost and determine which first direction is on the shortest path to it
-        //plus the distance
-        var ghostDistance = {},
-            allGhostCount = Object.keys(allGhosts).length;
-        if (allGhostCount) {
-            for (var name in allGhosts) {
-                directions.forEach(d => {
-                    var testTile = Vector.add(d, tile);
-                    if (this.isWalkableTile(testTile)) {
-                        var directionKey = d.x + ',' + d.y;
-                        if (!ghostDistance[directionKey]) {
-                            ghostDistance[directionKey] = {
-                                direction: testTile,
-                                distance: 0
-                            };
-                        }
-                        ghostDistance[directionKey].distance += (this.shortestPathBFS(testTile, scene.ghosts[name].tile).distance / allGhostCount);
-                    }
-                });
-            }
-        }
-
-        //dot density cloud
-
-
-
-        return {
-            energizers: Object.values(nearestEnergizers).sort((a, b) => a.distance - b.distance),
-            pellets: Object.values(nearestPellets).sort((a, b) => a.distance - b.distance),
-            fruit: nearestFruit,
-            ghosts: Object.values(nearestGhosts).sort((a, b) => a.distance - b.distance),
-            allghosts: allGhosts,
-            avgghostdistance: ghostDistance,
-            frightenedGhosts: Object.values(nearestFrightenedGhosts).sort((a, b) => a.distance - b.distance),
-            intersections: Object.values(nearestIntersections).sort((a, b) => a.distance - b.distance)
-        }
-    }
-
 
     /**
      * load the data from the wallmap strings into datastructures
      */
     static initialize() {
-        for (var i = 0; i < this.wallMap.length; i++) {
-            var row = this.wallMap[i];
-            for (var t = 0; t < row.length; t++) {
-                var tile = new Tile(t, i, row[t])
+        for (var y = 0; y < this.wallMap.length; y++) {
+            var row = this.wallMap[y];
+            for (var x = 0; x < row.length; x++) {
+                var tile = new Tile(x, y, row[x])
                 this.tiles.push(tile);
-                this.tileHash[t + ',' + i] = tile;
+                this.tileHash[x + ',' + y] = tile;
             }
         }
     }
@@ -2929,15 +2959,20 @@ class PacmanCutScene3 extends ScriptScene {
 
     static isWarpTile(t) {
         if (t.x < 0 && !this.isWallTile({ x: 0, y: t.y })) {
+            //outside of maze bounds on the left and tile to the right is open (not wall)
             return true;
         } else if (t.x > 27 && !this.isWallTile({ x: 27, y: t.y })) {
+            //outside of maze bounds on the right and tile to the left is open (not wall)
             return true;
         } else if (t.x < 0 || t.x > 27) {
+            //in the maze somewhere
             return false;
         }
     }
 
     static isWallTile(t) {
+        //wall tiles are the . on the wallMap, but also anything out of the maze bounds
+        // that is not a warp tile
         if (this.isWarpTile(t)) {
             return false;
         }
@@ -2969,17 +3004,20 @@ class PacmanCutScene3 extends ScriptScene {
     }
 
     isFruitReady() {
+        //make sure a fruit isn't already on the board
         return this.fruitRelease.indexOf(this.scene.pelletsEaten) >= 0;
     }
 
     chooseRandomFruitEntry() {
-        var choice = Math.floor(Math.random() * this.warpTiles.length);
-        return [this.warpTiles[choice]].concat(this.enterTargets[choice]);
+        var cls = this.constructor,
+            choice = Math.floor(Math.random() * cls.WARP_TILES.length);
+        return [cls.WARP_TILES[choice]].concat(cls.ENTER_TARGETS[choice]);
     }
 
     chooseRandomFruitExit() {
-        var choice = Math.floor(Math.random() * this.warpTiles.length);
-        return this.exitTargets[choice].concat(this.warpTiles[choice])
+        var cls = this.constructor,
+            choice = Math.floor(Math.random() * cls.WARP_TILES.length);
+        return cls.EXIT_TARGETS[choice].concat(cls.WARP_TILES[choice])
     }
 
     finish() {
@@ -3056,37 +3094,35 @@ class PacmanCutScene3 extends ScriptScene {
     static tiles = [];
     static tileHash = {};
 
+    //warp tiles (could find these programmatically)
+    static WARP_TILES = [
+        {x: -1, y: 10.5},
+        {x: -1, y: 19.5},
+        {x: 28, y: 10.5},
+        {x: 28, y: 19.5}
+    ];
+
+    //fruit entrance sequences
+    static ENTER_TARGETS = [
+        [{x: 9, y: 11},{x: 9, y: 14}], //upper left
+        [{x: 4, y: 26}, {x: 18, y: 26}, {x: 15, y: 20}], //lower left
+        [{x: 24, y: 20}, {x: 18, y: 17}], //upper right
+        [{x: 22, y: 23}, {x: 15, y: 20}] //lower right
+    ];
+
+    //fruit exit sequences
+    static EXIT_TARGETS = [
+        [{x: 9, y: 14}], //upper left
+        [{x: 12, y: 20}, {x: 10, y: 23}], //lower left
+        [{x: 15, y: 20}, {x: 18, y: 23}], //upper right
+        [{x: 15, y: 20}, {x: 18, y: 23}] //lower right
+    ];
+
     constructor(board) {
         super(board, RESOURCE.mspacman);
-
         this.pelletColor = '#dedffe';
-
         //release a fruit at these many pellets eaten (including energizers)
         this.fruitRelease = [64, 172];
-
-        //warp tiles (could find these programmatically)
-        this.warpTiles = [
-            {x: -1, y: 10.5},
-            {x: -1, y: 19.5},
-            {x: 28, y: 10.5},
-            {x: 28, y: 19.5}
-        ];
-
-        //fruit entrance sequences
-        this.enterTargets = [
-            [{x: 9, y: 11},{x: 9, y: 14}], //upper left
-            [{x: 4, y: 26}, {x: 18, y: 26}, {x: 15, y: 20}], //lower left
-            [{x: 24, y: 20}, {x: 18, y: 17}], //upper right
-            [{x: 22, y: 23}, {x: 15, y: 20}] //lower right
-        ];
-
-        //fruit exit sequences
-        this.exitTargets = [
-            [{x: 9, y: 14}], //upper left
-            [{x: 12, y: 20}, {x: 10, y: 23}], //lower left
-            [{x: 15, y: 20}, {x: 18, y: 23}], //upper right
-            [{x: 15, y: 20}, {x: 18, y: 23}] //lower right
-        ];
     }
 
     get textureOffset() {
@@ -3145,36 +3181,36 @@ MsPacman1.initialize();class MsPacman2 extends Maze {
     static tiles = [];
     static tileHash = {};
 
+    //warp tiles (could find these programmatically)
+    static WARP_TILES = [
+        {x: -1, y: 3.5},
+        {x: -1, y: 25.5},
+        {x: 28, y: 3.5},
+        {x: 28, y: 25.5}
+    ];
+
+    //fruit entrance sequences
+    static ENTER_TARGETS = [
+        [{x: 9, y: 14}], //upper left
+        [{x: 4, y: 23}, {x: 16, y: 25}, {x: 16, y: 20}], //lower left
+        [{x: 18, y: 17}], //upper right
+        [{x: 22, y: 23}, {x: 16, y: 20}] //lower right
+    ];
+
+    //fruit exit sequences
+    static EXIT_TARGETS = [
+        [{x: 9, y: 17}, {x: 9, y: 7}, {x: 6, y: 6}], //upper left --
+        [{x: 14, y: 26}, {x: 11, y: 25}, {x: 8, y: 23}], //lower left
+        [{x: 18, y: 23}, {x: 23, y: 13}, {x: 26, y: 13}], //upper right --
+        [{x: 18, y: 23}] //lower right --
+    ];
+
+
     constructor(board) {
         super(board, RESOURCE.mspacman);
-        
         this.pelletColor = '#e1df31';
         this.textureOffset = {x: 228, y: 248};
         this.fruitRelease = [64, 174];
-
-        //warp tiles (could find these programmatically)
-        this.warpTiles = [
-            {x: -1, y: 3.5},
-            {x: -1, y: 25.5},
-            {x: 28, y: 3.5},
-            {x: 28, y: 25.5}
-        ];
-
-        //fruit entrance sequences
-        this.enterTargets = [
-            [{x: 9, y: 14}], //upper left
-            [{x: 4, y: 23}, {x: 16, y: 25}, {x: 16, y: 20}], //lower left
-            [{x: 18, y: 17}], //upper right
-            [{x: 22, y: 23}, {x: 16, y: 20}] //lower right
-        ];
-
-        //fruit exit sequences
-        this.exitTargets = [
-            [{x: 9, y: 17}, {x: 9, y: 7}, {x: 6, y: 6}], //upper left --
-            [{x: 14, y: 26}, {x: 11, y: 25}, {x: 8, y: 23}], //lower left
-            [{x: 18, y: 23}, {x: 23, y: 13}, {x: 26, y: 13}], //upper right --
-            [{x: 18, y: 23}] //lower right --
-        ];
     }
 }
 //inherit statics and load map data
@@ -3222,32 +3258,32 @@ MsPacman2.initialize();class MsPacman3 extends Maze {
     static tiles = [];
     static tileHash = {};
 
+    //warp tiles (could find these programmatically)
+    static WARP_TILES = [
+        {x: -1, y: 11.5},
+        {x: -1, y: 11.5},
+        {x: 28, y: 11.5},
+        {x: 28, y: 11.5}
+    ];
+
+    //fruit entrance sequences- are there only two entry sequences
+    static ENTER_TARGETS = [
+        [{x: 10, y: 14}], // left
+        [{x: 10, y: 14}], // left
+        [{x: 26, y: 14}, {x: 16, y: 20}], // right
+        [{x: 26, y: 14}, {x: 16, y: 20}] // right
+    ];
+
+    //fruit exit sequences are there only two exit sequences?
+    static EXIT_TARGETS = [
+        [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
+        [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
+        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}], // right
+        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}] // right
+    ];
+
     constructor(board) {
         super(board, RESOURCE.mspacman);
-        
-        //warp tiles (could find these programmatically)
-        this.warpTiles = [
-            {x: -1, y: 11.5},
-            {x: -1, y: 11.5},
-            {x: 28, y: 11.5},
-            {x: 28, y: 11.5}
-        ];
-
-        //fruit entrance sequences- are there only two entry sequences
-        this.enterTargets = [
-            [{x: 10, y: 14}], // left
-            [{x: 10, y: 14}], // left
-            [{x: 26, y: 14}, {x: 16, y: 20}], // right
-            [{x: 26, y: 14}, {x: 16, y: 20}] // right
-        ];
-
-        //fruit exit sequences are there only two exit sequences?
-        this.exitTargets = [
-            [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
-            [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
-            [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}], // right
-            [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}] // right
-        ];
     }
 
 
@@ -3316,35 +3352,35 @@ MsPacman3.initialize();class MsPacman4 extends Maze {
       // 0123456789012345678901234567  
     ];
 
+    //warp tiles (could find these programmatically)
+    static WARP_TILES = [
+        {x: -1, y: 15.5},
+        {x: -1, y: 18.5},
+        {x: 28, y: 15.5},
+        {x: 28, y: 18.5}
+    ];
+
+    // fruit entrance sequences
+    static ENTER_TARGETS = [
+        [{x: 7, y: 8}, {x: 13, y: 14}], //upper left--
+        [{x: 6, y: 21}, {x: 14, y: 26}, {x: 15, y: 20}], //lower left
+        [{x: 18, y: 18}], //upper right--
+        [{x: 20, y: 23}, {x: 15, y: 20}] //lower right--
+    ];
+
+    // fruit exit sequences
+    static EXIT_TARGETS = [
+        [{x: 7, y: 17}], //upper left --
+        [{x: 11, y: 23}], //lower left --
+        [{x: 15, y: 20}, {x: 18, y: 23}, {x: 22, y: 14}], //upper right
+        [{x: 15, y: 20}, {x: 18, y: 23}] //lower right --
+    ];
+
     static tiles = [];
     static tileHash = {};
 
     constructor(board) {
         super(board, RESOURCE.mspacman);
-        
-        //warp tiles (could find these programmatically)
-        this.warpTiles = [
-            {x: -1, y: 15.5},
-            {x: -1, y: 18.5},
-            {x: 28, y: 15.5},
-            {x: 28, y: 18.5}
-    ];
-
-        // fruit entrance sequences
-        this.enterTargets = [
-            [{x: 7, y: 8}, {x: 13, y: 14}], //upper left--
-            [{x: 6, y: 21}, {x: 14, y: 26}, {x: 15, y: 20}], //lower left
-            [{x: 18, y: 18}], //upper right--
-            [{x: 20, y: 23}, {x: 15, y: 20}] //lower right--
-        ];
-
-        // fruit exit sequences
-        this.exitTargets = [
-            [{x: 7, y: 17}], //upper left --
-            [{x: 11, y: 23}], //lower left --
-            [{x: 15, y: 20}, {x: 18, y: 23}, {x: 22, y: 14}], //upper right
-            [{x: 15, y: 20}, {x: 18, y: 23}] //lower right --
-        ];
     }
 
     get isAlternateVersion() {
@@ -3445,12 +3481,6 @@ Pacman1.initialize();class Sprite {
         this.currentAnimation = 0;
     }
 
-    get size() {
-        return {
-            width: this.width,
-            height: this.height
-        }
-    }
     get position() {
         return {x: this.x, y: this.y};
     }
@@ -3461,59 +3491,64 @@ Pacman1.initialize();class Sprite {
     get centerPixel() {
         return {x: this.position.x + (this.width/2), y: this.position.y + (this.height/2)}; 
     }
+    //determine which tile this actor occupies. look at their center pixel coordinate
     get tile() {
         var center = this.centerPixel;
         return {x: Math.floor((center.x) / 8), y: Math.floor((center.y) / 8)};
     }
 
+    //don't draw this sprite
     hide() {
         this.hidden = true;
     }
-
+    //draw it
     show() {
         this.hidden = false;
     }
 
+    //stop this sprite from animating
     freeze() {
         this.frozen = true;
     }
-
+    //resume animation
     unfreeze() {
         this.frozen = false;
     }
 
-
-    collide(entity) {
-        return (this.tile.x == entity.tile.x && this.tile.y == entity.tile.y)
+    //actors collide if they occupy the same tile
+    collide(actor) {
+        return (this.tile.x == actor.tile.x && this.tile.y == actor.tile.y)
     }
 
 
-    //animation stuff
+    //set a new current animation and reset animation counters
     set animation(index) {
         this.currentAnimation = index;
         //reset animation info
         this.animation.curFrame = 0;
         this.animation.curFrameTicks = 0;
-        this.frameCtr = 0;
     }
+    //gets the current animation
     get animation() {
         return this.animations[this.currentAnimation];
     }
 
 
     draw() {
-        if (this.hidden) return;
-        if (this.frozen) return;
-        // update animations
+        //don't animate if hidden or frozen
+        if (this.hidden || this.frozen) return;
+        // update animation counters if there this is animated
         if (this.animations.length) {
             var currentAnimation = this.animations[this.currentAnimation];
             //if animating...
-            if (currentAnimation.ticksPerFrame > 0 && currentAnimation.frames > 1) {
+            var ticksPerFrame = typeof(currentAnimation.ticksPerFrame) == 'number'?
+                currentAnimation.ticksPerFrame:currentAnimation.ticksPerFrame[currentAnimation.curFrame];
+            if (ticksPerFrame > 0 && currentAnimation.frames > 1) {
                 //increment time spent on the current frame (milliseconds)
                 currentAnimation.curFrameTicks++;
                 //convert secPerFrame to milliseconds for comparison
                 //is the time on the current frame more than secPerFrame? if so, time to move on to next frame
-                if (currentAnimation.curFrameTicks == currentAnimation.ticksPerFrame) {
+                if (currentAnimation.curFrameTicks >= ticksPerFrame) {
                     //go to the next frame in the animation
                     currentAnimation.curFrame = (currentAnimation.curFrame + 1) % currentAnimation.frames;
                     currentAnimation.curFrameTicks = 0;
@@ -3701,8 +3736,12 @@ how many tries the player has remaining
 class LivesSprite extends Sprite {
     constructor(scene) {
         super(scene);
-        this.resource = GAME_MODE == GAME_PACMAN?RESOURCE.pacman:RESOURCE.mspacman;
-        this.textureOffset = {x: 472, y: GAME_MODE == GAME_PACMAN?16:0};
+        this.resource = Game.GAME_MODE == Game.GAME_PACMAN?RESOURCE.pacman:RESOURCE.mspacman;
+        if (Game.GAME_MODE == Game.GAME_PACMAN) {
+            this.textureOffset = {x: 587, y: 16};
+        } else {
+            this.textureOffset = {x: 472, y: 0}
+        }
         this.width = 16;
         this.height = 16;
     }
@@ -3713,7 +3752,7 @@ class LivesSprite extends Sprite {
             for (var i = 0; i < Math.min(this.scene.pacman.lives, 5); i++) {
                 context.drawImage(this.resource,
                     this.textureOffset.x, this.textureOffset.y, this.width, this.height,
-                    (i+1) * 16, 272, this.width, this.height  
+                    (i+1) * this.width, 272, this.width, this.height  
                 );
             }
         }
@@ -3773,16 +3812,61 @@ class PacmanLevelSprite extends Sprite {
     }
 }class Actor extends Sprite {
 
+    //turn preferences priority list- used by ghosts and ms pacman fruit.
+    //if there's a tie for which valid turns to make at a decision point, choose the first 
+    //one of the matches in this list
     static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
     constructor(board, x, y, width, height) {
         super(board, x, y, width, height);
-        this.animations = [];
-        this.currentAnimation = 0;
         this.frameCtr = 0;
     }
 
-    //location stuff
+    reset() {
+        this.show();
+        this.freeze();
+        this.position = Vector.clone(this.startPosition);
+        this.direction = Vector.clone(this.startDirection);
+        this.frameCtr = 0;
+    }
+
+    /**
+     * look at a tile on the map and determine what the ghost's (ms pacman fruit) next move should be 
+     * if/when it reaches that tile
+     * @param {*} atTile  the tile at which to base the calculation
+     */
+    calculateNextInstruction(atTile) {
+        var choice = -1,
+            closest = Infinity,
+            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
+        //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
+        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
+            var testDirection = Actor.TURN_PREFERENCE[i];
+            // can't reverse go back the way we just came
+            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
+                //calculate distance from testTile to targetTile and check if it's the closest
+                var testTile = Vector.add(atTile, testDirection),
+                    distance = Vector.distance(testTile, this.targetTile);
+                if (this.scene.mazeClass.isWalkableTile(testTile)) {
+                    //this is a valid turn to make
+                    validChoices.push(i);
+                    if (distance < closest) {
+                        //this choice gets the ghost the closest so far
+                        choice = i;
+                        closest = distance;
+                    }
+                }
+            }
+        }
+        // when ghost is frightened override turn choice with random selection from validChoices
+        if (this.isFrightened || this.randomScatter) {
+            choice = validChoices[Math.floor(Math.random() * validChoices.length)];
+        }
+        //set next direction to be the choice the ghost just made
+        return Actor.TURN_PREFERENCE[choice];
+    }
+    
+    //is this actor centered on a tile?
     get isTileCenter() {
         var tile = this.tile,
             pixel = this.position;
@@ -3822,6 +3906,7 @@ class PacmanLevelSprite extends Sprite {
             return 0;
         }
     }
+
 }class Pacman extends Actor {
     static MODE_PATROL = 0;
     static MODE_ENERGIZED = 1;
@@ -3839,7 +3924,7 @@ class PacmanLevelSprite extends Sprite {
         this.startPosition = { x: x, y: y };
         this.animations = [
             //normal
-            { frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
+            { frames: 4, ticksPerFrame: [3,2,2,2], curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
             //die
             { frames: 14, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 504, textureY: 0 },
             //giant 32 x 32
@@ -3853,14 +3938,10 @@ class PacmanLevelSprite extends Sprite {
     }
 
     reset() {
-        this.show();
+        Actor.prototype.reset.call(this);
         this.stop();
-        this.position = Vector.clone(this.startPosition);
-        this.direction = Vector.clone(this.startDirection);
         this.animation = Pacman.ANIM_NORMAL;
         this.mode = Pacman.MODE_PATROL;
-        this.frameCtr = 0;
-        this.freeze();
     }
 
 
@@ -3923,10 +4004,9 @@ class PacmanLevelSprite extends Sprite {
     }
 
     addPoints(points) {
-        var prevScore = this.score;
+        var prevScore = Math.floor(this.score / 10000);
         this.score += points;
         //award extra life for every 10k increment of points
-        prevScore = Math.floor(prevScore / 10000);
         var newScore = Math.floor(this.score / 10000);
         if (prevScore != newScore) {
             Sound.playOnce('extra_life');
@@ -3934,17 +4014,19 @@ class PacmanLevelSprite extends Sprite {
         }
         //set high score
         if (this.score > this.scene.highScore) {
-            localStorage['highscore_' + GAME_MODE] = this.score;
+            localStorage['highscore_' + Game.GAME_MODE] = this.score;
         }
     }
 
 
     die() {
-        //cache the scene's pellets/energizer
+        //point up and open mouth to begin die animation
         this.animation.curFrame = 2;
         this.direction = Vector.UP;
+        //cache the scene's pellets/energizer in side this pacman instance
         this.pellets = Array.from(this.scene.pellets);
         this.energizers = Array.from(this.scene.energizers);
+        //after getting caught, the game freezes for 0.5 seconds before starting die animation
         this.scene.freezeTimer.start(30, () => {
             Sound.playOnce('die');
             this.unfreeze();
@@ -4204,6 +4286,7 @@ class PacmanLevelSprite extends Sprite {
         Pacman.prototype.die.call(this);
         this.animation.curFrame = 1;
         this.direction = Vector.DOWN;
+        this.nextDirection = Vector.DOWN;
     }
 
     draw() {
@@ -4245,7 +4328,7 @@ class PacmanLevelSprite extends Sprite {
             );
         } else {
             //dying animation- should spin, down,left,up,right, down,left,up,right, down,left,up
-            this.direction = Actor.TURN_PREFERENCE[3 - (animation.curFrame + 2) % 4];
+            this.direction = Actor.TURN_PREFERENCE[animation.curFrame % 4];
             context.drawImage(RESOURCE.mspacman,
                 animation.textureX, directionalOffsetY, 16, 16,
                 this.position.x, this.position.y, 16, 16
@@ -4306,20 +4389,20 @@ class Ghost extends Actor {
 
 
     reset() {
-        this.show();
-        this.frozen = true;
-        this.frameCtr = 0;
-        this.direction = Vector.clone(this.startDirection);
-        this.position = Vector.clone(this.startPosition);
+        Actor.prototype.reset.call(this);
         this.nextInstruction = Vector.clone(this.direction);
         this.status = Ghost.STATUS_HOME; // EXCEPT BLINKY
         this.mode = Ghost.MODE_SCATTER;
         this.animation = Ghost.ANIM_SCATTER_CHASE;
         this.targetTile = this.calculateTargetTile();
         delete this.reverseInstruction;
+
     }
 
-
+    /**
+     * number of pellets that must be eaten before this ghost
+     * can leave the house
+     */
     get pelletLimit() {
         return 0;
     }
@@ -4463,43 +4546,6 @@ class Ghost extends Actor {
 
 
     /**
-     * look at a tile on the map and determine what the ghost's next move should be 
-     * if/when it reaches that tile
-     * @param {*} atTile 
-     */
-    calculateNextInstruction(atTile) {
-        var choice = -1,
-            closest = Infinity,
-            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
-        //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
-            var testDirection = Actor.TURN_PREFERENCE[i];
-            // can't reverse go back the way we just came
-            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
-                //calculate distance from testTile to targetTile and check if it's the closest
-                var testTile = Vector.add(atTile, testDirection),
-                    distance = Vector.distance(testTile, this.targetTile);
-                if (this.scene.mazeClass.isWalkableTile(testTile)) {
-                    //this is a valid turn to make
-                    validChoices.push(i);
-                    if (distance < closest) {
-                        //this choice gets the ghost the closest so far
-                        choice = i;
-                        closest = distance;
-                    }
-                }
-            }
-        }
-        // when ghost is frightened override turn choice with random selection from validChoices
-        if (this.isFrightened || this.randomScatter) {
-            choice = validChoices[Math.floor(Math.random() * validChoices.length)];
-        }
-        //set next direction to be the choice the ghost just made
-        return Actor.TURN_PREFERENCE[choice];
-    }
-
-
-    /**
      * these are the global cases for setting a ghost's target tile. the specific
      * target tile calculations of each respective ghosts are made in their subclass
      */
@@ -4571,6 +4617,7 @@ class Ghost extends Actor {
                         this.nextInstruction = Vector.LEFT;
                     }
                     if (!this.isFrightened) {
+                        //inherit the current scatter/chase mode
                         this.mode = this.scene.globalChaseMode;
                     }
                     this.targetTile = this.calculateTargetTile();
@@ -4669,6 +4716,7 @@ class Ghost extends Actor {
             } else if (eyes.y == 1) {
                 directionalOffsetX = 96;
             }
+            //get the eyes only
             if (this.mode == Ghost.MODE_EATEN) {
                 offsetY = 0;
                 directionalOffsetX /= 2;
@@ -4758,9 +4806,11 @@ class Ghost extends Actor {
 }//TODO:  on reversal there is a ms pacman patch that makes blinky go after ms pacman to "avoid parking"
 
 class Blinky extends Ghost {
+    //extra animations for cut scenes
     static ANIM_RIP = 4;
     static ANIM_PATCH = 5;
     static ANIM_NAKED = 6;
+    
     constructor(scene, x, y) {
         super(scene, x, y, 'Blinky');
         this.houseTarget = { x: 13 * 8, y: 16.5 * 8 };
@@ -4785,6 +4835,10 @@ class Blinky extends Ghost {
         this.status = Ghost.STATUS_PATROL;
     }
 
+
+    /**
+     * in ms pac-man blinky starts each level in random scatter mode
+     */
     get randomScatter() {
         return this.scene.scatterChase.randomScatter;
     }
@@ -4874,6 +4928,9 @@ class Blinky extends Ghost {
         this.reset();
     }
 
+    /**
+     * in ms pac-man pinky starts each level in random scatter mode
+     */
     get randomScatter() {
         return this.scene.scatterChase.randomScatter;
     }
@@ -4912,12 +4969,15 @@ class Blinky extends Ghost {
         this.reset();
     }
 
+    /**
+     * inky leave the ghost house after 30 pellets eaten on level 1 only
+     */
     get pelletLimit() {
         return this.scene.level==1?30:0;
     }
 
     calculateTargetTile() {
-        //inky targets two tiles in front of pacman, draws a vector from blinky to that target and doubles it
+        //inky looks two tiles in front of pacman, draws a vector from blinky to that spot and doubles it
         if (this.isChasing) {
             var blinkyTile = this.scene.ghosts.Blinky.tile,
                 pacmanTile = this.scene.pacman.tile,
@@ -4952,6 +5012,10 @@ class Blinky extends Ghost {
         this.reset();
     }
 
+    /**
+     * Clyde leaves the house after 60 pellets are eaten on level 1
+     * and after 50 on level 2
+     */
     get pelletLimit() {
         if (this.scene.level == 1) {
             return 60;
@@ -4962,7 +5026,7 @@ class Blinky extends Ghost {
     }
 
     /**
-     * Sue will target pacman directly when more than 8 tiles away from him. if he
+     * Clyde will target pacman directly when more than 8 tiles away from him. if he
      * gets closer, he will target his scatter tile
      */
     calculateTargetTile() {
@@ -4983,7 +5047,9 @@ class Blinky extends Ghost {
     }
 }/*
     this class dictates to the scene which scatter or chase phase the
-    ghosts should be in at a given moment
+    ghosts should be in at a given moment. basically a glorified timer.
+    the durations of each scatter/chase phase are dependent on the 
+    current level
 */
 class ScatterChase {
     constructor(scene){
@@ -4994,7 +5060,7 @@ class ScatterChase {
 
      get randomScatter() {
          //only applicable for ms pacman
-        return GAME_MODE == GAME_MSPACMAN && this.phase == 0 &&  this.phaseTimesRemaining.scatter > 0;
+        return Game.GAME_MODE == Game.GAME_MSPACMAN && this.phase == 0 &&  this.phaseTimesRemaining.scatter > 0;
     }
 
     reset() {
@@ -5004,19 +5070,23 @@ class ScatterChase {
         this.scene.globalChaseMode = GameScene.MODE_SCATTER;
     }
 
+    //set the countdowns for the current phase
     setTimers() {
         var phaseTimes = this['phase'+this.phase];
         this.phaseTimesRemaining = {
-            scatter: phaseTimes.scatter,// * 1000,
-            chase: phaseTimes.chase,// * 1000
+            scatter: phaseTimes.scatter,
+            chase: phaseTimes.chase,
         };
     }
 
+    //progress to the next phase in the sequence. replenish 
+    //countdowns
     nextPhase() {
         this.phase++;
         this.setTimers();
     }
 
+    //scatter/chase suspends when ghosts are frightened
     suspend() {
         this.suspended = true;
     }
@@ -5027,8 +5097,8 @@ class ScatterChase {
     get phase0() {
         //phase 0 timer appears to start slightly before maze characters move/update
         return {
-            scatter: this.scene.level<=4?420:300,
-            chase: 1200
+            scatter: this.scene.level<=4?420:300, //7 else 5 seconds
+            chase: 1200 //20 seconds
         }
     }
     get phase1() {
@@ -5039,44 +5109,42 @@ class ScatterChase {
     get phase2() {
         var chase;
         if (this.scene.level == 1) {
-            chase = 1200;
+            chase = 1200; //20 sec
         } else if (this.scene.level <= 4)
             chase = 61980; //1033 seconds
         else {
             chase = 62220; //1037 seconds
         }
         return {
-            scatter: 420,
+            scatter: 420, //7 seconds
             chase: chase
         }
     }
     get phase3() {
         return {
-            scatter: this.scene.level==1?420:1,
+            scatter: this.scene.level==1?420:1, //7 else 1/60 sec
             chase: Infinity  //forever
         }
     }
 
     tick() {
-        //suspended when ghosts are frightened
+        //don't count down if scatter/chase is suspended
         if (this.suspended) return;
 
         //check scatter timeleft first
         if (this.phaseTimesRemaining.scatter > 0) {
             //continue scattering
-            this.phaseTimesRemaining.scatter--;// -= progress;
-            if (this.phaseTimesRemaining.scatter <= 0) {
+            this.phaseTimesRemaining.scatter--;;
+            if (this.phaseTimesRemaining.scatter == 0) {
                 //scatter phase complete, start chasing
-                this.phaseTimesRemaining.scatter = 0;
                 this.scene.globalChaseMode = GameScene.MODE_CHASE;
                 this.scene.ghosts.forEach(ghost => ghost.chase());
             }
         } else if (this.phaseTimesRemaining.chase > 0) {
             //chase mode happening
-            this.phaseTimesRemaining.chase--;// -= progress;
-            if (this.phaseTimesRemaining.chase <= 0) {
+            this.phaseTimesRemaining.chase--;
+            if (this.phaseTimesRemaining.chase == 0) {
                 //enter next phase
-                this.phaseTimesRemaining.chase = 0;
                 this.nextPhase();
                 this.scene.globalChaseMode = GameScene.MODE_SCATTER;
                 this.scene.ghosts.forEach(ghost => ghost.scatter());
@@ -5189,22 +5257,7 @@ class Energizer extends Pellet {
     }
 
     get points() {
-        switch (this.level) {
-            case 1:
-                return 100;     //cherry
-            case 2:
-                return 200;     //strawberry
-            case 3:
-                return 500;     //orange
-            case 4:
-                return 700;     //pretzel
-            case 5:
-                return 1000;    //apple
-            case 6:
-                return 2000;    //pear
-            case 7:
-                return 5000;    //banana
-        }
+        return [100,200,500,700,1000,2000,5000][this.level-1];
     }
 
     eaten() {
@@ -5222,33 +5275,6 @@ class Energizer extends Pellet {
     }
     get isDone() {
         return this.mode == MsPacmanFruit.MODE_DONE;
-    }
-
-    chooseNextDirection(atTile) {
-
-        var choice = -1,
-            closest = Infinity,
-            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
-        //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
-            var testDirection = Actor.TURN_PREFERENCE[i];
-            // can't reverse go back the way we just came
-            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
-                //calculate distance from testTile to targetTile and check if it's the closest
-                var testTile = Vector.add(atTile, testDirection),
-                    distance = Vector.distance(testTile, this.targetTile);
-                if (!this.scene.mazeClass.isWallTile(testTile)) {
-                    //this is a valid turn to make
-                    validChoices.push(i);
-                    if (distance < closest) {
-                        //this choice gets the ghost the closest so far
-                        choice = i;
-                        closest = distance;
-                    }
-                }
-            }
-        }
-        return Actor.TURN_PREFERENCE[choice];
     }
 
     tick() {
@@ -5302,7 +5328,7 @@ class Energizer extends Pellet {
 
             //this move would hit a wall, try to continue in same direction of travel
             if (this.scene.mazeClass.isWallTile(testTile) || this.scene.mazeClass.isHouseTile(testTile) || this.scene.mazeClass.isDecisionTile(this.tile)) {
-                this.direction = this.chooseNextDirection(this.tile);
+                this.direction = this.calculateNextInstruction(this.tile);
                 this.madeInstruction = true;
             }
         } else {
@@ -5315,13 +5341,12 @@ class Energizer extends Pellet {
 
     draw() {
         Actor.prototype.draw.call(this);
-        var context = this.scene.context,
-            offsetX = (this.level - 1) * 16,
+        var offsetX = (this.level - 1) * 16,
             offsetBounce = 1.5 * Math.sin((this.bounceCtr / 16) * Math.PI) - 0.5;  //bounce the fruit up and down
-        context.drawImage(RESOURCE.mspacman,
-            this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
-            this.position.x, this.position.y + offsetBounce, 16, 16
-        );
+            this.scene.context.drawImage(RESOURCE.mspacman,
+                this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
+                this.position.x, this.position.y + offsetBounce, 16, 16
+            );
 
 
         // context.beginPath();
@@ -5368,6 +5393,7 @@ class PacmanFruit extends Sprite {
         super(scene, 13*8, 19.5*8, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 488, y: 48};
         //60 fps == 60 ticks per sec
+        //half ticks because fruit is updated twice per tick
         this.halfTicksToLive = 2 * 60 * ((Math.random() * (2/3)) + (28/3));   //10ish second timer (should be random between 9.33333 and 10)
         // this.points = this.setPoints();
         this.fruit = true;
@@ -5402,10 +5428,9 @@ class PacmanFruit extends Sprite {
 
     draw() {
         if (this.halfTicksToLive > 0) {
-            var context = this.scene.context;
             //do x/y offset based on board.level
             var offsetX = PacmanFruit.getFruitIndex(this.scene.level) * 16;
-            context.drawImage(RESOURCE.pacman,
+            this.scene.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
                 this.position.x, this.position.y, 16, 16  
             );
@@ -5427,74 +5452,18 @@ class PacmanFruit extends Sprite {
 // http://lisc.mae.cornell.edu/LISCpapers/TCIAGGregModelBasedPacmanJune2017.pdf
 // https://www.researchgate.net/publication/221157530_A_simple_tree_search_method_for_playing_Ms_Pac-Man
 
-//game credits for fun
-var CREDITS = 0;
 
-//game choice
-var GAME_PACMAN = 0,
-    GAME_MSPACMAN = 1,
-    GAME_MODE = GAME_PACMAN, //default to pacman
-    TitleScene, StartScene, CutScene1, CutScene2, CutScene3, LevelSprite, PacClass, Points, Fruit;    //these will be set when player picks a game mode    
-
-
-var LAST_SCORES = [
-    [0,null],   //pacman
-    [0,null]    //mspacman
-]
+//these will be set when player picks a game mode    
+var TitleScene, StartScene, CutScene1, CutScene2, CutScene3, LevelSprite, PacClass, Points, Fruit;    //these will be set when player picks a game mode    
 
 //load resources (sprite sheets)
 var RESOURCE = {
-    mspacman: document.createElement('img'),
-    pacman: document.createElement('img'),
-    text: document.createElement('img')
+    mspacman: new Image(),
+    pacman: new Image(),
+    text: new Image()
 }
 RESOURCE.mspacman.src = 'res/mspacman/mspacman.png';
 RESOURCE.pacman.src = 'res/pacman/pacman.png';
 RESOURCE.text.src = 'res/text.png';
 
-//create the game screen canvas
-var SCREEN = document.createElement('canvas'),
-    context = SCREEN.getContext('2d'),
-    scale = 2.0;
-SCREEN.id = "screen";
-SCREEN.width = 224*scale;
-SCREEN.height = 288*scale;
-
-//turn off scale antialiasing
-context.webkitImageSmoothingEnabled = false;
-context.mozImageSmoothingEnabled = false;
-context.imageSmoothingEnabled = false;
-context.scale(scale, scale)
-
-//draw black background on canvas
-SCREEN.style.background = 'black';
-SCREEN.style.border = 'solid';
-document.body.appendChild(SCREEN);
-
-
-
-function loop() {
-
-    if (!pauseGame) {
-        SceneManager.update();  
-    }
-
-    //deal with sound engine
-    if (pauseGame && !wasPaused) {
-        Sound.suspend();
-    } else if (!pauseGame && wasPaused) {
-        Sound.resume();
-    }
-
-    wasPaused = pauseGame;
-
-    window.requestAnimationFrame(loop);
-}
-window.requestAnimationFrame(loop)
-
-//create the game screen
-var creditsScene = new CreditsScene(context);
-SceneManager.pushScene(creditsScene);
-
-var pauseGame = false,
-    wasPaused = false;
+var GAME = new Game();

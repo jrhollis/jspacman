@@ -18,6 +18,42 @@ class Actor extends Sprite {
         this.frameCtr = 0;
     }
 
+    /**
+     * look at a tile on the map and determine what the ghost's (ms pacman fruit) next move should be 
+     * if/when it reaches that tile
+     * @param {*} atTile  the tile at which to base the calculation
+     */
+    calculateNextInstruction(atTile) {
+        var choice = -1,
+            closest = Infinity,
+            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
+        //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
+        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
+            var testDirection = Actor.TURN_PREFERENCE[i];
+            // can't reverse go back the way we just came
+            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
+                //calculate distance from testTile to targetTile and check if it's the closest
+                var testTile = Vector.add(atTile, testDirection),
+                    distance = Vector.distance(testTile, this.targetTile);
+                if (this.scene.mazeClass.isWalkableTile(testTile)) {
+                    //this is a valid turn to make
+                    validChoices.push(i);
+                    if (distance < closest) {
+                        //this choice gets the ghost the closest so far
+                        choice = i;
+                        closest = distance;
+                    }
+                }
+            }
+        }
+        // when ghost is frightened override turn choice with random selection from validChoices
+        if (this.isFrightened || this.randomScatter) {
+            choice = validChoices[Math.floor(Math.random() * validChoices.length)];
+        }
+        //set next direction to be the choice the ghost just made
+        return Actor.TURN_PREFERENCE[choice];
+    }
+    
     //is this actor centered on a tile?
     get isTileCenter() {
         var tile = this.tile,
@@ -58,4 +94,5 @@ class Actor extends Sprite {
             return 0;
         }
     }
+
 }

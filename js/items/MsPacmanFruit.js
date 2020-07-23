@@ -59,33 +59,6 @@ class MsPacmanFruit extends Actor {
         return this.mode == MsPacmanFruit.MODE_DONE;
     }
 
-    chooseNextDirection(atTile) {
-
-        var choice = -1,
-            closest = Infinity,
-            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
-        //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
-            var testDirection = Actor.TURN_PREFERENCE[i];
-            // can't reverse go back the way we just came
-            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
-                //calculate distance from testTile to targetTile and check if it's the closest
-                var testTile = Vector.add(atTile, testDirection),
-                    distance = Vector.distance(testTile, this.targetTile);
-                if (!this.scene.mazeClass.isWallTile(testTile)) {
-                    //this is a valid turn to make
-                    validChoices.push(i);
-                    if (distance < closest) {
-                        //this choice gets the ghost the closest so far
-                        choice = i;
-                        closest = distance;
-                    }
-                }
-            }
-        }
-        return Actor.TURN_PREFERENCE[choice];
-    }
-
     tick() {
         Actor.prototype.tick.call(this);        
         if (!this.frozen) {
@@ -137,7 +110,7 @@ class MsPacmanFruit extends Actor {
 
             //this move would hit a wall, try to continue in same direction of travel
             if (this.scene.mazeClass.isWallTile(testTile) || this.scene.mazeClass.isHouseTile(testTile) || this.scene.mazeClass.isDecisionTile(this.tile)) {
-                this.direction = this.chooseNextDirection(this.tile);
+                this.direction = this.calculateNextInstruction(this.tile);
                 this.madeInstruction = true;
             }
         } else {

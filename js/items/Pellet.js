@@ -16,7 +16,7 @@ class Pellet extends Sprite {
     draw () {
         if (this.hidden) return;
         //doesn't animate, just draw
-        var context = this.scene.context;
+        var context = this.context;
         context.beginPath();
         context.fillStyle = this.pelletColor;
         context.fillRect(this.position.x + 3, (this.position.y) + 3, 2, 2);

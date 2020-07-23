@@ -14,8 +14,8 @@ class Pacman extends Actor {
         this.startDirection = Vector.LEFT;
         this.startPosition = { x: x, y: y };
         this.animations = [
-            //normal
-            { frames: 4, ticksPerFrame: [3,2,2,2], curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
+            //normal --TODO: it seems chopming animations are dependent on speed control
+            { frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
             //die
             { frames: 14, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 504, textureY: 0 },
             //giant 32 x 32
@@ -24,7 +24,6 @@ class Pacman extends Actor {
             { frames: 4, ticksPerFrame: 4, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 }
         ];
         this.score = 0;
-        this.energizeTimer = new Timer();
         this.reset();
     }
 
@@ -89,11 +88,16 @@ class Pacman extends Actor {
         }
         this.addPoints(item.points);
     }
-
     get isEnergized() {
         return this.mode == Pacman.MODE_ENERGIZED;
     }
 
+
+    /**
+     * add points to pac-man's score. check for extra life.
+     * extra life every 10k points
+     * @param {*} points 
+     */
     addPoints(points) {
         var prevScore = Math.floor(this.score / 10000);
         this.score += points;
@@ -110,8 +114,13 @@ class Pacman extends Actor {
     }
 
 
+    /**
+     * kill the pac-man. stores the current maze's pellet arrays
+     * to pac-man and then begins die animation
+     */
     die() {
         //point up and open mouth to begin die animation
+        this.freeze();
         this.animation.curFrame = 2;
         this.direction = Vector.UP;
         //cache the scene's pellets/energizer in side this pacman instance
@@ -155,10 +164,7 @@ class Pacman extends Actor {
             this.freezeDelay--;
         }
 
-        //two updates per tick for a moving Actor
-        if (!this.stopped) {
-            Actor.prototype.tick.call(this);
-        }
+        Actor.prototype.tick.call(this);
 
         if (!this.scene.maze) return;  //we're scripting, no maze stuff here
         if (this.isDying) return; //ignore inputs if pacman is dying
@@ -168,9 +174,9 @@ class Pacman extends Actor {
         //look at 5 pixels over from center point in direction pac-man is moving. if it is a wall tile, then stop
         var centerPoint = this.centerPixel,
             nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 },
-            testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
+            nextTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
         //this move would hit a wall, try to continue in same direction of travel
-        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+        if (!this.scene.mazeClass.isWalkableTile(nextTile)) {
             inputDirection = this.direction;
         } else {
             this.unfreeze();
@@ -179,16 +185,18 @@ class Pacman extends Actor {
 
         //try again with original direction - if there's a wall here too, stop
         nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 };
-        testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
+        nextTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
         //this move would hit a wall, try to continue in same direction of travel
-        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+        if (!this.scene.mazeClass.isWalkableTile(nextTile)) {
             this.freeze();
             this.stop();
-            //another interesting fact- pac man never seems to stop with his mouth closed
-            if (this.animation.curFrame == 0) {
+            //pac man never seems to stop with his mouth closed
+            if (this.animation.curFrame == 0 && Game.GAME_MODE == Game.GAME_PACMAN) {
                 this.animation.curFrame = 2;
             }
         }
+
+
         var changeDirection = !Vector.equals(inputDirection, this.direction),
             oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
         this.direction = inputDirection;
@@ -224,44 +232,59 @@ class Pacman extends Actor {
         }
     }
 
-    //clip apart the sprite sheet at res/pacman/pacman.png
+
+    /**
+     * offset on sprite sheet according to which direction pac-man
+     * is pointing
+     */
+    get directionalOffsetY() {
+        //right, left, up, down
+        if (this.direction.x >= 1) {
+            return 0;
+        } else if (this.direction.x <= -1) {
+            return 16;
+        } else if (this.direction.y <= -1) {
+            return 32;
+        } else if (this.direction.y >= 1) {
+            return 48;
+        }
+    }
+
+
+    /**
+     * offset on sprite sheet to which frame pac-man is
+     * at in his eating animation
+     */
+    get frameOffsetX() {
+        if (this.animation.curFrame == 0) {
+            return 0;
+        } else if (this.animation.curFrame == 1) {
+            return -1;
+        } else if (this.animation.curFrame == 2) {
+            return -2;
+        } else if (this.animation.curFrame == 3) {
+            return -1;
+        }
+    }
+
+
     draw() {
         if (this.hidden) return;
         Actor.prototype.draw.call(this);
-        var context = this.scene.context,
+        var context = this.context,
             animation = this.animation;
 
-        if (!this.isDying) {
+        if (this.isAlive) {
+            //draw chomping animation
             var curFrame = animation.curFrame,
-                frameOffsetX = 0,
-                directionalOffsetY = 0,
-                width = 15,
-                height = 15;
+                frameOffsetX = this.frameOffsetX,
+                directionalOffsetY = this.directionalOffsetY,
+                width = this.width,
+                height = this.height;
 
             if (curFrame == 0) {
                 //closed mouth uses only one texture, no matter direction
                 directionalOffsetY = 0;
-            } else {
-                //right, left, up, down
-                if (this.direction.x >= 1) {
-                    directionalOffsetY = 0;
-                } else if (this.direction.x <= -1) {
-                    directionalOffsetY = 16;
-                } else if (this.direction.y <= -1) {
-                    directionalOffsetY = 32;
-                } else if (this.direction.y >= 1) {
-                    directionalOffsetY = 48;
-                }
-            }
-
-            if (curFrame == 0) {
-                frameOffsetX = 0
-            } else if (curFrame == 1) {
-                frameOffsetX = -1;
-            } else if (curFrame == 2) {
-                frameOffsetX = -2;
-            } else if (curFrame == 3) {
-                frameOffsetX = -1;
             }
 
             if (this.isGiant) {
@@ -285,9 +308,7 @@ class Pacman extends Actor {
             );
             if (animation.curFrame == 13) {
                 //dead
-                this.stop();
                 this.freeze();
-                this.hide();
                 this.mode = Pacman.MODE_DEAD;
             }
         }
@@ -295,6 +316,8 @@ class Pacman extends Actor {
 
 
     /**
+     * total duration of energize/frighten. time is in seconds, flashes are 
+     * 28 ticks each-- 4 frames, 7 ticks per frame
      * 
      * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
      */
@@ -327,17 +350,26 @@ class Pacman extends Actor {
         }
     }
 
-    // for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
+    /**
+     * these strings indicate how many pixels to move pacman at a given tick. two consecutive digits are applied
+     * each tick, allowing for sub pixel granularity on each frame. 
+     * i.e. on level 1 if pacman is patrolling, in one tick he will update twice moving 0 pixels in the first
+     * update and 1 pixel in the next, for a total of 1 pixel in the tick. as the game speeds up, this
+     * allows for pac-man (and ghosts) to move more than 1 pixel per tick without flying off the rails.
+     * 
+     * for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
+     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
+     */
     get speedControl() {
         // TODO: something odd going on when pacman moves up. doesn't follow these patterns. pixel rounding??
         //on average I think it works out, but not pixel perfect
-        if (this.stopped || this.isDying) {
+        if (this.stopped || !this.isAlive) {
             return '00000000000000000000000000000000';
         } else if (this.isPatrolling) {
             if (this.scene.level == 1) {
                 return '01010101010101010101010101010101';
             } else if (this.scene.level <= 4) {
-                return '11010101011010101101010101101010' //18/32
+                return '11010101011010101101010101101010'; //18/32
             } else if (this.scene.level <= 20) {
                 return '01101101011011010110110101101101'; //20/32
             } else {

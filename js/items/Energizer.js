@@ -22,7 +22,7 @@ class Energizer extends Pellet {
         //there is no sprite sheet / texture involved here
         if (animation.curFrame == 0) {
             //draw energizer on the canvas
-            var context = this.scene.context;
+            var context = this.context;
             context.fillStyle = this.pelletColor;
             // drawing a circle anti-aliases on canvas. doesn't fit aesthetic.. use rectangles
             context.fillRect(this.position.x + 1, (this.position.y) + 1, 6, 6);

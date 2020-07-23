@@ -53,7 +53,7 @@ class MsPacmanPoints extends Sprite {
         if (this.ticksToLive > 0) {
             //do x/y offset based on scene.level
             var offset = this.textureOffsets;
-            this.scene.context.drawImage(RESOURCE.mspacman,
+            this.context.drawImage(RESOURCE.mspacman,
                 this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, 16, 16,
                 this.position.x, this.position.y, 16, 16  
             );

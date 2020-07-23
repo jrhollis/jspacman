@@ -68,7 +68,7 @@ class PacmanFruit extends Sprite {
         if (this.halfTicksToLive > 0) {
             //do x/y offset based on board.level
             var offsetX = PacmanFruit.getFruitIndex(this.scene.level) * 16;
-            this.scene.context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
                 this.position.x, this.position.y, 16, 16  
             );

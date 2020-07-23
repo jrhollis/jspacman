@@ -203,43 +203,6 @@ class Ghost extends Actor {
 
 
     /**
-     * look at a tile on the map and determine what the ghost's next move should be 
-     * if/when it reaches that tile
-     * @param {*} atTile  the tile at which to base the calculation
-     */
-    calculateNextInstruction(atTile) {
-        var choice = -1,
-            closest = Infinity,
-            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
-        //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
-        for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
-            var testDirection = Actor.TURN_PREFERENCE[i];
-            // can't reverse go back the way we just came
-            if (!Vector.equals(Vector.inverse(this.direction), testDirection)) {
-                //calculate distance from testTile to targetTile and check if it's the closest
-                var testTile = Vector.add(atTile, testDirection),
-                    distance = Vector.distance(testTile, this.targetTile);
-                if (this.scene.mazeClass.isWalkableTile(testTile)) {
-                    //this is a valid turn to make
-                    validChoices.push(i);
-                    if (distance < closest) {
-                        //this choice gets the ghost the closest so far
-                        choice = i;
-                        closest = distance;
-                    }
-                }
-            }
-        }
-        // when ghost is frightened override turn choice with random selection from validChoices
-        if (this.isFrightened || this.randomScatter) {
-            choice = validChoices[Math.floor(Math.random() * validChoices.length)];
-        }
-        //set next direction to be the choice the ghost just made
-        return Actor.TURN_PREFERENCE[choice];
-    }
-
-
-    /**
      * these are the global cases for setting a ghost's target tile. the specific
      * target tile calculations of each respective ghosts are made in their subclass
      */
@@ -339,7 +302,6 @@ class Ghost extends Actor {
             this.lastDirection = Vector.clone(this.direction);
             this.direction = Vector.clone(this.nextInstruction);
             // look ahead to next tile and calculate next instruction from there
-            this.targetTile = this.calculateTargetTile();
             var nextTile = Vector.add(this.tile, this.direction),
                 futureTile = Vector.add(nextTile, this.direction);
             if (this.scene.mazeClass.isDecisionTile(nextTile)) {
@@ -387,9 +349,9 @@ class Ghost extends Actor {
         if (this.hidden) return;
         Actor.prototype.draw.call(this);
         //figure out texture sheet offsets then draw
-        var context = this.scene.context, //canvas 2d context for drawing
+        var context = this.context, //canvas 2d context for drawing
             animation = this.animation,
-            directionalOffsetX = 0,
+            directionalOffsetX = 0, //could potentially share these values with pacman 
             offsetY = 0;
         //non-frighten animations move eyes in the nextDirection. ghosts' eyes move first before they make a turn
         if (!this.isFrightened) {
@@ -418,7 +380,8 @@ class Ghost extends Actor {
         }
         //draw to canvas
         context.drawImage(RESOURCE.pacman,
-            animation.textureX + directionalOffsetX + (animation.curFrame * this.width), animation.textureY + offsetY, this.width, this.height, //clip from source
+            animation.textureX + directionalOffsetX + (animation.curFrame * this.width), 
+            animation.textureY + offsetY, this.width, this.height, //clip from source
             this.position.x, this.position.y, this.width, this.height
         );
     }
@@ -427,8 +390,8 @@ class Ghost extends Actor {
      * these strings represent the amount of pixels a ghost should move per half tick during
      * a period of 16 ticks (two updates per tick).  this.frameCtr keeps track of the position in the speed control
      * string. this.frameCtr gets incremented in tick() each executed (unfrozen) frame
-     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      * 
+     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      */
     get speedControl() {
 

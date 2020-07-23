@@ -66,10 +66,10 @@ class MsPacmanStartScene extends Scene {
         this.copyright.draw();
         this.dates.draw();
 
-        context.drawImage(RESOURCE.mspacman,
+        this.context.drawImage(RESOURCE.mspacman,
             472, 0, 16, 16, 12*8, 23*8, 16, 16
         );
-        context.drawImage(RESOURCE.mspacman,
+        this.context.drawImage(RESOURCE.mspacman,
             456, 248, 32, 32, 5*8, 28*8, 32, 32
         );
 

@@ -214,7 +214,7 @@ class MsPacmanTitleScene extends ScriptScene {
         this.with.draw();
         this.actorName.draw();
         //midway logo
-        context.drawImage(RESOURCE.mspacman,
+        this.context.drawImage(RESOURCE.mspacman,
             456, 248, 32, 32, 5*8, 28*8, 32, 32
         );
 

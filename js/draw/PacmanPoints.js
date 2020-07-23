@@ -49,10 +49,9 @@ class PacmanPoints extends Sprite {
 
     draw() {
         if (this.ticksToLive > 0) {
-            var context = this.scene.context;
             //do x/y offset based on board.level
             var offset = this.textureOffsets;
-            context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, offset.w, 16,
                 this.position.x - ((offset.w - 16) / 2), this.position.y, offset.w, 16  
             );

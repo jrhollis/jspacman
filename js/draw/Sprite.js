@@ -10,13 +10,16 @@ class Sprite {
         this.currentAnimation = 0;
     }
 
+    //return pixel position on the screen
     get position() {
         return {x: this.x, y: this.y};
     }
+    //set x and y in one go
     set position(position) {
         this.x = position.x;
         this.y = position.y;
     }
+
     get centerPixel() {
         return {x: this.position.x + (this.width/2), y: this.position.y + (this.height/2)}; 
     }
@@ -69,15 +72,13 @@ class Sprite {
         // update animation counters if there this is animated
         if (this.animations.length) {
             var currentAnimation = this.animations[this.currentAnimation];
-            //if animating...
-            var ticksPerFrame = typeof(currentAnimation.ticksPerFrame) == 'number'?
-                currentAnimation.ticksPerFrame:currentAnimation.ticksPerFrame[currentAnimation.curFrame];
-            if (ticksPerFrame > 0 && currentAnimation.frames > 1) {
+            //if animating
+            if (currentAnimation.ticksPerFrame > 0 && currentAnimation.frames > 1) {
                 //increment time spent on the current frame (milliseconds)
                 currentAnimation.curFrameTicks++;
                 //convert secPerFrame to milliseconds for comparison
                 //is the time on the current frame more than secPerFrame? if so, time to move on to next frame
-                if (currentAnimation.curFrameTicks >= ticksPerFrame) {
+                if (currentAnimation.curFrameTicks >= currentAnimation.ticksPerFrame) {
                     //go to the next frame in the animation
                     currentAnimation.curFrame = (currentAnimation.curFrame + 1) % currentAnimation.frames;
                     currentAnimation.curFrameTicks = 0;
