@@ -22,8 +22,9 @@ class Game {
     /**
      * 
      * @param {*} el element to attach the canvas to. defaults to document.body
+     * @param {int} scale how many times larger to make the screen. default is 2
      */
-    constructor(el) {
+    constructor(el, scale) {
         this.el = (el?document.getElementById(el):document.body)||document.body;
 
         //pause controls. space bar will pause/unpause the game. see Input.js
@@ -33,7 +34,7 @@ class Game {
         //create the canvas and scale it so it's not so tiny
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d'),
-        this.scale = 2.0;
+        this.scale = scale || 2.0;
         this.canvas.width = 224*this.scale;
         this.canvas.height = 288*this.scale;
         

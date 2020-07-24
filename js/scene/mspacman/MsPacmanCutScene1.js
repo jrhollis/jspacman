@@ -78,6 +78,7 @@ class MsPacmanCutScene1 extends ScriptScene {
                 this.mspacman.y = 16*8;
                 this.mspacman.direction = Vector.RIGHT;
                 this.pacman.y = 16*8;
+                this.pacman.x = 29*8;
                 this.pacman.direction = Vector.LEFT;
             }, 
 

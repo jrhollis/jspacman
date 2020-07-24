@@ -54,7 +54,7 @@ class PacmanCutScene3 extends ScriptScene {
                 this.blinky.start();
             },
             430: () => { Sound.playOnce('intermission'); },
-            582: () => {
+            590: () => {
                 this.blinky.hide();
                 this.blinky.stop();
             },
