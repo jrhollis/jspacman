@@ -468,7 +468,7 @@ class GameScene extends Scene {
                     // bail out here and wait until next frame to eat next ghost
                     return;
                 } else if (!ghost.isEaten) {
-                    return; 
+                    if (Game.GOD_MODE) return; 
                     // ghost was patrolling, pac man dies. RIP pac man we hardly knew ye
                     //everything stops for a little under a second
                     this.ghosts.forEach(ghost => ghost.stop());

@@ -2,6 +2,9 @@
  * Game class creates a canvas and fires up a game loop.
  */
 class Game {
+    //pacman cannot die!
+    static GOD_MODE = false;
+
     //which game mode is being played
     static GAME_PACMAN = 0;
     static GAME_MSPACMAN = 1;
@@ -10,7 +13,7 @@ class Game {
     //credits to play.. for fun I guess
     static CREDITS = 0;
 
-    //last scores for each player and each game
+    //last game's scores for each player and each game mode
     static LAST_SCORES = [
         [0,null],   //pacman
         [0,null]    //mspacman
