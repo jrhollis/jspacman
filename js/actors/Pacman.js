@@ -308,13 +308,13 @@ class Pacman extends Actor {
             //do directional stuff and modular back and forth for animation
             context.drawImage(RESOURCE.pacman,
                 animation.textureX + frameOffsetX, directionalOffsetY, width, height,
-                this.position.x, this.position.y, width, height
+                this.x, this.y, width, height
             );
         } else {
             //dying animation
             context.drawImage(RESOURCE.pacman,
                 animation.textureX + (animation.curFrame * 16), 0, 16, 16,
-                this.position.x, this.position.y, 16, 16
+                this.x, this.y, 16, 16
             );
             if (animation.curFrame == 13) {
                 //dead

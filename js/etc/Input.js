@@ -70,7 +70,6 @@ class Input {
         }
     }
 
-
     /**
      * returns the last key pressed
      */
@@ -79,7 +78,6 @@ class Input {
         delete this.keyPress;
         return k;
     }
-
 
     /**
      * reads the key press from two frames ago

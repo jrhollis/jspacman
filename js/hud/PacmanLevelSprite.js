@@ -24,6 +24,7 @@ class PacmanLevelSprite extends Sprite {
             if (i < 1) break;
             fruits.unshift(PacmanFruit.getFruitIndex(i));
         }
+        //play math games to line the fruit up nicely on the bottom of the screen
         for (var i = 0; i < fruits.length; i++) {
             var offsetX = fruits[i] * 16,
                 dstX = (24 - (2*i)) * 8;

@@ -86,6 +86,7 @@ class MsPacmanCutScene3 extends ScriptScene {
     }
     
 
+    //the baby bounce pattern
     get bounce() {
         return [
             [0,0],[0,0],[0,0],[0,-1],[-1,-1],[0,-1],[0,-1],[-1,-1],[0,0],[0,0],[-1,1],[0,1],[0,0],[0,1],[0,0],[0,1],[-1,0],[0,1],[0,1],

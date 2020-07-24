@@ -200,9 +200,8 @@ class GameScene extends Scene {
         this.frightenFlashTimer.stop();
         this.frightenTimer.stop();
 
-        this.energizers.forEach(e => {
-            e.freeze();
-        });
+        this.energizers.forEach(e => e.freeze());
+
         this.startLevelTimer.start(1.25 * 60, () => {
             this.levelComplete = false;
             this.readyText.hide();
@@ -224,7 +223,7 @@ class GameScene extends Scene {
         });
 
         this.scatterChase.reset();
-        //hack to catch copy actual game... need to address this
+        //hack to copy actual game... need to address this
         this.scatterChase.tick();
         this.scatterChase.tick();
     }
@@ -272,14 +271,14 @@ class GameScene extends Scene {
         //update eyes now in case freeze timer is active, do other ghosts later- after freeze timer code
         var updateGhostsLater = this.ghosts.filter(ghost => !(ghost.isEaten && !ghost.hidden));
         if (!this.levelComplete) {
-            //don't freeze eyes when freeze timer is on
+            //don't freeze eyes even when freeze timer is on
             for (var i = 0; i < 2; i++) {
                 this.ghosts.filter(ghost => ghost.isEaten && !ghost.hidden).forEach(ghost => ghost.tick());
             }
         }
         
         if (this.freezeTimer.tick()) {
-            //if game play is frozen, stop the siren sound and bail
+            //if game play is frozen, stop the siren sound and bail the tick
             Sound.stop('siren');
             return;
         }
@@ -289,17 +288,20 @@ class GameScene extends Scene {
             return;
         }
 
-        //sound check - if there are retreating ghosts play retreat
+        //sound checks
         if (this.pacman.isAlive) {
             if (Ghost.NUM_EATEN > 0) {
+                // if there are retreating ghosts play retreat
                 Sound.stop('power_pellet');
                 Sound.playLoop('retreating');
             } else {
                 Sound.stop('retreating');
                 if (Ghost.NUM_FRIGHTENED > 0) {
+                    //are there frigthened ghosts? play power pellet sound
                     Sound.stop('siren');
                     Sound.playLoop('power_pellet');
                 } else {
+                    //else go back to playing the siren
                     Sound.stop('power_pellet');
                     Sound.playLoop('siren');
                 }
@@ -313,17 +315,19 @@ class GameScene extends Scene {
             return;
         }
 
+        //check for game over scenarios
         if (this.pacman.isDead) {
-            //pacman is fully dead, start a timer and restart level, next player, or end game
+            //pacman is dead, start a timer and restart level, go to next player, or end game
             this.freezeTimer.start(60, () => {
                 var otherPlayer = (this.curPlayer+1)%this.numPlayers;
                 if (this.pacman.lives < 0) {
-                    //gloabls updates
-                    Game.LAST_SCORES[Game.GAME_MODE][this.curPlayer] = this.pacman.score;
-                    Game.CREDITS--;
                     //game over for this player
+                    //save last score to this game_mode and player #
+                    Game.LAST_SCORES[Game.GAME_MODE][this.curPlayer] = this.pacman.score;
+                    //take away a credit
+                    Game.CREDITS--;
                     if (this.numPlayers == 2) {
-                        //if two players and other player has lives, show playerlabel text
+                        //if two players and other player has lives, show playerlabel text for game over
                         if (this.players[otherPlayer].lives >= 0) {
                             this.playerLabel.text = "PLAYER " + (this.curPlayer?"TWO":"ONE");
                             this.playerLabel.show();
@@ -332,9 +336,11 @@ class GameScene extends Scene {
                                 this.gameOverText.hide();
                                 this.loadPlayer(otherPlayer);
                             });
-                            return; //not done yet
+                            //not done yet, other player's turn
+                            return; 
                         }
                     }
+                    //game over
                     this.gameOverText.show();
 
                     //show the credits before exiting game scene
@@ -342,7 +348,7 @@ class GameScene extends Scene {
                     this.credits.text = ""+Game.CREDITS;
                     this.credits.show();
 
-                    this.freezeTimer.start(60, () => {
+                    this.freezeTimer.start(90, () => {
                         if (!Game.CREDITS) {
                             //out of credits, go to title screen
                             SceneManager.replaceScene(new TitleScene(this.context));
@@ -451,7 +457,7 @@ class GameScene extends Scene {
         //fruit collision
         if (this.fruit && this.fruit.collide(this.pacman)) {
             //put a point sprite at this location
-            this.pointSprite = new Points(this, this.fruit.position.x, this.fruit.position.y, this.fruit.points, 0);
+            this.pointSprite = new Points(this, this.fruit, this.fruit.points);
             //feed it to pacman
             this.pacman.eatItem(this.fruit);
         }
@@ -465,7 +471,7 @@ class GameScene extends Scene {
                     this.eatenGhosts.push(ghost);
                     ghost.eaten();
                     // make sure two ghosts aren't eaten in the same frame.
-                    // bail out here and wait until next frame to eat next ghost
+                    // jump out here and wait until next frame to eat next ghost
                     return;
                 } else if (!ghost.isEaten) {
                     if (Game.GOD_MODE) return; 
@@ -582,7 +588,7 @@ class GameScene extends Scene {
         //when pacman eats a ghost, hide pacman and freeze other ghosts for a second
         this.pacman.hide();
         //immediately display the score
-        this.ghostScore = new Points(this, ghost.position.x, ghost.position.y, this.numGhostsEaten, 1);
+        this.ghostScore = new Points(this, ghost, this.numGhostsEaten);
         this.ghosts.forEach(g => {
             if (g != ghost && !g.isEaten) {
                 g.freeze();

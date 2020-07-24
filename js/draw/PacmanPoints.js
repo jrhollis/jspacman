@@ -2,12 +2,20 @@
  *  points sprite shows up in spot where pacman eats a ghost or fruit
  * */
 class PacmanPoints extends Sprite {
-    constructor (scene, x, y, score) {
-        super(scene, x, y, 16, 16); //always appear below ghost house
+    /**
+     * 
+     * @param {*} scene 
+     * @param {*} item thing that was eaten (fruit or ghost)
+     * @param {*} score if fruit, the actual score, if ghost, the number of ghosts eaten 
+     *                  during energized/fright period
+     */
+    constructor (scene, item, score) {
+        super(scene, item.x, item.y, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 456, y: 144};
         //keep on the board for 2 seconds
         this.ticksToLive = 120; 
-        this.score = score;        
+        this.score = score;  
+        this.item = item;      
     }
 
     /**
@@ -64,7 +72,7 @@ class PacmanPoints extends Sprite {
             var offset = this.textureOffsets;
             this.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, offset.w, 16,
-                this.position.x - ((offset.w - 16) / 2), this.position.y, offset.w, 16  
+                this.x - ((offset.w - 16) / 2), this.y, offset.w, 16  
             );
         }
     }

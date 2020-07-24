@@ -1,4 +1,8 @@
-//after level 5 https://www.youtube.com/watch?v=v8BT43ZWSTY
+/**
+ * after level 5
+ * blinky chases pacman right to left. blinky's sheet gets caught on a nail
+ * his sheet gets torn
+ */
 class PacmanCutScene2 extends ScriptScene {
     constructor(context) {
         super(context, {
@@ -97,7 +101,6 @@ class PacmanCutScene2 extends ScriptScene {
         this.actors = [this.pacman, this.blinky];
         this.levelSprite = new PacmanLevelSprite(this);
         this.level = 5;
-
     }
 
     draw() {

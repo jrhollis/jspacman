@@ -66,9 +66,7 @@ class Actor extends Sprite {
     
     //is this actor centered on a tile?
     get isTileCenter() {
-        var tile = this.tile,
-            pixel = this.position;
-        return tile.x*8 == pixel.x+4 && tile.y*8 == pixel.y+4;
+        return this.tile.x*8 == this.x+4 && this.tile.y*8 == this.y+4;
     }
 
     //start and stop movement (but not animation)

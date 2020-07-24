@@ -20,6 +20,7 @@ class CreditsScene extends Scene {
 
         this.canSelectGame = true;
 
+        //set up the marquee
         this.pellets = [];
         for (var i = 4; i <= 24; i++) {
             this.pellets.push(new Pellet(this, i * 8, 4 * 8));
@@ -40,6 +41,7 @@ class CreditsScene extends Scene {
     }
 
     tick() {
+        //do the color changing thing on the marquee
         this.colorCounter++;
         if (this.colorCounter == 2) {
             this.colorCounter = 0;
@@ -80,6 +82,7 @@ class CreditsScene extends Scene {
             return;
         }
         
+        //flips between selections whenever a key is down
         if ((Input.lastKey == 38 || Input.lastKey == 40) && this.canSelectGame) {
             Game.GAME_MODE = (Game.GAME_MODE + 1) % 2;
             this.canSelectGame = false;

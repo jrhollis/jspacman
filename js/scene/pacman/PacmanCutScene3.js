@@ -1,4 +1,8 @@
-//after level 9
+/**
+ * after level 9
+ * blinky chases pacman again right to left. he slinks back across
+ * the screen naked, pulling his sheet behind him.
+ */
 class PacmanCutScene3 extends ScriptScene {
     constructor(context) {
         super(context, {
@@ -74,6 +78,5 @@ class PacmanCutScene3 extends ScriptScene {
         ];
         this.level = 9;
         this.pelletsLeft = 1;
-
     }
 }

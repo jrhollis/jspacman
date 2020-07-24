@@ -419,7 +419,7 @@ class Ghost extends Actor {
         context.drawImage(RESOURCE.pacman,
             animation.textureX + directionalOffsetX + (animation.curFrame * this.width), 
             animation.textureY + offsetY, this.width, this.height, //clip from source
-            this.position.x, this.position.y, this.width, this.height
+            this.x, this.y, this.width, this.height
         );
     }
 

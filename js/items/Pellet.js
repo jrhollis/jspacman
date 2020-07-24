@@ -10,7 +10,7 @@ class Pellet extends Sprite {
     }
 
     get hitBox() {
-        return {x: this.position.x + 3, y: this.position.y + 3, w: 2, h: 2}
+        return {x: this.x + 3, y: this.y + 3, w: 2, h: 2}
     }
 
     draw () {
@@ -19,7 +19,7 @@ class Pellet extends Sprite {
         var context = this.context;
         context.beginPath();
         context.fillStyle = this.pelletColor;
-        context.fillRect(this.position.x + 3, (this.position.y) + 3, 2, 2);
+        context.fillRect(this.x + 3, this.y + 3, 2, 2);
         context.fill();
 
         // context.beginPath();

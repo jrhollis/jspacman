@@ -37,14 +37,14 @@ class MsPacman extends Pacman {
             //chomping animation
             context.drawImage(RESOURCE.mspacman,
                 animation.textureX + (this.frameOffsetX * 16), this.directionalOffsetY, 16, 16,
-                this.position.x, this.position.y, 16, 16
+                this.x, this.y, 16, 16
             );
         } else {
             //dying animation- should spin, down,left,up,right, down,left,up,right, down,left,up
             this.direction = Actor.TURN_PREFERENCE[animation.curFrame % 4];
             context.drawImage(RESOURCE.mspacman,
                 animation.textureX, this.directionalOffsetY, 16, 16,
-                this.position.x, this.position.y, 16, 16
+                this.x, this.y, 16, 16
             );
             if (animation.curFrame == 9) {
                 //dead - stop animating

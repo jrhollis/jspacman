@@ -1,9 +1,12 @@
-//after level 2
+/**
+ * after level 2
+ * Blinky chases pacman from right to left off the screen. blinky comes back
+ * left to right, frightened. pacman appears chasing him and is giant sized
+ */
 class PacmanCutScene1 extends ScriptScene {
     constructor(context) {
         super(context, {
             1: () => {
-
                 this.pacman.hide();
                 this.pacman.animation = Pacman.ANIM_NORMAL;
                 this.pacman.direction = Vector.LEFT;
@@ -21,7 +24,6 @@ class PacmanCutScene1 extends ScriptScene {
             },
             100: () => {
                 Sound.playOnce('intermission')
-
 
                 this.pacman.show();
                 this.pacman.start();

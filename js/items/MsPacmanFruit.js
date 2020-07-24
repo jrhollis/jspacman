@@ -18,7 +18,7 @@ class MsPacmanFruit extends Actor {
         this.level = this.scene.level;
         if (this.level > 7) {
             //after level 7, randomly choose fruit
-            this.level = Math.floor(Math.random() * 7) + 1;
+            this.level = Math.floor(Math.random() * 8);
         }
         this.textureOffset = { x: 504, y: 0 };
         //the fruit bounces up and down as it moves. this counter keeps track of that bounce
@@ -41,7 +41,7 @@ class MsPacmanFruit extends Actor {
     }
 
     get hitBox() {
-        return { x: this.position.x + 4, y: this.position.y + 4, w: 8, h: 8 }
+        return { x: this.x + 4, y: this.y + 4, w: 8, h: 8 }
     }
 
     get points() {
@@ -133,16 +133,7 @@ class MsPacmanFruit extends Actor {
             offsetBounce = 1.5 * Math.sin((this.bounceCtr / 16) * Math.PI) - 0.5;  //bounce the fruit up and down
         this.context.drawImage(RESOURCE.mspacman,
             this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
-            this.position.x, this.position.y + offsetBounce, 16, 16
+            this.x, this.y + offsetBounce, 16, 16
         );
-        
-        if (this.mode == MsPacmanFruit.MODE_EXIT ) {
-            var context = this.context;
-            context.beginPath();
-            context.lineWidth = 1;
-            context.strokeStyle = "#FF0000";
-            var tile = this.targetTile;
-            context.strokeRect(tile.x*8, tile.y*8, 8,8);
-        }
     }
 }
