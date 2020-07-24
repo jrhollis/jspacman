@@ -468,7 +468,7 @@ class GameScene extends Scene {
                     // bail out here and wait until next frame to eat next ghost
                     return;
                 } else if (!ghost.isEaten) {
-                    // return; 
+                    return; 
                     // ghost was patrolling, pac man dies. RIP pac man we hardly knew ye
                     //everything stops for a little under a second
                     this.ghosts.forEach(ghost => ghost.stop());
@@ -535,8 +535,9 @@ class GameScene extends Scene {
         //suspend scatter/chase behavior while frigthened
         this.scatterChase.suspend();
         //set up timers based on duration and # flashes for current level
-        var duration = this.pacman.energizedDuration.ticks,
-            numFlashes = this.pacman.energizedDuration.flashes,
+        var fright = Ghost.getFrightenDuration(this.level),
+            duration = fright.ticks,
+            numFlashes = fright.flashes,
             flashDuration = numFlashes * 7 * 4;   //7 ticksPerFrame of flash animation, 4 is the numFrames
         this.frightenTimer.start(duration - flashDuration, () => {
             this.ghosts.forEach(ghost => {

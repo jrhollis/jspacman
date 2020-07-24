@@ -11,18 +11,22 @@ class Input {
     }
 
     static onKeyDown(e) {
+        //tag this key state as pressed
         Input.keyState[''+e.keyCode] = 1;
+        //remember the last key pressed
         Input.lastKey = e.keyCode;
+        //if pressing arrow keys, prevent default so the web page doesn't scroll
         if (e.keyCode >= 37 && e.keyCode <= 40) {
             e.preventDefault();
             return false;
         }
-
+        //if space bar is pressed pause the game
         if (e.keyCode == 32) {
             GAME.pauseGame = !GAME.pauseGame;
             e.preventDefault();
             return false;
         }
+        //if "F" key is pressed, pause and advance the game 1 frame
         if (e.keyCode == 70) {
             GAME.pauseGame = true;
             //render next frame
@@ -31,7 +35,7 @@ class Input {
             return false;
         }
         // console.log(e.keyCode)
-        //read once
+        //read the pressed key once
         if (!Input.keyDown) {
             Input.keyPress = e.keyCode;
         }

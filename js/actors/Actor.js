@@ -11,6 +11,7 @@ class Actor extends Sprite {
 
     constructor(scene, x, y, width, height) {
         super(scene, x, y, width, height);
+        this.startPosition = { x: x, y: y };
         //frame counter keeps track of which value to select from speedControl string
         //this gets incremented twice per tick and loops back to zero after 31
         this.frameCtr = 0;

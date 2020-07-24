@@ -1,5 +1,5 @@
 /**
- * base class for just about anything drawn on the canvas, except the maze backgrounds
+ * base class for just about anything drawn on the canvas- except the maze backgrounds
  */
 class Sprite {
     constructor(scene, x, y, width, height) {
@@ -9,7 +9,25 @@ class Sprite {
         this.y = y;
         this.width = width;
         this.height = height;
+
+        /**
+         * an animation is a json object containing up to 6 values:
+         * i.e.{ frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 }
+         * 
+         * frames           - total number of frames that make up this animation
+         * ticksPerFrame    - number of ticks to display a single from of the animation before moving on to the next frame
+         * curFrame         - the frame that this animation is currently on
+         * curFrameTicks    - counter for the number ticks of the current animation frame
+         * textureX         - X texture coordinate on the sprite sheet resource of the first frame of this animation
+         * textureY         - Y texture coordinate on the sprite sheet resource of the first frame of this animation
+         * 
+         * textures for each frame are assumed to be horizontally lined up on the sprite sheet with each frame
+         * being the same width (this.width). If the there is no texture (like with the Energizer pellets), the texture
+         * coordinates can be omitted
+         * 
+         */
         this.animations = [];
+        //the pointer to the current animation in the this.animations array
         this.currentAnimation = 0;
     }
 
@@ -22,7 +40,7 @@ class Sprite {
         this.x = position.x;
         this.y = position.y;
     }
-
+    //mid point of the sprite rectangle
     get centerPixel() {
         return {x: this.position.x + (this.width/2), y: this.position.y + (this.height/2)}; 
     }
@@ -69,6 +87,10 @@ class Sprite {
     }
 
 
+    /**
+     * nothing is really drawn here, but the current animation (if there is one) has its
+     * counter updated.
+     */
     draw() {
         //don't animate if hidden or frozen
         if (this.hidden || this.frozen) return;

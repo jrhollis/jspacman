@@ -1,8 +1,7 @@
-/*
-the row of (ms) pacmans that appear below the maze indicating 
-how many tries the player has remaining
+/** 
+* the row of pacmans or ms pacmans that appear below the maze indicating 
+* how many lives the player has remaining. maxes out at 5
 */
-
 class LivesSprite extends Sprite {
     constructor(scene) {
         super(scene, 0, 0, 16, 16);

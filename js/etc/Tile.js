@@ -1,4 +1,6 @@
-class Tile {
+/**
+ * a Tile represents one 8x8 pixel tile of the Maze
+ * 
     //from Maze.wallMap
     //. = wall
     //0 = open, but nothing on it
@@ -8,6 +10,15 @@ class Tile {
     //4 = decision only
     //5 = tunnel
     //6 = house
+ */
+class Tile {
+    /**
+     * 
+     * @param {*} x tile X coordinate
+     * @param {*} y tile Y coordinate
+     * @param {*} type type of tile. see above for definitions of possible values
+     *                 values are:  .,0,1,2,3,4,5,6
+     */
     constructor(x, y, type) {
         this.x = x;
         this.y = y;
@@ -40,7 +51,7 @@ class Tile {
     get decision() {
         return this.type == '4' || this.type == '2';
     }
-    //can pac-man move over this tile
+    //true if pac-man can move over this tile
     get walkable() {
         return !this.house && !this.wall;
     }

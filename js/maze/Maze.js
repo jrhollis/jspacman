@@ -1,21 +1,25 @@
 class Maze {
 
-    static getMazeIndex(scene) {
-        //get the version of the maze based on the current level
+    /**
+     * get the version of the maze based on the current level
+     * 
+     * @param {int} level current level of game
+     */
+    static getMazeIndex(level) {
         if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
-            if (scene.level <= 2) {
+            if (level <= 2) {
                 return 0;
-            } else if (scene.level <= 5) {
+            } else if (level <= 5) {
                 return 1;
-            } else if (scene.level <= 9) {
+            } else if (level <= 9) {
                 return 2;
-            } else if (scene.level <= 13) {
+            } else if (level <= 13) {
                 return 3;
-            } else if (scene.level == 14) {
+            } else if (level == 14) {
                 return 2;
             } else {
                 //rotate colors of mazes based on level
-                if (scene.level % 2) {
+                if (level % 2) {
                     return 2;
                 } else {
                     return 3;
@@ -27,10 +31,16 @@ class Maze {
         }
     }
 
+    /**
+     * get a maze instance for the current level. only ms pacman
+     * will return different mazes. pacman just uses the same maze
+     * for every level
+     * 
+     * @param {*} scene the game scene
+     */
     static getMaze(scene) {
         if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
-            //based on level, create a maze instance and return it
-            switch (Maze.getMazeIndex(scene)) {
+            switch (Maze.getMazeIndex(scene.level)) {
                 case 0:
                     return new MsPacman1(scene);
                 case 1:
@@ -60,6 +70,11 @@ class Maze {
         }
     }
 
+
+
+    /**
+     * helper functions for inspecting the Tile instance type
+     */
     static isTileType(t, attr) {
         try {
             return this.tileHash[t.x + ',' + t.y][attr];
@@ -105,6 +120,7 @@ class Maze {
         }
         return this.isTileType(t, 'wall')
     }
+
 
 
 
@@ -154,7 +170,7 @@ class Maze {
     chooseRandomFruitExit() {
         var cls = this.constructor,
             choice = Math.floor(Math.random() * cls.WARP_TILES.length);
-        return cls.EXIT_TARGETS[choice].concat(cls.WARP_TILES[choice])
+        return cls.EXIT_TARGETS[choice].concat(cls.WARP_TILES[choice]);
     }
 
     /**
@@ -181,7 +197,7 @@ class Maze {
             }
             if (this.flashAnimation.curFrame % 2) {
                 //show black and white version
-                offsety = Maze.getMazeIndex(this.scene) * 248;
+                offsety = Maze.getMazeIndex(this.scene.level) * 248;
                 offsetx = 0;
             }
         }

@@ -131,9 +131,18 @@ class MsPacmanFruit extends Actor {
         Actor.prototype.draw.call(this);
         var offsetX = (this.level - 1) * 16,
             offsetBounce = 1.5 * Math.sin((this.bounceCtr / 16) * Math.PI) - 0.5;  //bounce the fruit up and down
-        this.scene.context.drawImage(RESOURCE.mspacman,
+        this.context.drawImage(RESOURCE.mspacman,
             this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
             this.position.x, this.position.y + offsetBounce, 16, 16
         );
+        
+        if (this.mode == MsPacmanFruit.MODE_EXIT ) {
+            var context = this.context;
+            context.beginPath();
+            context.lineWidth = 1;
+            context.strokeStyle = "#FF0000";
+            var tile = this.targetTile;
+            context.strokeRect(tile.x*8, tile.y*8, 8,8);
+        }
     }
 }

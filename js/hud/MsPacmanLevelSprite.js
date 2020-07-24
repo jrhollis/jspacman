@@ -1,6 +1,12 @@
 /*
-the row of fruit that appears below the maze indicating which level
-the player is on
+* the row of fruit that appears below the maze indicating which level
+* the player is on.
+*
+* the order of appearance of fruit in ms pacman starting at level 1:
+* cherry, strawberry, orange, pretzel, apple, pear, banana
+*
+* unlike pacman fruits are not pushed off the board as levels progress.
+* after banana (level 7) the MsPacmanLevelSprite fruits do not change
 */
 
 class MsPacmanLevelSprite extends Sprite {

@@ -14,8 +14,11 @@ class Inky extends Ghost {
         return this.scene.level==1?30:0;
     }
 
+
+    /**
+     * inky looks two tiles in front of pacman, draws a vector from blinky to that spot and doubles it
+     */
     calculateTargetTile() {
-        //inky looks two tiles in front of pacman, draws a vector from blinky to that spot and doubles it
         if (this.isChasing) {
             var blinkyTile = this.scene.ghosts.Blinky.tile,
                 pacmanTile = this.scene.pacman.tile,
@@ -33,7 +36,7 @@ class Inky extends Ghost {
             //now draw a vector from blinky to that target and double the length to get new target
             targetTile.x += (targetTile.x - blinkyTile.x);
             targetTile.y += (targetTile.y - blinkyTile.y);
-            return Vector.clone(targetTile);
+            return targetTile;
         } else {
             return Ghost.prototype.calculateTargetTile.call(this);
         }

@@ -1,8 +1,8 @@
 /**
  * this class dictates to the scene which scatter or chase phase the
-    ghosts should be in at a given moment. basically a glorified timer.
-    the durations of each scatter/chase phase are dependent on the 
-    current level
+ * ghosts should be in at a given moment. basically a glorified timer.
+ * the durations of each scatter/chase phase are dependent on the 
+ * current level
  */
 class ScatterChase {
     constructor(scene){
@@ -27,7 +27,9 @@ class ScatterChase {
         this.scene.globalChaseMode = GameScene.MODE_SCATTER;
     }
 
-    //set the countdowns for the current phase
+    /**
+     * set the countdowns for the current phase
+     */
     setTimers() {
         var phaseTimes = this['phase'+this.phase];
         this.phaseTimesRemaining = {
@@ -36,14 +38,18 @@ class ScatterChase {
         };
     }
 
-    //progress to the next phase in the sequence. replenish 
-    //countdowns
+    /**
+     * progress to the next phase in the sequence. replenish countdowns
+     * 
+     */
     nextPhase() {
         this.phase++;
         this.setTimers();
     }
 
-    //scatter/chase suspends when ghosts are frightened
+    /**
+     * scatter/chase suspends when ghosts are frightened
+     */
     suspend() {
         this.suspended = true;
     }

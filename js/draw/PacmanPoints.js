@@ -5,10 +5,15 @@ class PacmanPoints extends Sprite {
     constructor (scene, x, y, score) {
         super(scene, x, y, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 456, y: 144};
+        //keep on the board for 2 seconds
         this.ticksToLive = 120; 
         this.score = score;        
     }
 
+    /**
+     * if eaten, just set ticksToLive to zero so it doesn't draw, and then
+     * gets deleted from the maze in the next tick
+     */
     eaten() {
         this.ticksToLive = 0;
     }
@@ -17,10 +22,14 @@ class PacmanPoints extends Sprite {
         this.ticksToLive--;
         if (this.ticksToLive < 0) {
             //pull self from the scene
-            delete this.hide()
+            delete this.scene.pointSprite;
         }
     }
 
+    /**
+     * find the points value sprite on the sprite sheet. some score sprites
+     * are wider than 16 pixels, so take that into account
+     */
     get textureOffsets() {
         switch(this.score) {
             //fruit
@@ -44,9 +53,11 @@ class PacmanPoints extends Sprite {
                 //ghosts 1,2,3, or 4
                 return {x: 16 * this.score, y: -16, w: 16};
         }
-
     }
 
+    /**
+     * as long as this sprite has ticksToLive, draw it
+     */
     draw() {
         if (this.ticksToLive > 0) {
             //do x/y offset based on board.level

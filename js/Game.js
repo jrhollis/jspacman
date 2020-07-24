@@ -1,28 +1,40 @@
+/**
+ * Game class creates a canvas and fires up a game loop.
+ */
 class Game {
+    //which game mode is being played
     static GAME_PACMAN = 0;
     static GAME_MSPACMAN = 1;
     static GAME_MODE = 0; //pacman
 
+    //credits to play.. for fun I guess
     static CREDITS = 0;
 
+    //last scores for each player and each game
     static LAST_SCORES = [
         [0,null],   //pacman
         [0,null]    //mspacman
     ];
 
+    /**
+     * 
+     * @param {*} el element to attach the canvas to. defaults to document.body
+     */
     constructor(el) {
         this.el = (el?document.getElementById(el):document.body)||document.body;
 
+        //pause controls. space bar will pause/unpause the game. see Input.js
         this.pauseGame = false;
         this.wasPaused = false;
 
+        //create the canvas and scale it so it's not so tiny
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d'),
         this.scale = 2.0;
         this.canvas.width = 224*this.scale;
         this.canvas.height = 288*this.scale;
         
-        //turn off scale antialiasing
+        //turn off antialiasing on the scaling
         this.context.webkitImageSmoothingEnabled = false;
         this.context.mozImageSmoothingEnabled = false;
         this.context.imageSmoothingEnabled = false;
@@ -33,7 +45,7 @@ class Game {
         this.canvas.style.border = 'solid';
         this.el.appendChild(this.canvas);
 
-        //set up scene manager with credits scene
+        //set up scene manager with credits scene as initial scene
         SceneManager.pushScene(new CreditsScene(this.context));
 
         //start game loop
@@ -45,20 +57,20 @@ class Game {
      * the game loop. where the magic happens
      */
     loop() {
-
+        //if not paused, play the action
         if (!this.pauseGame) {
             SceneManager.update();  
         }
-    
-        //deal with sound engine
+        
+        //deal with sound engine when pausing
         if (this.pauseGame && !this.wasPaused) {
             Sound.suspend();
         } else if (!this.pauseGame && this.wasPaused) {
             Sound.resume();
         }
-    
         this.wasPaused = this.pauseGame;
-    
+
+        //request another frame to continue the game loop
         window.requestAnimationFrame(()=>this.loop());
     }
 }

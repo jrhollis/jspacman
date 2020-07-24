@@ -1,18 +1,28 @@
 class Pacman extends Actor {
+    //STATUS INDICATORS
+    //normal movement around maze
     static MODE_PATROL = 0;
+    //after eating an energizer
     static MODE_ENERGIZED = 1;
+    //in the process of dying where he folds up into nothing
     static MODE_DYING = 2;
+    //all done dying
     static MODE_DEAD = 3;
 
+    //ANIMATIONS
+    //normal maze chomping
     static ANIM_NORMAL = 0;
+    //folding up and disappearing
     static ANIM_DIE = 1;
+    //used for cutscene 1 in pacman where he's pacman becomes a giant for some reason
     static ANIM_GIANT = 2;
+    //used for menu and cut scene. slows mouth chomping animation to half-speed
     static ANIM_SLOMO = 3;
 
     constructor(scene, x, y) {
         super(scene, x, y, 16, 16);
+        //always starts facing left
         this.startDirection = Vector.LEFT;
-        this.startPosition = { x: x, y: y };
         this.animations = [
             //normal --TODO: it seems chopming animations are dependent on speed control
             { frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
@@ -196,23 +206,16 @@ class Pacman extends Actor {
             //this move would hit a wall, try to continue in same direction of travel
             this.freeze();
             this.stop();
-            //pac man never seems to stop with his mouth closed
+            //pac man never stops with his mouth closed. ms pacman does, though
             if (this.animation.curFrame == 0 && Game.GAME_MODE == Game.GAME_PACMAN) {
                 this.animation.curFrame = 2;
             }
         }
 
-
-        var changeDirection = !Vector.equals(inputDirection, this.direction),
-            oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
+        var oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
         this.direction = inputDirection;
 
-        //when going up... movement is '01111121'
-        if (changeDirection && !oppositeDirection && Vector.equals(this.direction, Vector.DOWN)) {
-            this.y++;
-        }
-
-        //pause for a frame when changing direction
+        //make sure to keep pacman centered in the maze path
         if (!this.stopped && !oppositeDirection) {
 
             //get the coordinate of center lane
@@ -220,7 +223,8 @@ class Pacman extends Actor {
                 centerY = (this.tile.y * 8) + 3;
 
             //keep pac-man in his lane. fudge over to center line depending on direction of travel
-            //this code re-aligns pacman to the center of the maze lane after cutting a corner
+            //this code re-aligns pacman to the center of the maze lane after cutting a corner.
+            //have to use half pixels (0.5) because of the two updates per tick thing
             if (this.direction.x) {
                 if (this.centerPixel.y > centerY) {
                     this.y -= 0.5;
@@ -241,7 +245,7 @@ class Pacman extends Actor {
 
     /**
      * offset on sprite sheet according to which direction pac-man
-     * is pointing
+     * is facing
      */
     get directionalOffsetY() {
         //right, left, up, down
@@ -258,8 +262,8 @@ class Pacman extends Actor {
 
 
     /**
-     * offset on sprite sheet to which frame pac-man is
-     * at in his eating animation
+     * offset on sprite sheet for the frame pac-man is
+     * on in his eating animation
      */
     get frameOffsetX() {
         if (this.animation.curFrame == 0) {
@@ -320,41 +324,6 @@ class Pacman extends Actor {
         }
     }
 
-
-    /**
-     * total duration of energize/frighten. time is in seconds, flashes are 
-     * 28 ticks each-- 4 frames, 7 ticks per frame
-     * 
-     * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
-     */
-    get energizedDuration() {
-        var time = 0,
-            level = this.scene.level,
-            flashes = 0;
-        if (level <= 5) {
-            time = 7 - level;
-            flashes = 5;
-        } else if (level == 6 || level == 10) {
-            time = 5;
-            flashes = 5;
-        } else if (level <= 8 || level == 11) {
-            time = 2;
-            flashes = 5;
-        } else if (level == 14) {
-            time = 3;
-            flashes = 5;
-        } else if (level == 17 || level > 18) {
-            time = 0;
-            flashes = 0;
-        } else if (level == 9 || level <= 18) {
-            time = 1;
-            flashes = 3;
-        }
-        return {
-            ticks: time * 60,
-            flashes: flashes
-        }
-    }
 
     /**
      * these strings indicate how many pixels to move pacman at a given tick. two consecutive digits are applied

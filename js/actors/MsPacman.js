@@ -1,3 +1,6 @@
+/**
+ * Ms Pac-man's class. See Pacman.js
+ */
 class MsPacman extends Pacman {
     constructor(scene, x, y) {
         super(scene, x, y, 16, 16);

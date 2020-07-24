@@ -24,11 +24,47 @@ class Ghost extends Actor {
     static HOUSE_DOOR = { x: 13, y: 14 };
     static LEAVE_TARGET = { x: 13 * 8, y: 13.5 * 8 };
 
+
+    /**
+     * total duration of energize/frighten. time is in seconds, flashes are 
+     * 28 ticks each-- 4 frames, 7 ticks per frame. on most later levels, ghosts 
+     * never frighten and only reverse direction
+     * 
+     * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
+     */
+    static getFrightenDuration(level) {
+        var time = 0,
+            flashes = 0;
+        if (level <= 5) {
+            time = 7 - level;
+            flashes = 5;
+        } else if (level == 6 || level == 10) {
+            time = 5;
+            flashes = 5;
+        } else if (level <= 8 || level == 11) {
+            time = 2;
+            flashes = 5;
+        } else if (level == 14) {
+            time = 3;
+            flashes = 5;
+        } else if (level == 17 || level > 18) {
+            time = 0;
+            flashes = 0;
+        } else if (level == 9 || level <= 18) {
+            time = 1;
+            flashes = 3;
+        }
+        return {
+            ticks: time * 60,
+            flashes: flashes
+        }
+    }
+
     constructor(scene, x, y) {
         super(scene, x, y, 16, 16);
-        this.startPosition = { x: x, y: y };
+        
+        //when eaten, ghosts should return to their houseTarget (usually their startPosition, except Blinky)
         this.houseTarget = this.startPosition;
-
         this.animations = [
             //normal movement
             { frames: 2, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 456, textureY: 64 },
@@ -37,9 +73,10 @@ class Ghost extends Actor {
             //frighten (flash blue / white)
             { frames: 4, ticksPerFrame: 7, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 64 },
             //eaten (eyes)
-            { frames: 1, ticksPerFrame: 0, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 80 },
+            { frames: 1, ticksPerFrame: 0, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 80 }
         ];
         this.currentAnimation = 0;
+        //pellet counter for release from ghost house
         this.pelletCounter = 0;
     }
 
@@ -58,14 +95,18 @@ class Ghost extends Actor {
     }
 
     /**
-     * number of pellets that must be eaten before this ghost
-     * can leave the house
+     * when not using global pellet count, use this as a personal ghost counter.
+     * it is number of pellets that must be eaten before this ghost can leave the house
+     * only clyde and inky have values here. see their subclasses
      */
     get pelletLimit() {
         return 0;
     }
 
 
+    /**
+     * check to see if ghost is on a tunnel tile
+     */
     get inTunnel() {
         try {
             return this.scene.mazeClass.isTunnelTile(this.tile);
@@ -79,9 +120,8 @@ class Ghost extends Actor {
      * get a reverse instruction.
      */
     frighten() {
-        //tag the instruction as a reverse
-        this.reverseInstruction = Vector.inverse(this.direction);
-        this.reverseInstruction.reverse = true;
+        //reverse the ghost, even if they're eaten (eyes)
+        this.reverse();
         if (!this.isEaten) {
             //eaten ghosts (eyes) can't be frightened
             this.mode = Ghost.MODE_FRIGHT;
@@ -89,6 +129,9 @@ class Ghost extends Actor {
             Ghost.NUM_FRIGHTENED++;
         }
     }
+    /**
+     * start the flashin'
+     */
     frightenFlash() {
         this.animation = Ghost.ANIM_FRIGHT_FLASH;
     }
@@ -96,25 +139,23 @@ class Ghost extends Actor {
         return this.mode == Ghost.MODE_FRIGHT;
     }
 
+
     /**
      * turn the ghost around at the next tile center, if possible
      */
     reverse() {
-        var reverse = Vector.inverse(this.direction);
-        this.reverseInstruction = reverse;
+        this.reverseInstruction = Vector.inverse(this.direction);;
+        //tag as a reverse instruction so we know later when it becomes the next instruction
         this.reverseInstruction.reverse = true;
     }
 
 
     /**
      * make the ghost scatter pacman. called by the scatterchase instance
-     * @param {*} noReverse sometimes scatter needs to be called without the reverse instruction
      */
-    scatter(noReverse) {
+    scatter() {
         if (!this.isEaten) {
-            if (!noReverse) {
-                this.reverse();
-            }
+            this.reverse();
             this.mode = Ghost.MODE_SCATTER;
             this.animation = Ghost.ANIM_SCATTER_CHASE;
             //point to this ghost's scatter target
@@ -130,6 +171,7 @@ class Ghost extends Actor {
     /**
      * make the ghost chase pacman. called by the scatterchase instance
      * @param {*} noReverse sometimes chase needs to be called without the reverse instruction
+     *                      i.e. when frigthen state ends
      */
     chase(noReverse) {
         if (!this.isEaten) {

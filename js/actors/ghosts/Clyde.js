@@ -22,16 +22,15 @@ class Clyde extends Ghost {
 
     /**
      * Clyde will target pacman directly when more than 8 tiles away from him. if he
-     * gets closer, he will target his scatter tile
+     * gets closer than that, he will target his scatter tile
      */
     calculateTargetTile() {
         if (this.isChasing) {
-            var sueTile = this.tile,
-                pacmanTile = this.scene.pacman.tile,
-                distance = Vector.distance(sueTile, pacmanTile);
+            var pacmanTile = this.scene.pacman.tile,
+                distance = Vector.distance(this.tile, pacmanTile);
             if (distance > 8) {
                 // target pacman tile
-                return pacmanTile;
+                return Vector.clone(pacmanTile);
             } else {
                 // move to scatter target
                 return this.scatterTargetTile;

@@ -44,25 +44,19 @@ class MsPacman3 extends Maze {
     //warp tiles (could find these programmatically)
     static WARP_TILES = [
         {x: -1, y: 11.5},
-        {x: -1, y: 11.5},
-        {x: 28, y: 11.5},
         {x: 28, y: 11.5}
     ];
 
     //fruit entrance sequences- are there only two entry sequences
     static ENTER_TARGETS = [
         [{x: 10, y: 14}], // left
-        [{x: 10, y: 14}], // left
-        [{x: 26, y: 14}, {x: 16, y: 20}], // right
         [{x: 26, y: 14}, {x: 16, y: 20}] // right
     ];
 
-    //fruit exit sequences are there only two exit sequences?
+    //fruit exit sequences are there only two exit sequences
     static EXIT_TARGETS = [
         [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
-        [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
-        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}], // right
-        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}] // right
+        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 26, y: 23}] // right
     ];
 
     constructor(board) {

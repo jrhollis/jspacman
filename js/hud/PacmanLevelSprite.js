@@ -1,6 +1,13 @@
-/*
-the row of fruit that appears below the maze indicating which level
-the player is on
+/**
+* the row of fruit that appears below the maze indicating which level
+* the player is on. 
+*
+* the order of fruit appearance in pacman starting at level 1 is:
+* cherry, strawberry, orange, orange, apple, apple, pineapple, pineapple,
+* galaxian boss, galaxian boss, bell, bell, keys until forever
+*
+* as levels progress, earlier fruit is pushed off the board. a
+* maximum of 7 fruits are displayed at one time
 */
 
 class PacmanLevelSprite extends Sprite {

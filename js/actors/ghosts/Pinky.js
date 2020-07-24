@@ -16,7 +16,7 @@ class Pinky extends Ghost {
 
     /**
      * Pinky targets four tiles in front of the pacman in pacman's direction of travel. Also
-     * takes into account a bug with the targeting scheme in the original arcade game.s
+     * takes into account a bug with the targeting scheme in the original arcade game.
      */
     calculateTargetTile() {
         if (this.isChasing) {
@@ -32,7 +32,7 @@ class Pinky extends Ghost {
                     targetTile.x -= 4;
                 }
             }
-            return Vector.clone(targetTile);
+            return targetTile;
         } else {
             return Ghost.prototype.calculateTargetTile.call(this);
         }
