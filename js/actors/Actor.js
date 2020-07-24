@@ -1,3 +1,7 @@
+/**
+ * base class for pacmans, ghosts, and ms pacman fruit. actor is
+ * a base class for anything that moves around a scene
+ */
 class Actor extends Sprite {
 
     //turn preferences priority list- used by ghosts and ms pacman fruit.
@@ -5,11 +9,16 @@ class Actor extends Sprite {
     //one of the matches in this list
     static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
-    constructor(board, x, y, width, height) {
-        super(board, x, y, width, height);
+    constructor(scene, x, y, width, height) {
+        super(scene, x, y, width, height);
+        //frame counter keeps track of which value to select from speedControl string
+        //this gets incremented twice per tick and loops back to zero after 31
         this.frameCtr = 0;
     }
 
+    /**
+     * return the actor to it's starting place
+     */
     reset() {
         this.show();
         this.freeze();
@@ -26,7 +35,7 @@ class Actor extends Sprite {
     calculateNextInstruction(atTile) {
         var choice = -1,
             closest = Infinity,
-            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
+            validChoices = [];    //keep track of non-wall hitting moves for random selection (i.e. frightened mode)
         //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
         for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
             var testDirection = Actor.TURN_PREFERENCE[i];
@@ -69,6 +78,9 @@ class Actor extends Sprite {
         this.stopped = false;
     }
 
+    /**
+     * this gets called twice per frame.
+     */
     tick() {
         if (!this.stopped) {
             //update position of actor
@@ -78,15 +90,20 @@ class Actor extends Sprite {
             //counter used for speed control
             this.frameCtr = (this.frameCtr+1) % 32;
 
-            //warp tunnel wrap-around- if actor goes through tunnel, make them loop out from the other side
-            if (this.tile.x == 29 && this.direction.x == 1) {
-                this.x = (-2 * 8);
+            //warp tunnel wrap-around- if actor goes through tunnel, 
+            // make them loop out from the other side
+            if (this.tile.x == 30 && this.direction.x == 1) {
+                this.x = (-3 * 8)+2;
             } else if (this.tile.x == -2 && this.direction.x == -1) {
-                this.x = (29 * 8);
+                this.x = (30 * 8)-2;
             }
         }
     }
 
+    /**
+     * get the value at index:frameCtr from the speedControl string. this will be how
+     * many pixels the actor should move next half tick
+     */
     get speed() {
         try {
             return parseInt(this.speedControl[this.frameCtr]);

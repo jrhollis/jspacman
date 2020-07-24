@@ -14,7 +14,7 @@ class Maze {
             } else if (scene.level == 14) {
                 return 2;
             } else {
-                //rotate based on level
+                //rotate colors of mazes based on level
                 if (scene.level % 2) {
                     return 2;
                 } else {
@@ -130,23 +130,36 @@ class Maze {
         return this.scene.level <= 4 ? 240 : 180;
     }
 
+    /**
+     * check the fruit release values. if pellets eaten is equal to one of those, release
+     * a fruit.
+     */
     isFruitReady() {
         //make sure a fruit isn't already on the board
         return this.fruitRelease.indexOf(this.scene.pelletsEaten) >= 0;
     }
 
+    /**
+     * Ms Pacman only. choose a random warp tile for the fruit to appear
+     */
     chooseRandomFruitEntry() {
         var cls = this.constructor,
             choice = Math.floor(Math.random() * cls.WARP_TILES.length);
         return [cls.WARP_TILES[choice]].concat(cls.ENTER_TARGETS[choice]);
     }
 
+    /**
+     * Ms Pacman only. choose a random warp tile for the fruit to exit on
+     */
     chooseRandomFruitExit() {
         var cls = this.constructor,
             choice = Math.floor(Math.random() * cls.WARP_TILES.length);
         return cls.EXIT_TARGETS[choice].concat(cls.WARP_TILES[choice])
     }
 
+    /**
+     * called when the maze should start flashing animation
+     */
     finish() {
         this.flashing = true; 
     }
@@ -162,6 +175,7 @@ class Maze {
                 this.flashAnimation.curFrame++;
                 this.flashAnimation.curFrameTicks = 0;
                 if (this.flashAnimation.curFrame > this.flashAnimation.frames) {
+                    //flashing is done
                     this.complete = true;
                 }
             }

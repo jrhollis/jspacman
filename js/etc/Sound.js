@@ -1,14 +1,23 @@
+/**
+ * the Sound class uses Web Audio API. One sound track for each game mode
+ * contains all the sound effects for that respective game. this class
+ * picks the sound track apart and plays snippets from each track as a
+ * sound effect.
+ * 
+ * !!!!! In order for sound effects to work, this game must be loaded through
+ * a web server because it loads the files via XMLHttpRequest
+ */
 class Sound {
     static initialize() {
         var AudioContext = window.AudioContext || window.webkitAudioContext;
         this.context = new AudioContext();
-
+        //load each sound track
         this.loadSound('res/pacman/sfx.ogg').then(buffer => this.sfx_0 = buffer);
         this.loadSound('res/mspacman/sfx.ogg').then(buffer => this.sfx_1 = buffer);
     }
 
     //list of currently running sounds. used for stopAll()
-    static playing = {}
+    static playing = {};
 
     //time offsets for each sound effect in the sfx.ogg file
     static sfx = [{    //GAME_PACMAN res/pacman/sfx.ogg
@@ -49,7 +58,9 @@ class Sound {
     }];
 
 
-    //siren pointer. as pellets are eaten, the siren will change
+    /**
+     * siren pointer. as pellets are eaten, the siren will change
+     */
     static siren = 0;
     static resetSiren() {
         this.siren = 0;
@@ -57,7 +68,7 @@ class Sound {
     /**
      * determine which siren to play based on number of pellets remaining in maze.
      * when the siren is changed, the old siren must first be stopped.
-     * @param {int} pelletsLeft 
+     * @param {int} pelletsLeft pellets remaining on maze
      */
     static checkSiren(pelletsLeft) {
         if (pelletsLeft > 108) {
@@ -78,7 +89,10 @@ class Sound {
         this.siren = siren;
     }
 
-    //play a sfx in a loop
+    /**
+     * siren pointer. as pellets are eaten, the siren will change
+     * @param {*} fx sound effect name from this.sfx to play
+     */
     static playLoop(fx) {
         if (fx == 'siren') {
             fx += this.siren;
@@ -100,13 +114,17 @@ class Sound {
             delete this.playing[fx];
         });
         return source;
-
     }
 
-    //this counter is only for pacman. his sound fx flips back and forth each time he eats a pellet
+    /**
+     * this counter is only for pacman. his sound fx flips back and forth each time he eats a pellet
+     */
     static munch = 0;
 
-    //play a sfx one time
+    /**
+     * play sound effect one time
+     * @param {} fx sound effect name from this.sfx to play
+     */
     static playOnce(fx) {
         if (fx == 'munch') {
             this.stop('munch');
@@ -127,7 +145,10 @@ class Sound {
         return source;
     }
 
-    //stop a currently-playing sfx
+    /**
+     * stop a currently-playing sfx
+     * @param {*} fx sound effect name from this.sfx to stop
+     */
     static stop(fx) {
         if (fx == 'siren') {
             fx += this.siren;
@@ -137,24 +158,34 @@ class Sound {
         }
     }
 
-    //stop all currently playing sfx
+    /**
+     * stop all currently playing sound effects
+     */
     static stopAll() {
         for (var fx in this.playing) {
             this.stop(fx);
         }
     }
 
+    /**
+     * unpauses all sounds
+     */
     static resume() {
-        if (this.context)
-            this.context.resume();
+        if (this.context) this.context.resume();
     }
 
+    /**
+     * pauses all sounds
+     */
     static suspend() {
-        if (this.context)
-            this.context.suspend();
+        if (this.context) this.context.suspend();
     }
 
 
+    /**
+     * load a sound file into an audio buffer for processing
+     * @param {*} url location of sound file
+     */
     static loadSound(url) {
         return new Promise((resolve, reject) => {
             var request = new XMLHttpRequest();

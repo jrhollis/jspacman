@@ -26,7 +26,6 @@ class Ghost extends Actor {
 
     constructor(scene, x, y) {
         super(scene, x, y, 16, 16);
-        this.scene = scene;
         this.startPosition = { x: x, y: y };
         this.houseTarget = this.startPosition;
 
@@ -45,6 +44,9 @@ class Ghost extends Actor {
     }
 
 
+    /**
+     * return ghosts to their starting positions and states
+     */
     reset() {
         Actor.prototype.reset.call(this);
         this.nextInstruction = Vector.clone(this.direction);
@@ -53,7 +55,6 @@ class Ghost extends Actor {
         this.animation = Ghost.ANIM_SCATTER_CHASE;
         this.targetTile = this.calculateTargetTile();
         delete this.reverseInstruction;
-
     }
 
     /**
@@ -109,7 +110,6 @@ class Ghost extends Actor {
      * make the ghost scatter pacman. called by the scatterchase instance
      * @param {*} noReverse sometimes scatter needs to be called without the reverse instruction
      */
-
     scatter(noReverse) {
         if (!this.isEaten) {
             if (!noReverse) {
@@ -162,8 +162,6 @@ class Ghost extends Actor {
     }
 
 
-
-    //ghost house stuff vvvv
     /**
      * direct the ghost to leave the house. if they are not already home
      * point the ghost in the direction of the exit point (x axis first)
@@ -214,12 +212,11 @@ class Ghost extends Actor {
 
 
     /**
-     * one tick of the game. this is where the meat of the ghosts' game mechanics lies. this tells
+     * one (half) tick of the game. this is where the meat of the ghosts' game mechanics lies. this tells
      * the ghost how to move based on its location, mode, and status. for instance, if the ghost is 
      * leaving home, it's pointed to the LEAVE_TARGET and gradually moves there with each tick of the game.
      */
     tick() {
-        //the ghost's "speed" determines how many pixels it moves in this game tick. see "get speedControl()" below
         Actor.prototype.tick.call(this);
         if (!this.scene.maze) return;
         if (this.isHome) {
@@ -286,7 +283,7 @@ class Ghost extends Actor {
             this.madeInstruction = true;    //clear this after leaving tileCenter
             // execute pending instruction
             if (this.reverseInstruction) {
-                //check validity of move, if not valid, go back in the previous direciton
+                //check validity of move, if not valid, go back in the previous direction
                 var nextTile = Vector.add(this.tile, this.reverseInstruction);
                 if (this.scene.mazeClass.isWallTile(nextTile)) {
                     this.nextInstruction = Vector.inverse(this.lastDirection);
@@ -300,13 +297,12 @@ class Ghost extends Actor {
             // look ahead to next tile and calculate next instruction from there
             var nextTile = Vector.add(this.tile, this.direction),
                 futureTile = Vector.add(nextTile, this.direction);
-            if (this.scene.mazeClass.isDecisionTile(nextTile)) {
-                this.nextInstruction = this.calculateNextInstruction(nextTile);
-            } else if (this.scene.mazeClass.isWallTile(futureTile)) {
+            if (this.scene.mazeClass.isDecisionTile(nextTile) || this.scene.mazeClass.isWallTile(futureTile)) {
                 this.nextInstruction = this.calculateNextInstruction(nextTile);
             }
             if (!this.nextInstruction) {
                 //the above did not generate a valid move. could happen due to a reverse instruction at an inopportune time
+                //calculate a next move from this tile, or just keep the current direction
                 var nextDirection = this.calculateNextInstruction(this.tile) || this.direction;
                 this.nextInstruction = Vector.clone(nextDirection);
             }
@@ -326,7 +322,7 @@ class Ghost extends Actor {
                     this.status = Ghost.STATUS_ENTER_HOME;
                 }
             } else if (this.exitingHouse) {
-                //now that the ghost has popped out of the house, make sure its position is snapped to the maze lanes
+                //now that the ghost has popped out of the house, make sure its y position is snapped to the maze lane
                 this.y = ((this.tile.y - 1) * 8) + 4;
                 this.exitingHouse = false;
             }
@@ -339,7 +335,7 @@ class Ghost extends Actor {
     /**
      * the interesting thing here is that the ghosts telegraph their turn a few pixels
      * before the execute the turn. the draw method takes into account a pending instruction
-     * and moves the ghost's eyes in that direction while the ghost is patrolling
+     * and moves the ghost's eyes in that direction while it is patrolling the maze.
      */
     draw() {
         if (this.hidden) return;
@@ -354,10 +350,13 @@ class Ghost extends Actor {
             offsetY = this.textureOffsetY;
             var eyes;
             if (this.isHome || this.isLeavingHome) {
+                //eyes agree with the ghosts direction
                 eyes = this.direction;
             } else if (this.madeInstruction || this.nextInstruction.reverse) {
+                //eyes should agree with direction
                 eyes = this.direction;
             } else {
+                //eyes look in the ghost's next move direction
                 eyes = this.nextInstruction || this.direction;
             }
             //add an x offset to the textureX to point eyes frames

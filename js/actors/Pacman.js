@@ -44,21 +44,25 @@ class Pacman extends Actor {
         return { x: this.position.x + 7, y: this.position.y + 7 };
     }
 
+    /**
+     * see if pacman collided with a pellet
+     * 
+     * @param {*} pellet test hitbox against pacman
+     */
     collideItem(pellet) {
         var pelletHitbox = pellet.hitBox;
-        if ((pelletHitbox.x > this.hitBox.x && pelletHitbox.x + pelletHitbox.w < this.hitBox.x + this.hitBox.w) &&
-            (pelletHitbox.y > this.hitBox.y + 1 && pelletHitbox.y + pelletHitbox.h < this.hitBox.y + this.hitBox.h)) {
-            return true;
-        }
-        return false;
+        return ((pelletHitbox.x > this.hitBox.x && pelletHitbox.x + pelletHitbox.w < this.hitBox.x + this.hitBox.w) &&
+            (pelletHitbox.y > this.hitBox.y + 1 && pelletHitbox.y + pelletHitbox.h < this.hitBox.y + this.hitBox.h));
     }
 
     /**
      * pacman is out in the maze and there is no fright timer.
      */
     patrol() {
-        this.animation = Pacman.ANIM_NORMAL;
-        this.mode = Pacman.MODE_PATROL;
+        if (this.isAlive) {
+            this.animation = Pacman.ANIM_NORMAL;
+            this.mode = Pacman.MODE_PATROL;    
+        }
     }
     get isPatrolling() {
         return this.mode == Pacman.MODE_PATROL;
@@ -69,7 +73,7 @@ class Pacman extends Actor {
      * pacman eats an item such as a pellet, energizer, or fruit. when eating a pellet, pacman
      * freezes for one frame, and freezes for 3 when eating an energizer. The freeze delay counter
      * is because the freeze happens after one tick.
-     * @param {*} item 
+     * @param {*} item the thing that pacman ate
      */
     eatItem(item) {
         if (item.pellet) {
@@ -197,11 +201,19 @@ class Pacman extends Actor {
                 this.animation.curFrame = 2;
             }
         }
-        //finally set the direction
+
+
+        var changeDirection = !Vector.equals(inputDirection, this.direction),
+            oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
         this.direction = inputDirection;
 
-        //TODO: pause for a frame when changing direction
-        if (!this.stopped) {
+        //when going up... movement is '01111121'
+        if (changeDirection && !oppositeDirection && Vector.equals(this.direction, Vector.DOWN)) {
+            this.y++;
+        }
+
+        //pause for a frame when changing direction
+        if (!this.stopped && !oppositeDirection) {
 
             //get the coordinate of center lane
             var centerX = (this.tile.x * 8) + 3,

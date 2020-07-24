@@ -1,6 +1,5 @@
 /**
  * this class keeps a two frame buffer since controls are delayed in the game
- * 
  */
 class Input {
     static lastKey = null;

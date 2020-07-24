@@ -13,6 +13,9 @@ class MsPacman extends Pacman {
         ];
     }
 
+    /**
+     * ms pacman starts die animation pointing down
+     */
     die() {
         Pacman.prototype.die.call(this);
         this.animation.curFrameTicks = 0;
@@ -28,7 +31,7 @@ class MsPacman extends Pacman {
             animation = this.animation;
 
         if (this.isAlive) {
-            //chopming animation
+            //chomping animation
             context.drawImage(RESOURCE.mspacman,
                 animation.textureX + (this.frameOffsetX * 16), this.directionalOffsetY, 16, 16,
                 this.position.x, this.position.y, 16, 16

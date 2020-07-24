@@ -1,23 +1,27 @@
+/**
+ * Ms Pacman fruit behaves quite differently from Pacman fruit. It enters through
+ * a random tunnel, makes its way toward the center of the maze, does one loop
+ * around the ghost house and then chooses a random tunnel to exit through.
+ */
 class MsPacmanFruit extends Actor {
     static MODE_ENTER = 0;
     static MODE_LOOP = 1;
     static MODE_EXIT = 2;
 
+    //this is a point inside the ghost house that causes the fruit to do the lap 
+    //around the house when targeted
     static HOUSE_TARGET = { x: 13, y: 18 };
-
-    static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
     constructor(scene) {
         super(scene, -16, -16, 16, 16);
-
+        this.fruit = true;
         this.level = this.scene.level;
         if (this.level > 7) {
             //after level 7, randomly choose fruit
             this.level = Math.floor(Math.random() * 7) + 1;
         }
         this.textureOffset = { x: 504, y: 0 };
-        this.fruit = true;
-
+        //the fruit bounces up and down as it moves. this counter keeps track of that bounce
         this.bounceCtr = 0;
         //fruit enters through one of 2 or 4 set paths (depending on maze)
         this.mode = MsPacmanFruit.MODE_ENTER;
@@ -32,7 +36,9 @@ class MsPacmanFruit extends Actor {
         this.targetTile = this.enterSequence[this.turn];
     }
 
-
+    get speedControl() {
+        return '00100010001000100010001000100010';
+    }
 
     get hitBox() {
         return { x: this.position.x + 4, y: this.position.y + 4, w: 8, h: 8 }
@@ -125,21 +131,9 @@ class MsPacmanFruit extends Actor {
         Actor.prototype.draw.call(this);
         var offsetX = (this.level - 1) * 16,
             offsetBounce = 1.5 * Math.sin((this.bounceCtr / 16) * Math.PI) - 0.5;  //bounce the fruit up and down
-            this.scene.context.drawImage(RESOURCE.mspacman,
-                this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
-                this.position.x, this.position.y + offsetBounce, 16, 16
-            );
-
-
-        // context.beginPath();
-        // context.lineWidth = 1;
-        // context.strokeStyle = "#FF0000";
-        // var tile = this.targetTile;
-        // context.strokeRect(tile.x*8, tile.y*8, 8, 8);
-
-    }
-
-    get speedControl() {
-        return '00100010001000100010001000100010';
+        this.scene.context.drawImage(RESOURCE.mspacman,
+            this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
+            this.position.x, this.position.y + offsetBounce, 16, 16
+        );
     }
 }

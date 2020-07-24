@@ -80,7 +80,6 @@ class MsPacman1 extends Maze {
             return {x: 228, y: 0};
         }
     }
-
 }
 //inherit statics and load map
 Object.assign(MsPacman1, Maze);

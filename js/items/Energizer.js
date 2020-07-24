@@ -1,6 +1,6 @@
-/*
-    The big pellet. Energizes pacman and frightens/reverses the ghost when eaten
-*/
+/**
+ * The big pellet. Energizes pacman and frightens/reverses the ghost when eaten
+ */
 class Energizer extends Pellet {
     constructor(scene, x, y) {
         super(scene, x, y);
@@ -28,7 +28,6 @@ class Energizer extends Pellet {
             context.fillRect(this.position.x + 1, (this.position.y) + 1, 6, 6);
             context.fillRect(this.position.x, (this.position.y) + 2, 8, 4);
             context.fillRect(this.position.x + 2, (this.position.y), 4, 8);
-
             context.fill();
         }
     }

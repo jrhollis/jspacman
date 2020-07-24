@@ -1,3 +1,6 @@
+/**
+ * base class for just about anything drawn on the canvas, except the maze backgrounds
+ */
 class Sprite {
     constructor(scene, x, y, width, height) {
         this.scene = scene;

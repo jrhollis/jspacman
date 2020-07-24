@@ -1,21 +1,25 @@
-/*
-    this class dictates to the scene which scatter or chase phase the
+/**
+ * this class dictates to the scene which scatter or chase phase the
     ghosts should be in at a given moment. basically a glorified timer.
     the durations of each scatter/chase phase are dependent on the 
     current level
-*/
+ */
 class ScatterChase {
     constructor(scene){
         this.scene = scene;
         this.reset();
      }
 
-
+     /**
+      * phase 0 scatter in ms pacman is random movements for pinky and blinky
+      */
      get randomScatter() {
-         //only applicable for ms pacman
         return Game.GAME_MODE == Game.GAME_MSPACMAN && this.phase == 0 &&  this.phaseTimesRemaining.scatter > 0;
     }
 
+    /**
+     * reset the phase and timers
+     */
     reset() {
         this.phase = 0;
         this.setTimers();

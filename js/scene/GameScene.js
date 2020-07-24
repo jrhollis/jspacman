@@ -1,3 +1,6 @@
+/**
+ * the GameScene is where all the game play action occurs
+ */
 class GameScene extends Scene {
 
     //these correspond to the static ghost modes scatter/chase
@@ -88,20 +91,36 @@ class GameScene extends Scene {
 
     }
 
+    /**
+     * count of pellets and energizers eaten this level
+     */
     get pelletsEaten() {
         var totalPellets = this.mazeClass.tiles.filter(t => t.pellet).length + this.mazeClass.tiles.filter(t => t.energizer).length;
         return totalPellets - this.pelletsLeft;
     }
 
+    /**
+     * count pellets and energizers remaining on the maze board
+     */
     get pelletsLeft() {
         return this.pellets.length + this.energizers.length;
     }
 
+    /**
+     * the high score for the current GAME_MODE
+     */
     get highScore() {
         var score = parseInt(localStorage['highscore_' + Game.GAME_MODE]||'0');
         return !score?"":score;
     }
 
+
+    /**
+     * sets the current player. if two player mode, load their last set of 
+     * remaining pellets on to the maze.
+     * 
+     * @param {int} player index of player to load (0: player 1, 1: player 2)
+     */
     loadPlayer(player) {
         this.curPlayer = player;
         this.pacman = this.players[player];
@@ -119,6 +138,13 @@ class GameScene extends Scene {
         }
     }
 
+
+    /**
+     * called after level is completed or when starting a new game on level 1.
+     * this loads pellets from the wall map.
+     * 
+     * @param {*} newGame are we coming into level 1?
+     */
     nextLevel(newGame) {
         Sound.resetSiren();
         this.levelStarting = true;
@@ -148,6 +174,11 @@ class GameScene extends Scene {
         }
     }
 
+
+    /**
+     * if pacman dies, come here. this resets actors. also called
+     * after loading a new level.
+     */
     resetLevel() {
         this.levelStarting = true;
         Ghost.NUM_EATEN = 0;
@@ -199,6 +230,10 @@ class GameScene extends Scene {
     }
 
 
+    /**
+     * called when all pellets are eaten and level is complete. mostly animation
+     * timers. check for cutscenes after levels 2, 5, and 9. go on to next level
+     */
     endLevel() {
         this.levelComplete = true;
         Ghost.NUM_EATEN = 0;
@@ -234,19 +269,22 @@ class GameScene extends Scene {
         //wait for the start level timer before doing anything
         if (this.startLevelTimer.tick()) return;
 
-        //don't freeze eyes when freeze timer is on
+        //update eyes now in case freeze timer is active, do other ghosts later- after freeze timer code
         var updateGhostsLater = this.ghosts.filter(ghost => !(ghost.isEaten && !ghost.hidden));
         if (!this.levelComplete) {
+            //don't freeze eyes when freeze timer is on
             for (var i = 0; i < 2; i++) {
                 this.ghosts.filter(ghost => ghost.isEaten && !ghost.hidden).forEach(ghost => ghost.tick());
             }
         }
         
         if (this.freezeTimer.tick()) {
+            //if game play is frozen, stop the siren sound and bail
             Sound.stop('siren');
             return;
         }
         if (this.levelComplete || this.levelStarting) {
+            //if before or after level, make sure to stop all sounds
             Sound.stopAll();
             return;
         }
@@ -269,12 +307,14 @@ class GameScene extends Scene {
         }
 
         if (this.eatenGhosts.length) {
-            //who'd pacman eat last tick
+            //who'd pacman eat last tick? eat one now and go to next tick
+            //the prevents pacman from eating two ghosts in the same tick
             this.eatGhost(this.eatenGhosts.pop());
             return;
         }
 
         if (this.pacman.isDead) {
+            //pacman is fully dead, start a timer and restart level, next player, or end game
             this.freezeTimer.start(60, () => {
                 var otherPlayer = (this.curPlayer+1)%this.numPlayers;
                 if (this.pacman.lives < 0) {
@@ -316,14 +356,14 @@ class GameScene extends Scene {
                     //switch players if other player has lives
                     this.loadPlayer(otherPlayer);    
                 } else {
-                    //only one player or one player left
+                    //only one player playing
                     this.resetLevel();
                 }
             });
             return;
         }
 
-        //update behavior
+        //update ghost behavior
         this.scatterChase.tick();
 
         //update the frighten timers if they're running
@@ -331,7 +371,7 @@ class GameScene extends Scene {
         this.frightenFlashTimer.tick();
 
         //point sprites from fruit
-        if (this.pointSprite) this.pointSprite.tick()
+        if (this.pointSprite) this.pointSprite.tick();
 
         //update actors twice per pick
         for (var i = 0; i < 2; i++) {
@@ -384,7 +424,7 @@ class GameScene extends Scene {
     /**
      * called twice per tick. collision occurs between ghosts when pacman and
      * a ghost occupy the same tile. collision with items occurs when their
-     * bboxes overlap
+     * hitboxes overlap
      */
     collisionDetect() {
         //no point in collision detected if pacman just kicked the bucket
@@ -400,7 +440,7 @@ class GameScene extends Scene {
             }
         }
         for (var i = 0; i < this.energizers.length; i++) {
-            //if center of pellet is in pacman hitbox, then eat
+            //if center of pellet is inside pacman hitbox, then eat
             if (this.pacman.collideItem(this.energizers[i])) {
                 this.ateEnergizer = this.energizers[i];
                 this.energizers.splice(i, 1);
@@ -410,14 +450,15 @@ class GameScene extends Scene {
 
         //fruit collision
         if (this.fruit && this.fruit.collide(this.pacman)) {
-            //put a point sprite here
+            //put a point sprite at this location
             this.pointSprite = new Points(this, this.fruit.position.x, this.fruit.position.y, this.fruit.points, 0);
+            //feed it to pacman
             this.pacman.eatItem(this.fruit);
         }
 
-        //ghosts with collision and/or free if personal pelletLimit is met
+        //pacman/ghosts collision
         for (var i = 0; i < this.ghosts.length; i++) {
-            var ghost = this.ghosts[i]; //must be in a for-loop so we can break out if a ghost is eaten
+            var ghost = this.ghosts[i];
             if (ghost.collide(this.pacman)) {
                 if (ghost.isFrightened && !ghost.isEaten) {
                     //pac man eats a frightened ghost- pause game for 1 second and hide ghost+pacman to reveal score
@@ -428,13 +469,15 @@ class GameScene extends Scene {
                     return;
                 } else if (!ghost.isEaten) {
                     // return; 
-                    // //pac man dies. RIP pac man we hardly knew ye
+                    // ghost was patrolling, pac man dies. RIP pac man we hardly knew ye
+                    //everything stops for a little under a second
                     this.ghosts.forEach(ghost => ghost.stop());
                     if (this.fruit && this.fruit.stop) this.fruit.stop(); //ms pacman
                     this.pacman.freeze();
                     this.pacman.stop();
                     Sound.stopAll();
                     this.freezeTimer.start(45, () => {
+                        //ghosts disappear and pacman starts die animation
                         this.ghosts.forEach(ghost => ghost.hide());
                         this.pacman.die();
                     });
@@ -444,6 +487,12 @@ class GameScene extends Scene {
     }
 
 
+    /**
+     * check to see if it's time to release a ghost from the house
+     * 
+     * @param {*} reason possible values are 'timeup' from the lastPelletEaten timer or 
+     *                   'pellet' to check pelletCounters of the ghosts
+     */
     releaseNextGhost(reason) {
         for (var i = 3; i >= 0; i--) {
             var ghost = this.ghosts[i];
@@ -470,7 +519,12 @@ class GameScene extends Scene {
         }
     }
 
-    //ghost functions
+
+    /**
+     * put the ghosts into a frightened state. this reverses their direction,
+     * slows them down, and suspends the scatter/chase behavior. frightened period
+     * ends when timer runs out or all four ghosts have been devoured
+     */
     frightenGhosts() {
         this.ghosts.forEach(ghost => ghost.frighten());
         //reset eaten counter
@@ -514,6 +568,14 @@ class GameScene extends Scene {
     }
 
 
+    /**
+     * when a ghost is eaten, a score should be displayed with points increasing
+     * by a multiplier base on how many were eaten in this frightened period.
+     * 1 = 200, 2 = 400, 3 = 800, 4 = 1600. if all ghosts are eaten, the frightened
+     * period ends.
+     * 
+     * @param {*} ghost ghost that was eaten
+     */
     eatGhost(ghost) {
         Sound.playOnce('eat_ghost');
         //when pacman eats a ghost, hide pacman and freeze other ghosts for a second
@@ -545,7 +607,15 @@ class GameScene extends Scene {
     }
 
 
+    /**
+     * feed the pellet to pacman to award points and/or energize. reset
+     * the last pellet eaten timer and update the global pellet counter.
+     * check to see if a ghost can be released by the global counter.
+     * 
+     * @param {*} pellet pellet that was eaten
+     */
     eatPellet(pellet) {
+        //feed to pacman and reset the last pellet eaten timer
         this.pacman.eatItem(pellet);
         this.lastPelletEatenTimer.reset(this.lastPelletEatenTimeout + 1);
         this.globalPelletCounter++;
@@ -590,6 +660,7 @@ class GameScene extends Scene {
         this.oneUpLabel.flash = this.curPlayer == 0;
         this.twoUpLabel.flash = this.curPlayer == 1;
 
+        //draw the background maze image
         this.maze.draw();
 
         //draw hud
@@ -599,19 +670,21 @@ class GameScene extends Scene {
         this.levelSprite.draw();
         this.livesSprite.draw();
 
-        //draw point/score sprites
+        //draw fruit point score sprites
         if (this.pointSprite) this.pointSprite.draw();
 
         //draw items
         this.pellets.forEach(p => p.draw());
         this.energizers.forEach(e => e.draw());
 
+        //if there's a fruit, draw it
         if (this.fruit) this.fruit.draw();
 
-        //actors
+        //draw actors
         this.pacman.draw();
         this.ghosts.forEach(g => g.draw());
 
+        //if there's a ghost score, draw it
         if (this.ghostScore) this.ghostScore.draw();
     }
 }

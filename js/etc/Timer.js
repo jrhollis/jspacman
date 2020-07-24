@@ -1,10 +1,13 @@
+/**
+ * simple class that just keeps track of a countdown. when the
+ * countdown is complete, fire the callback
+ */
 class Timer {
     constructor() {}
 
-    start(ticks, callback, wait) {
-        this.wait = wait;
+    start(ticks, callback) {
         this.originalTicks = ticks;
-        this.ticks = ticks; //one frame delay on starts
+        this.ticks = ticks;
         this.callback = callback;
         if (ticks <= 0) {
             //started with no or negative time, just do the call back
@@ -13,6 +16,10 @@ class Timer {
         }
     }
 
+    /**
+     * start the timer back up
+     * @param {*} ticks the number of ticks to set on the timer
+     */
     reset(ticks) {
         this.ticks = ticks||this.originalTicks; 
     }
@@ -21,6 +28,9 @@ class Timer {
         this.ticks = 0;
     }
 
+    /**
+     * countdown the timer. when time's up, execute the call back
+     */
     tick() {
         if (this.ticks > 0) {
             this.ticks--;
@@ -29,6 +39,6 @@ class Timer {
                 this.callback.call(this);
             }
         }
-        return this.wait || this.ticks > 0;
+        return this.ticks > 0;
     }
 }

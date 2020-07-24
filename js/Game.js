@@ -40,6 +40,10 @@ class Game {
         window.requestAnimationFrame(()=>this.loop());
     }
 
+
+    /**
+     * the game loop. where the magic happens
+     */
     loop() {
 
         if (!this.pauseGame) {

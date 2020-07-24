@@ -1,5 +1,8 @@
-//TODO:  on reversal there is a ms pacman patch that makes blinky go after ms pacman to "avoid parking"
-
+/**
+ * Blinky is a special ghost. He appears in the pac-man cut scenes with his own
+ * animations. he also has a "cruise elroy" state where he speeds up when there
+ * are few pellets left on the maze.
+ */
 class Blinky extends Ghost {
     //extra animations for cut scenes
     static ANIM_RIP = 4;
@@ -25,9 +28,12 @@ class Blinky extends Ghost {
         this.reset();
     }
 
+
+    /**
+     * blinky starts outside of the house on reset
+     */
     reset() {
         Ghost.prototype.reset.call(this);
-        //blinky starts outside of the house
         this.status = Ghost.STATUS_PATROL;
     }
 
@@ -50,8 +56,11 @@ class Blinky extends Ghost {
         }
     }
 
+
+    /**
+     * blinky should always leave home immediately
+     */
     tick() {
-        //blinky should always leave home immediately
         if (this.isHome) {
             this.leaveHouse()
         }
@@ -61,9 +70,10 @@ class Blinky extends Ghost {
 
     draw() {
         if (this.currentAnimation == Blinky.ANIM_NAKED) {
-            Actor.prototype.draw.call(this);
+            //this is for the third cutscene of pacman. just update animation without any maze logic
+            Sprite.prototype.draw.call(this);
             var animation = this.animation;
-            context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 animation.textureX + (animation.curFrame * 32), animation.textureY, 32, this.height, //clip from source
                 this.position.x-16, this.position.y, 32, this.height
             );
@@ -80,7 +90,6 @@ class Blinky extends Ghost {
      * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2439
      */
     get elroy() {
-        //cruise elroy for Blinky only
         if (this.scene.pelletsLeft > 0) {
             if (this.scene.pelletsLeft <= this.elroy2PelletsLeft) {
                 return 2;
@@ -92,6 +101,9 @@ class Blinky extends Ghost {
     }
 
 
+    /**
+     * elroy1 threshold is double elroy2
+     */
     get elroy1PelletsLeft() {
         return this.elroy2PelletsLeft * 2;
     }

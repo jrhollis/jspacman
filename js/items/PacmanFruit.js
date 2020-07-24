@@ -1,5 +1,8 @@
-//instead of making a subclass for each fruit, just jam all info into this single class for everything
-class PacmanFruit extends Sprite {
+/**
+ * Pacman only fruit. This fruit doesn't do anything except spawn at the same
+ * place in the maze, twice per maze, and hang around for 9.33 to 10 seconds
+ */
+ class PacmanFruit extends Sprite {
     static POINTS = [100, 300, 500, 700, 1000, 2000, 3000, 5000];
     static getFruitIndex(level) {
         switch(level) {
@@ -33,11 +36,12 @@ class PacmanFruit extends Sprite {
         //60 fps == 60 ticks per sec
         //half ticks because fruit is updated twice per tick
         this.halfTicksToLive = 2 * 60 * ((Math.random() * (2/3)) + (28/3));   //10ish second timer (should be random between 9.33333 and 10)
-        // this.points = this.setPoints();
         this.fruit = true;
     }
 
-
+    /**
+     * amount of points this fruit is worth
+     */
     get points() {
         return PacmanFruit.POINTS[PacmanFruit.getFruitIndex(this.scene.level)];
     }
@@ -46,16 +50,25 @@ class PacmanFruit extends Sprite {
         return {x: this.position.x + 6, y: this.position.y, w: 2, h: 8}
     }
 
+    /**
+     * returns true if hitbox intersects with pacman's hitbox
+     * @param {*} pacman duh
+     */
     collide(pacman) {
         return (pacman.centerPixel.x <= this.hitBox.x+this.hitBox.w && pacman.centerPixel.x >= this.hitBox.x && 
                 pacman.centerPixel.y <= this.hitBox.y+this.hitBox.h && pacman.centerPixel.y >= this.hitBox.y)
     }
 
+    /**
+     * the fruit was eaten, leave it for dead
+     */
     eaten() {
         this.halfTicksToLive = 0;
     }
 
-
+    /**
+     * count down half ticks until it's time to remove the fruit
+     */
     tick() {
         this.halfTicksToLive--;
         if (this.halfTicksToLive < 0) {
@@ -66,7 +79,6 @@ class PacmanFruit extends Sprite {
 
     draw() {
         if (this.halfTicksToLive > 0) {
-            //do x/y offset based on board.level
             var offsetX = PacmanFruit.getFruitIndex(this.scene.level) * 16;
             this.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
