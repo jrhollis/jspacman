@@ -84,17 +84,19 @@ class MsPacmanCutScene2 extends ScriptScene {
                 this.pacman.y = 8.5*8;
                 this.pacman.direction = {x: -5, y: 0};
             },
-            1110: () => {
+            1120: () => {
+                //and back the other way, pacman first
                 this.pacman.direction = {x: 5, y: 0};
                 this.pacman.x = -1.5 * 8;
                 this.pacman.y = 28.5 * 8;
             },
-            1125: () => {
+            1135: () => {
+                //finally ms pacman
                 this.mspacman.direction = {x: 5, y: 0};
                 this.mspacman.x = -1.5 * 8;
                 this.mspacman.y = 28.5 * 8;
             },
-            1350: 'end'
+            1355: 'end'
         });
         this.levelSprite = new MsPacmanLevelSprite(this);
         this.level = 5;
@@ -106,7 +108,6 @@ class MsPacmanCutScene2 extends ScriptScene {
         this.pacman = new Pacman(this, -1.5 * 8, 8.5 * 8);
         this.mspacman = new MsPacman(this, -1.5 * 8, 8.5 * 8);
 
-
         this.drawables = [
             this.act,
             this.theChase,
@@ -114,24 +115,16 @@ class MsPacmanCutScene2 extends ScriptScene {
             this.mspacman,
             this.pacman
         ];
+
+        this.actors = [this.pacman, this.mspacman];
     }
     
 
-    tick() {
-        ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.mspacman.tick();
-        }
-    }
-
     draw() {
         ScriptScene.prototype.draw.call(this)
-        this.drawables.forEach(d => d.draw());
         if (this.take) {
-            var takeOffset = (this.take-1) * 32,
-                context = this.context;
-            context.drawImage(RESOURCE.mspacman,
+            var takeOffset = (this.take-1) * 32;
+            this.context.drawImage(RESOURCE.mspacman,
                 456 + takeOffset, 208, 32, 32, (6*8) + 2, (13*8) + 1, 32, 32
             );    
         }

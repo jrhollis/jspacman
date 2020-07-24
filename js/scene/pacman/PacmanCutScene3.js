@@ -65,23 +65,15 @@ class PacmanCutScene3 extends ScriptScene {
         this.pacman = new Pacman(this, 27.75 * 8, 19.5 * 8);
         this.blinky = new Blinky(this, 31 * 8, 19.5 * 8);
         this.levelSprite = new PacmanLevelSprite(this);
+
+        this.drawables = [
+            this.pacman, this.blinky, this.levelSprite
+        ];
+        this.actors = [
+            this.pacman, this.blinky
+        ];
         this.level = 9;
         this.pelletsLeft = 1;
 
-    }
-
-    tick() {
-        ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.blinky.tick();
-        }
-    }
-
-    draw() {
-        ScriptScene.prototype.draw.call(this)
-        this.pacman.draw();
-        this.blinky.draw();
-        this.levelSprite.draw();
     }
 }

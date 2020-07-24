@@ -94,20 +94,14 @@ class PacmanCutScene2 extends ScriptScene {
 
         this.pacman = new Pacman(this, 27.75 * 8, 19.5 * 8);
         this.blinky = new Blinky(this, 31 * 8, 19.5 * 8);
+        this.actors = [this.pacman, this.blinky];
         this.levelSprite = new PacmanLevelSprite(this);
         this.level = 5;
 
     }
 
-    tick() {
-        ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.blinky.tick();
-        }
-    }
-
     draw() {
+        //don't use drawables because order is important
         ScriptScene.prototype.draw.call(this)
         this.pacman.draw();
         //draw the nail

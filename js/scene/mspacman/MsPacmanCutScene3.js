@@ -113,7 +113,6 @@ class MsPacmanCutScene3 extends ScriptScene {
 
     draw() {
         ScriptScene.prototype.draw.call(this)
-        this.drawables.forEach(d => d.draw());
         var context = this.context;
         if (this.take) {
             var takeOffset = (this.take-1) * 32;

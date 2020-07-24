@@ -185,7 +185,11 @@ class MsPacmanCutScene1 extends ScriptScene {
             this.mspacman,
             this.pinky,
             this.inky
-        ]
+        ];
+
+        this.actors = [
+            this.pacman, this.mspacman, this.pinky, this.inky
+        ];
     }
 
     get bounce() {
@@ -198,12 +202,6 @@ class MsPacmanCutScene1 extends ScriptScene {
 
     tick() {
         ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.mspacman.tick();
-            this.inky.tick();
-            this.pinky.tick();
-        }
         if (this.pinkyBounce > -1) {
             var move = this.bounce[this.pinkyBounce];
             this.pinky.x -= move[0];
@@ -220,7 +218,6 @@ class MsPacmanCutScene1 extends ScriptScene {
 
     draw() {
         ScriptScene.prototype.draw.call(this);
-        this.drawables.forEach(d => d.draw());
         var context = this.context;
         if (this.showHeart) {
             context.drawImage(RESOURCE.mspacman,

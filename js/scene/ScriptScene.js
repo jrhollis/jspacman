@@ -17,6 +17,10 @@ class ScriptScene extends Scene {
     constructor(context, keyFrames) {
         super(context);
         this.keyFrames = keyFrames;
+        //things to draw in this scene
+        this.drawables = [];
+        //things that move- pacmans, ghosts
+        this.actors = [];
         //how many ticks has this scene been active
         this.ctr = 0;
     }
@@ -38,6 +42,15 @@ class ScriptScene extends Scene {
             //execute the keyframe function
             keyFrame.call(this);
         }
+        for (var i = 0; i < 2; i++) {
+            this.actors.forEach(a => a.tick());
+        }
+    }
+
+
+    draw() {
+        Scene.prototype.draw.call(this);
+        this.drawables.forEach(d => d.draw());
     }
 
 }
