@@ -228,7 +228,7 @@ class PacmanTitleScene extends ScriptScene {
                     g.hide();
                     g.stop();
                     this.pacman.hide();
-                    this.ghostScore = new PacmanPoints(this, g.position.x, g.position.y, this.ghostsEaten)
+                    this.ghostScore = new PacmanPoints(this, g, this.ghostsEaten)
                     this.ghostsEaten++;
                     this.a_ghosts.forEach(gg => {
                         gg.freeze();
