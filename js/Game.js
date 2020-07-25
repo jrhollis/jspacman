@@ -63,6 +63,7 @@ class Game {
     loop() {
         //if not paused, play the action
         if (!this.pauseGame) {
+            Input.watch();
             SceneManager.update();  
         }
         
