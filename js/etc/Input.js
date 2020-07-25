@@ -1,15 +1,27 @@
 /**
- * this class keeps a two frame buffer since controls are delayed in the game
+ * this class reads key presses and keeps a two frame buffer 
+ * since inputs appear to be delayed in the game
  */
 class Input {
+    //remember the last key pressed
     static lastKey = null;
+    //frame delay buffer
     static buffer = [];
+    //hash of currently pressed keys (hashkey = keycode)
+    //and their state
     static keyState = {};
 
+    /**
+     * clear the key (frame delay) buffer
+     */
     static reset() {
         Input.buffer = [];
     }
 
+    /**
+     * read key presses
+     * @param {*} e key down event
+     */
     static onKeyDown(e) {
         //tag this key state as pressed
         Input.keyState[''+e.keyCode] = 1;
@@ -26,7 +38,7 @@ class Input {
             e.preventDefault();
             return false;
         }
-        //if "F" key is pressed, pause and advance the game 1 frame
+        //if "F" key is pressed, pause and advance the game one frame
         if (e.keyCode == 70) {
             GAME.pauseGame = true;
             //render next frame
@@ -35,16 +47,22 @@ class Input {
             return false;
         }
         // console.log(e.keyCode)
-        //read the pressed key once
+        //read the pressed key once if no keys are currently being pressed
         if (!Input.keyDown) {
             Input.keyPress = e.keyCode;
         }
+        //a key is being pressed
         Input.keyDown = true;
     }
 
+    /**
+     * 
+     * @param {*} e key up event
+     */
     static onKeyUp(e) {
         delete Input.keyState[e.keyCode];
         delete Input.lastKey;
+        //a key is no longer being pressed
         Input.keyDown = false;
     }
 

@@ -1,11 +1,11 @@
 /**
  * the Sound class uses Web Audio API. One sound track for each game mode
  * contains all the sound effects for that respective game. this class
- * picks the sound track apart and plays snippets from each track as a
+ * picks the sound track apart and plays snippets from each game's track as a
  * sound effect.
  * 
  * !!!!! In order for sound effects to work, this game must be loaded through
- * a web server because it loads the files via XMLHttpRequest
+ * a web server because it loads the sound effects files via XMLHttpRequest
  */
 class Sound {
     static initialize() {
@@ -71,6 +71,8 @@ class Sound {
      * @param {int} pelletsLeft pellets remaining on maze
      */
     static checkSiren(pelletsLeft) {
+        //I think these are the pellet counts at which the siren
+        //changes tone
         if (pelletsLeft > 108) {
             this.setSiren(0);
         } else if (pelletsLeft > 44) {
