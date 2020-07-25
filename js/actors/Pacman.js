@@ -51,7 +51,7 @@ class Pacman extends Actor {
     }
 
     get centerPixel() {
-        return { x: this.position.x + 7, y: this.position.y + 7 };
+        return { x: this.x + 7, y: this.y + 7 };
     }
 
     /**
@@ -266,14 +266,11 @@ class Pacman extends Actor {
      * on in his eating animation
      */
     get frameOffsetX() {
-        if (this.animation.curFrame == 0) {
-            return 0;
-        } else if (this.animation.curFrame == 1) {
-            return -1;
-        } else if (this.animation.curFrame == 2) {
-            return -2;
-        } else if (this.animation.curFrame == 3) {
-            return -1;
+        switch(this.animation.curFrame) {
+            case 3:
+                return -1;
+            default:
+                return -this.animation.curFrame;
         }
     }
 
@@ -327,9 +324,9 @@ class Pacman extends Actor {
 
     /**
      * these strings indicate how many pixels to move pacman at a given tick. two consecutive digits are applied
-     * each tick, allowing for sub pixel granularity on each frame. 
-     * i.e. on level 1 if pacman is patrolling, in one tick he will update twice moving 0 pixels in the first
-     * update and 1 pixel in the next, for a total of 1 pixel in the tick. as the game speeds up, this
+     * each tick, allowing for sub tick granularity with respect to movement. 
+     * i.e. on level 1 if pacman is patrolling, in one tick he will update his positiong twice moving 0 pixels in the first
+     * half tick and 1 pixel in the next, for a total of 1 pixel in the tick. as the game speeds up, this
      * allows for pac-man (and ghosts) to move more than 1 pixel per tick without flying off the rails.
      * 
      * for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
@@ -342,25 +339,25 @@ class Pacman extends Actor {
             return '00000000000000000000000000000000';
         } else if (this.isPatrolling) {
             if (this.scene.level == 1) {
-                return '01010101010101010101010101010101';
+                return '01010101010101010101010101010101'; //16/32 = 60 px/sec
             } else if (this.scene.level <= 4) {
-                return '11010101011010101101010101101010'; //18/32
+                return '11010101011010101101010101101010'; //18/32 = 67.5 px/sec
             } else if (this.scene.level <= 20) {
-                return '01101101011011010110110101101101'; //20/32
+                return '01101101011011010110110101101101'; //20/32 = 75
             } else {
-                return '11010101011010101101010101101010';
+                return '11010101011010101101010101101010'; //18/32 = 67.5
             }
         } else if (this.isEnergized) {
             if (this.scene.level == 1) {
-                return '11010101011010101101010101101010';
+                return '11010101011010101101010101101010'; //18/32 = 67.5
             } else if (this.scene.level <= 4) {
-                return '11010110010110101010110110110101';
+                return '11010110010110101010110110110101'; //19/32 = 71.25
             } else if (this.scene.level <= 20) {
-                return '01101101011011010110110101101101';
+                return '01101101011011010110110101101101'; //20/32 = 75
             } else {
                 //there is no "energized" state for pacman at this point as the 
                 //energizers don't frighten the ghosts- just use patrolling speed
-                return '11010101011010101101010101101010';
+                return '11010101011010101101010101101010'; //not ever used
             }
         }
     }

@@ -61,9 +61,9 @@ class Game {
      * the game loop. where the magic happens
      */
     loop() {
+        Input.watch();
         //if not paused, play the action
         if (!this.pauseGame) {
-            Input.watch();
             SceneManager.update();  
         }
         
