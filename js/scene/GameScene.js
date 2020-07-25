@@ -127,9 +127,11 @@ class GameScene extends Scene {
         this.playerLabel.text = 'PLAYER ' + (!player?"ONE":"TWO");
         this.level = this.pacman.level;
         if (this.level < 1) {
+            //only play song when level is 0. it will come in as -1 for player 2
+            var newGame = !this.level; 
             this.level = 1;
             this.pacman.level = 1;
-            this.nextLevel(true); //only play song on first ever start
+            this.nextLevel(newGame);
         } else {
             //load in cached pellets
             this.pellets = this.pacman.pellets;

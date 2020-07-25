@@ -13,6 +13,8 @@ class MsPacmanStartScene extends Scene {
         this.pushStartButton = new Text(this, "PUSH START BUTTON", 'orange', 5*8, 16*8);
         this.onePlayerOnly = new Text(this, "1 PLAYER ONLY", 'orange', 7*8, 18*8);
         this.twoPlayers = new Text(this, "1 OR 2 PLAYERS", 'orange', 7*8, 18*8);
+        this.twoPlayerMode = new Text(this, 'PRESS 2 KEY', 'yellow', 9*8, 20*8);
+        this.twoPlayerMode.hide();
         // this.twoPlayers.hide();
         this.bonusPacman = new Text(this, "ADDITIONAL    AT 10000 pts", 'orange', 1*8, 24*8);
         this.copyright = new Text(this, "c MIDWAY MFG CO", 'red', 10*8, 29*8);
@@ -29,6 +31,7 @@ class MsPacmanStartScene extends Scene {
             SceneManager.replaceScene(new GameScene(this.context, 1));
             return;
         } else if (Game.CREDITS > 1 && keyPress == 50) { //#2
+            console.log('two players')
             SceneManager.replaceScene(new GameScene(this.context, 2));
             return;
         } else if (keyPress == 27) {
@@ -43,8 +46,10 @@ class MsPacmanStartScene extends Scene {
         this.credits.text = ""+Game.CREDITS;
         if (Game.CREDITS > 1) {
             this.twoPlayers.show();
+            this.twoPlayerMode.show();
             this.onePlayerOnly.hide();
         } else {
+            this.twoPlayerMode.hide();
             this.twoPlayers.hide();
             this.onePlayerOnly.show();
         }
@@ -62,6 +67,7 @@ class MsPacmanStartScene extends Scene {
         this.pushStartButton.draw();
         this.onePlayerOnly.draw();
         this.twoPlayers.draw();
+        this.twoPlayerMode.draw();
         this.bonusPacman.draw();
         this.copyright.draw();
         this.dates.draw();

@@ -28,4 +28,4 @@ RESOURCE.mspacman.src = 'res/mspacman/mspacman.png';
 RESOURCE.pacman.src = 'res/pacman/pacman.png';
 RESOURCE.text.src = 'res/text.png';
 
-var GAME = new Game(null, 3);
+var GAME = new Game(null, 2.5);

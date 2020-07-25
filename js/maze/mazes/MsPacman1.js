@@ -73,8 +73,10 @@ class MsPacman1 extends Maze {
 
     get textureOffset() {
         //depends on level
-        var pacman = this.scene.pacman;
-        if (this.scene.level <= 1 && (pacman.lives >= 2 || (!pacman.isAlive && pacman.lives == 1))) {
+        var scene = this.scene, 
+            pacman = scene.pacman;
+        if (scene.numPlayers == 1 && scene.level == 1 && (pacman.lives >= 2 || (!pacman.isAlive && pacman.lives == 1))) {
+            //bug where maze is blue and red on first play for one player
             return {x: 0, y: 992};
         } else {
             return {x: 228, y: 0};

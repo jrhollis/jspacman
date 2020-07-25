@@ -205,10 +205,7 @@ class PacmanTitleScene extends ScriptScene {
 
         //two updates per tick for actors
         for (var i = 0; i < 2; i++) {
-            this.a_ghosts.forEach(g => {
-                g.tick();
-            });
-
+            this.a_ghosts.forEach(g => g.tick());
             this.pacman.tick();
 
             if (!this.a_energizer.hidden && this.pacman.collide(this.a_energizer)) {
