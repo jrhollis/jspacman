@@ -117,7 +117,7 @@ class PacmanTitleScene extends ScriptScene {
         if (!Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.hide();
         }
-        this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
+        this.highScoreText = new Text(this, ""+Game.getHighScore(Game.GAME_PACMAN), 'white', 16*8, 8, 'right');
         this.characterNickname = new Text(this, 'CHARACTER / NICKNAME', 'white', 6*8, 5*8);
 
         //blinky

@@ -123,7 +123,7 @@ class Pacman extends Actor {
         }
         //set high score
         if (this.score > this.scene.highScore) {
-            localStorage['highscore_' + Game.GAME_MODE] = this.score;
+            Game.setHighScore(Game.GAME_MODE, this.score);
         }
     }
 

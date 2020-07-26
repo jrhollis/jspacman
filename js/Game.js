@@ -19,6 +19,39 @@ class Game {
         [0,null]    //mspacman
     ];
 
+    //used of local storage doesn't work
+    static TEMP_HIGH_SCORE = 0;
+
+    /**
+     * retrieve the current high score
+     * @param {*} mode game mode
+     */
+    static getHighScore(mode) {
+        try {
+            return parseInt(localStorage['highscore_' + mode]||'0');
+        } catch(ex) {
+            //if localStorage not available, just take the last high score
+            var oldHigh =  Math.max(...this.LAST_SCORES[mode]),
+                high = Math.max(oldHigh, this.TEMP_HIGH_SCORE);
+            return high;
+        }
+    }
+
+    /**
+     * check to set a new high score
+     * @param {*} mode  game mode
+     * @param {*} score score of the game
+     */
+    static setHighScore(mode, score) {
+        try {
+            localStorage['highscore_' + mode] = score;
+        } catch(ex) {
+            //localStorage not available
+        } finally {
+            this.TEMP_HIGH_SCORE = Math.max(this.TEMP_HIGH_SCORE, score);
+        }
+    }
+
     /**
      * 
      * @param {*} el element to attach the canvas to. defaults to document.body
@@ -55,6 +88,7 @@ class Game {
         //start game loop
         window.requestAnimationFrame(()=>this.loop());
     }
+
 
 
     /**

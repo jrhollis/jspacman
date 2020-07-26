@@ -110,7 +110,7 @@ class GameScene extends Scene {
      * the high score for the current GAME_MODE
      */
     get highScore() {
-        var score = parseInt(localStorage['highscore_' + Game.GAME_MODE]||'0');
+        var score = Game.getHighScore(Game.GAME_MODE);
         return !score?"":score;
     }
 
