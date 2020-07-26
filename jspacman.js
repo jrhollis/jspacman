@@ -1015,7 +1015,7 @@ class GameScene extends Scene {
      * the high score for the current GAME_MODE
      */
     get highScore() {
-        var score = parseInt(localStorage['highscore_' + Game.GAME_MODE]||'0');
+        var score = Game.getHighScore(Game.GAME_MODE);
         return !score?"":score;
     }
 
@@ -1130,9 +1130,6 @@ class GameScene extends Scene {
         });
 
         this.scatterChase.reset();
-        //hack to copy actual game... need to address this
-        this.scatterChase.tick();
-        this.scatterChase.tick();
     }
 
 
@@ -2105,7 +2102,7 @@ class MsPacmanCutScene3 extends ScriptScene {
     constructor(context) {
         super(context);
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
-        this.highScoreText = new Text(this, localStorage['highscore_1'], 'white', 16*8, 8, 'right');
+        this.highScoreText = new Text(this, ""+Game.getHighScore(Game.GAME_MSPACMAN), 'white', 16*8, 8, 'right');
         this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
         this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
@@ -2291,7 +2288,7 @@ class MsPacmanCutScene3 extends ScriptScene {
 
         });
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
-        this.highScoreText = new Text(this, localStorage['highscore_1'], 'white', 16*8, 8, 'right');
+        this.highScoreText = new Text(this, ""+Game.getHighScore(Game.GAME_MSPACMAN), 'white', 16*8, 8, 'right');
         this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[1][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
         this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[1][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
@@ -2695,7 +2692,7 @@ class PacmanCutScene3 extends ScriptScene {
     constructor(context) {
         super(context);
         this.p1HighScoreP2 = new Text(this, "1UP   HIGH SCORE   2UP", 'white', 3*8, 0);
-        this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
+        this.highScoreText = new Text(this, ""+Game.getHighScore(Game.GAME_PACMAN), 'white', 16*8, 8, 'right');
         this.scoreOneText = new Text(this, ""+(Game.LAST_SCORES[0][0]||"00"), 'white', 6 * 8, 1 * 8, 'right');
         this.scoreTwoText = new Text(this, ""+Game.LAST_SCORES[0][1]||"00", 'white', 25 * 8, 1 * 8, 'right');
         //no last score for this guy, so show nothing
@@ -2879,7 +2876,7 @@ class PacmanCutScene3 extends ScriptScene {
         if (!Game.LAST_SCORES[0][1]) {
             this.scoreTwoText.hide();
         }
-        this.highScoreText = new Text(this, localStorage['highscore_0'], 'white', 16*8, 8, 'right');
+        this.highScoreText = new Text(this, ""+Game.getHighScore(Game.GAME_PACMAN), 'white', 16*8, 8, 'right');
         this.characterNickname = new Text(this, 'CHARACTER / NICKNAME', 'white', 6*8, 5*8);
 
         //blinky
@@ -4384,7 +4381,7 @@ class Actor extends Sprite {
         }
         //set high score
         if (this.score > this.scene.highScore) {
-            localStorage['highscore_' + Game.GAME_MODE] = this.score;
+            Game.setHighScore(Game.GAME_MODE, this.score);
         }
     }
 
@@ -4938,8 +4935,11 @@ class Ghost extends Actor {
      * leaving home, it's pointed to the LEAVE_TARGET and gradually moves there with each tick of the game.
      */
     tick() {
+
         Actor.prototype.tick.call(this);
         if (!this.scene.maze) return;
+        this.targetTile = this.calculateTargetTile();
+
         if (this.isHome) {
             //ghost is home in the ghost house
             //bounce up and down off walls when stuck in the house
@@ -5028,7 +5028,7 @@ class Ghost extends Actor {
                 this.nextInstruction = Vector.clone(nextDirection);
             }
             //update the target tile
-            this.targetTile = this.calculateTargetTile();
+            // this.targetTile = this.calculateTargetTile();
         } else {
             if (!this.isTileCenter) {
                 //off center tile, unset the madeInstruction flag
@@ -5048,7 +5048,7 @@ class Ghost extends Actor {
                 this.exitingHouse = false;
             }
             //always update the target tile
-            this.targetTile = this.calculateTargetTile();
+            // this.targetTile = this.calculateTargetTile();
         }
     }
 
@@ -5324,15 +5324,11 @@ class Blinky extends Ghost {
         if (this.isChasing) {
             var pacmanDirection = this.scene.pacman.direction,
                 targetTile = Vector.clone(this.scene.pacman.tile);
-            if (pacmanDirection.x) {
-                targetTile.x += (pacmanDirection.x * 4)
-            }
-            if (pacmanDirection.y) {
-                targetTile.y += (pacmanDirection.y * 4);
-                //emulate the overflow bug in the original arcade game where if pacman is moving up, target tile also moves left 4 tiless
-                if (pacmanDirection.y < 0) {
-                    targetTile.x -= 4;
-                }
+            targetTile.x += (pacmanDirection.x * 4)
+            targetTile.y += (pacmanDirection.y * 4);
+            //emulate the overflow bug in the original arcade game where if pacman is moving up, target tile also moves left 4 tiless
+            if (pacmanDirection.y < 0) {
+                targetTile.x -= 4;
             }
             return targetTile;
         } else {
@@ -5369,11 +5365,10 @@ class Blinky extends Ghost {
                     y: pacmanTile.y + (pacmanDirection.y * 2) 
                 };
             //emulate overflow bug where if pacman is moving up, target tile also moves left 2 tiless
-            if (pacmanDirection.y) {
-                if (pacmanDirection.y < 0) {
-                    targetTile.x -= 2;
-                }
+            if (pacmanDirection.y < 0) {
+                targetTile.x -= 2;
             }
+            this.ptile = Vector.clone(targetTile);
             //now draw a vector from blinky to that target and double the length to get new target
             targetTile.x += (targetTile.x - blinkyTile.x);
             targetTile.y += (targetTile.y - blinkyTile.y);
@@ -5849,6 +5844,39 @@ class Game {
         [0,null]    //mspacman
     ];
 
+    //used of local storage doesn't work
+    static TEMP_HIGH_SCORE = 0;
+
+    /**
+     * retrieve the current high score
+     * @param {*} mode game mode
+     */
+    static getHighScore(mode) {
+        try {
+            return parseInt(localStorage['highscore_' + mode]||'0');
+        } catch(ex) {
+            //if localStorage not available, just take the last high score
+            var oldHigh =  Math.max(...this.LAST_SCORES[mode]),
+                high = Math.max(oldHigh, this.TEMP_HIGH_SCORE);
+            return high;
+        }
+    }
+
+    /**
+     * check to set a new high score
+     * @param {*} mode  game mode
+     * @param {*} score score of the game
+     */
+    static setHighScore(mode, score) {
+        try {
+            localStorage['highscore_' + mode] = score;
+        } catch(ex) {
+            //localStorage not available
+        } finally {
+            this.TEMP_HIGH_SCORE = Math.max(this.TEMP_HIGH_SCORE, score);
+        }
+    }
+
     /**
      * 
      * @param {*} el element to attach the canvas to. defaults to document.body
@@ -5885,6 +5913,7 @@ class Game {
         //start game loop
         window.requestAnimationFrame(()=>this.loop());
     }
+
 
 
     /**
