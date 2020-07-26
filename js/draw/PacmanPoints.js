@@ -13,7 +13,7 @@ class PacmanPoints extends Sprite {
         super(scene, item.x, item.y, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 456, y: 144};
         //keep on the board for 2 seconds
-        this.ticksToLive = 120; 
+        this.ticksToLive = 80; 
         this.score = score;  
         this.item = item;      
     }
