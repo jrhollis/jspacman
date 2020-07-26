@@ -330,7 +330,6 @@ class Pacman extends Actor {
      * allows for pac-man (and ghosts) to move more than 1 pixel per tick without flying off the rails.
      * 
      * for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
-     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      */
     get speedControl() {
         // TODO: something odd going on when pacman moves up. doesn't follow these patterns. pixel rounding??

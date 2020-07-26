@@ -87,7 +87,6 @@ class Blinky extends Ghost {
      * Blinky has a "cruise elroy state" where his speed increases slightly when 
      * there are few dots left in the maze.
      * 
-     * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2439
      */
     get elroy() {
         if (this.scene.pelletsLeft > 0) {

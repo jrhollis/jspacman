@@ -4588,7 +4588,6 @@ class Actor extends Sprite {
      * allows for pac-man (and ghosts) to move more than 1 pixel per tick without flying off the rails.
      * 
      * for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
-     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      */
     get speedControl() {
         // TODO: something odd going on when pacman moves up. doesn't follow these patterns. pixel rounding??
@@ -4675,7 +4674,6 @@ class MsPacman extends Pacman {
         }
     }
 }// https://www.youtube.com/watch?v=sQK7PmR8kpQ ms pacman ghost ai
-//ghost movement https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
 class Ghost extends Actor {
     static MODE_CHASE = 0;
     static MODE_SCATTER = 1;
@@ -4706,7 +4704,6 @@ class Ghost extends Actor {
      * 28 ticks each-- 4 frames, 7 ticks per frame. on most later levels, ghosts 
      * never frighten and only reverse direction
      * 
-     * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
      */
     static getFrightenDuration(level) {
         var time = 0,
@@ -5107,7 +5104,6 @@ class Ghost extends Actor {
      * a period of 16 ticks (two updates per tick).  this.frameCtr keeps track of the position in the speed control
      * string. this.frameCtr gets incremented in tick() each executed (unfrozen) frame
      * 
-     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      */
     get speedControl() {
 
@@ -5261,7 +5257,6 @@ class Blinky extends Ghost {
      * Blinky has a "cruise elroy state" where his speed increases slightly when 
      * there are few dots left in the maze.
      * 
-     * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2439
      */
     get elroy() {
         if (this.scene.pelletsLeft > 0) {
@@ -5939,8 +5934,6 @@ class Game {
     }
 }
 //MS PACMAN
-// http://cubeman.org/arcade-source/mspac.asm
-// https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
 
 
 //great guide!!

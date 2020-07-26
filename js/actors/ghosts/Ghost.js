@@ -1,5 +1,4 @@
 // https://www.youtube.com/watch?v=sQK7PmR8kpQ ms pacman ghost ai
-//ghost movement https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
 class Ghost extends Actor {
     static MODE_CHASE = 0;
     static MODE_SCATTER = 1;
@@ -30,7 +29,6 @@ class Ghost extends Actor {
      * 28 ticks each-- 4 frames, 7 ticks per frame. on most later levels, ghosts 
      * never frighten and only reverse direction
      * 
-     * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
      */
     static getFrightenDuration(level) {
         var time = 0,
@@ -431,7 +429,6 @@ class Ghost extends Actor {
      * a period of 16 ticks (two updates per tick).  this.frameCtr keeps track of the position in the speed control
      * string. this.frameCtr gets incremented in tick() each executed (unfrozen) frame
      * 
-     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      */
     get speedControl() {
 

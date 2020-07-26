@@ -1,6 +1,4 @@
 //MS PACMAN
-// http://cubeman.org/arcade-source/mspac.asm
-// https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
 
 
 //great guide!!
