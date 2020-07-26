@@ -226,31 +226,46 @@ class AI {
         }
     }
 }/**
- * this class keeps a two frame buffer since controls are delayed in the game
- * 
+ * this class reads key presses and keeps a two frame buffer 
+ * since inputs appear to be delayed in the game
  */
 class Input {
+    //remember the last key pressed
     static lastKey = null;
+    //frame delay buffer
     static buffer = [];
+    //hash of currently pressed keys (hashkey = keycode)
+    //and their state
     static keyState = {};
 
+    /**
+     * clear the key (frame delay) buffer
+     */
     static reset() {
         Input.buffer = [];
     }
 
+    /**
+     * read key presses
+     * @param {*} e key down event
+     */
     static onKeyDown(e) {
+        //tag this key state as pressed
         Input.keyState[''+e.keyCode] = 1;
+        //remember the last key pressed
         Input.lastKey = e.keyCode;
+        //if pressing arrow keys, prevent default so the web page doesn't scroll
         if (e.keyCode >= 37 && e.keyCode <= 40) {
             e.preventDefault();
             return false;
         }
-
+        //if space bar is pressed pause the game
         if (e.keyCode == 32) {
             GAME.pauseGame = !GAME.pauseGame;
             e.preventDefault();
             return false;
         }
+        //if "F" key is pressed, pause and advance the game one frame
         if (e.keyCode == 70) {
             GAME.pauseGame = true;
             //render next frame
@@ -259,16 +274,22 @@ class Input {
             return false;
         }
         // console.log(e.keyCode)
-        //read once
+        //read the pressed key once if no keys are currently being pressed
         if (!Input.keyDown) {
             Input.keyPress = e.keyCode;
         }
+        //a key is being pressed
         Input.keyDown = true;
     }
 
+    /**
+     * 
+     * @param {*} e key up event
+     */
     static onKeyUp(e) {
         delete Input.keyState[e.keyCode];
         delete Input.lastKey;
+        //a key is no longer being pressed
         Input.keyDown = false;
     }
 
@@ -294,7 +315,6 @@ class Input {
         }
     }
 
-
     /**
      * returns the last key pressed
      */
@@ -303,7 +323,6 @@ class Input {
         delete this.keyPress;
         return k;
     }
-
 
     /**
      * reads the key press from two frames ago
@@ -319,17 +338,26 @@ class Input {
 
 //swallow the key strokes
 document.onkeydown = Input.onKeyDown;
-document.onkeyup = Input.onKeyUp;class Sound {
+document.onkeyup = Input.onKeyUp;/**
+ * the Sound class uses Web Audio API. One sound track for each game mode
+ * contains all the sound effects for that respective game. this class
+ * picks the sound track apart and plays snippets from each game's track as a
+ * sound effect.
+ * 
+ * !!!!! In order for sound effects to work, this game must be loaded through
+ * a web server because it loads the sound effects files via XMLHttpRequest
+ */
+class Sound {
     static initialize() {
         var AudioContext = window.AudioContext || window.webkitAudioContext;
         this.context = new AudioContext();
-
+        //load each sound track
         this.loadSound('res/pacman/sfx.ogg').then(buffer => this.sfx_0 = buffer);
         this.loadSound('res/mspacman/sfx.ogg').then(buffer => this.sfx_1 = buffer);
     }
 
     //list of currently running sounds. used for stopAll()
-    static playing = {}
+    static playing = {};
 
     //time offsets for each sound effect in the sfx.ogg file
     static sfx = [{    //GAME_PACMAN res/pacman/sfx.ogg
@@ -370,7 +398,9 @@ document.onkeyup = Input.onKeyUp;class Sound {
     }];
 
 
-    //siren pointer. as pellets are eaten, the siren will change
+    /**
+     * siren pointer. as pellets are eaten, the siren will change
+     */
     static siren = 0;
     static resetSiren() {
         this.siren = 0;
@@ -378,9 +408,11 @@ document.onkeyup = Input.onKeyUp;class Sound {
     /**
      * determine which siren to play based on number of pellets remaining in maze.
      * when the siren is changed, the old siren must first be stopped.
-     * @param {int} pelletsLeft 
+     * @param {int} pelletsLeft pellets remaining on maze
      */
     static checkSiren(pelletsLeft) {
+        //I think these are the pellet counts at which the siren
+        //changes tone
         if (pelletsLeft > 108) {
             this.setSiren(0);
         } else if (pelletsLeft > 44) {
@@ -399,7 +431,10 @@ document.onkeyup = Input.onKeyUp;class Sound {
         this.siren = siren;
     }
 
-    //play a sfx in a loop
+    /**
+     * siren pointer. as pellets are eaten, the siren will change
+     * @param {*} fx sound effect name from this.sfx to play
+     */
     static playLoop(fx) {
         if (fx == 'siren') {
             fx += this.siren;
@@ -421,13 +456,17 @@ document.onkeyup = Input.onKeyUp;class Sound {
             delete this.playing[fx];
         });
         return source;
-
     }
 
-    //this counter is only for pacman. his sound fx flips back and forth each time he eats a pellet
+    /**
+     * this counter is only for pacman. his sound fx flips back and forth each time he eats a pellet
+     */
     static munch = 0;
 
-    //play a sfx one time
+    /**
+     * play sound effect one time
+     * @param {} fx sound effect name from this.sfx to play
+     */
     static playOnce(fx) {
         if (fx == 'munch') {
             this.stop('munch');
@@ -448,7 +487,10 @@ document.onkeyup = Input.onKeyUp;class Sound {
         return source;
     }
 
-    //stop a currently-playing sfx
+    /**
+     * stop a currently-playing sfx
+     * @param {*} fx sound effect name from this.sfx to stop
+     */
     static stop(fx) {
         if (fx == 'siren') {
             fx += this.siren;
@@ -458,24 +500,34 @@ document.onkeyup = Input.onKeyUp;class Sound {
         }
     }
 
-    //stop all currently playing sfx
+    /**
+     * stop all currently playing sound effects
+     */
     static stopAll() {
         for (var fx in this.playing) {
             this.stop(fx);
         }
     }
 
+    /**
+     * unpauses all sounds
+     */
     static resume() {
-        if (this.context)
-            this.context.resume();
+        if (this.context) this.context.resume();
     }
 
+    /**
+     * pauses all sounds
+     */
     static suspend() {
-        if (this.context)
-            this.context.suspend();
+        if (this.context) this.context.suspend();
     }
 
 
+    /**
+     * load a sound file into an audio buffer for processing
+     * @param {*} url location of sound file
+     */
     static loadSound(url) {
         return new Promise((resolve, reject) => {
             var request = new XMLHttpRequest();
@@ -489,75 +541,54 @@ document.onkeyup = Input.onKeyUp;class Sound {
             request.send();
         });
     }
-}class Tile {
-    //from Maze.wallMap
-    //. = wall
-    //0 = open, but nothing on it
-    //1 = pellet
-    //2 = pellet + decision
-    //3 = energizer
-    //4 = decision only
-    //5 = tunnel
-    //6 = house
-    constructor(x, y, type) {
-        this.x = x;
-        this.y = y;
-        this.type = type;
-    }
-    //maze wall
-    get wall() {
-        return this.type == '.';
-    }
-    //open tile. no pellets or anythign else on it
-    get open() {
-        return this.type == '0';
-    }
-    get pellet() {
-        return this.type == '1' || this.type == '2';
-    }
-    get energizer() {
-        return this.type == '3';
-    }
-    //tunnel tile - slows the ghosts
-    get tunnel() {
-        return this.type == '5';
-    }
-    //ghost house tile - slows the ghosts
-    get house() {
-        return this.type == '6';
-    }
-    //decision tiles are where the ghosts make their next move depending on their AI
-    //these occur at most (but not all) intersections in the maze
-    get decision() {
-        return this.type == '4' || this.type == '2';
-    }
-    //can pac-man move over this tile
-    get walkable() {
-        return !this.house && !this.wall;
-    }
-}class Timer {
+}/**
+ * simple class that just keeps track of a countdown. when the
+ * countdown is complete, fire the callback. used for ghost fright/flash timers, 
+ * start/end of level sequences, and other game play timings
+ */
+class Timer {
+    /**
+     * nothing is passed to the constructor. a Timer doesn't do anything until
+     * .start(...) is called on it with the countdown and callbacks passed to it there.
+     */
     constructor() {}
 
-    start(ticks, callback, wait) {
-        this.wait = wait;
+    /**
+     * define and start a timer countdown and an action to take at the end
+     * of the countdown
+     * 
+     * @param {*} ticks number of ticks to set the countdown for
+     * @param {*} callback callback to execute when tick countdown reaches zero
+     */
+    start(ticks, callback) {
         this.originalTicks = ticks;
-        this.ticks = ticks; //one frame delay on starts
+        this.ticks = ticks;
         this.callback = callback;
         if (ticks <= 0) {
-            //started with no or negative time, just do the call back
+            //started with no or negative time, just do the call back immediately
             this.ticks = 0;
             this.callback.call(this);
         }
     }
 
+    /**
+     * start the timer back up
+     * @param {*} ticks the number of ticks to set on the timer
+     */
     reset(ticks) {
         this.ticks = ticks||this.originalTicks; 
     }
 
+    /**
+     * kill the timer
+     */
     stop() {
         this.ticks = 0;
     }
 
+    /**
+     * countdown the timer. when time's up, execute the call back
+     */
     tick() {
         if (this.ticks > 0) {
             this.ticks--;
@@ -566,80 +597,172 @@ document.onkeyup = Input.onKeyUp;class Sound {
                 this.callback.call(this);
             }
         }
-        return this.wait || this.ticks > 0;
+        return this.ticks > 0;
     }
-}//represents an x, y pair. could be tile location, pixel locations, whatever
+}/**
+ * Vector class with some helpful vector math functions. 
+ * A Vector represents an x, y coordinate pair. could be tile 
+ * location, pixel locations, whatever. 
+ */
 class Vector {
+    //helpful vectors used for directions and tile math
     static ZERO = {x: 0, y: 0};
     static LEFT = {x: -1, y: 0};
     static RIGHT = {x: 1, y: 0};
     static UP = {x: 0, y: -1};
     static DOWN = {x: 0, y: 1};
     
-    static add(t1, t2) {
-        return { x: t1.x + t2.x, y: t1.y + t2.y };
+    /**
+     * add two coordinate pairs together
+     * 
+     * @param {*} v1 x,y coordinate pair
+     * @param {*} v2 x,y coordinate pair
+     */
+    static add(v1, v2) {
+        return { x: v1.x + v2.x, y: v1.y + v2.y };
     }
-    static distance(t1, t2) {
-        return Math.sqrt(Math.pow(t1.x - t2.x, 2) + Math.pow(t1.y - t2.y, 2));
+    /**
+     * find the euclidian distance between two coordinate pairs
+     * 
+     * @param {*} v1 x,y coordinate pair
+     * @param {*} v2 x,y coordinate pair
+     */
+    static distance(v1, v2) {
+        return Math.sqrt(Math.pow(v1.x - v2.x, 2) + Math.pow(v1.y - v2.y, 2));
     }
+    /**
+     * invert the coordinate pair
+     * 
+     * @param {*} v x,y coordinate pair
+     */
     static inverse(v) {
         return { x: -v.x, y: -v.y };
     }
+    /**
+     * create a copy of a coordinate pair
+     * 
+     * @param {*} v x,y coordinate pair
+     */
     static clone(v) {
         return { x: v.x, y: v.y };
     }
+    /**
+     * see if two coordinate pairs are the same
+     * 
+     * @param {*} v1 x,y coordinate pair
+     * @param {*} v2 x,y coordinate pair
+     */
     static equals(v1, v2) {
-        return v1.x==v2.x && v1.y == v2.y;
+        return v1.x == v2.x && v1.y == v2.y;
     }
-}class Scene {
+}/**
+ * a scene instance holds a reference to the canvas context for drawing.
+ * each different "screen" in the game will be represented by a scene or
+ * subclass of scene.
+ */
+class Scene {
     constructor(context) {
+        //save a reference to the canvas context
         this.context = context;
     }
     
-    tick() {}
+    tick() {} //stub
 
     draw() {
+        //clear the canvas on each draw
         this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
     }
-}class ScriptScene extends Scene {
+}/**
+ * ScriptScene keeps a ctr of each tick and will execute a
+ * function from keyFrames if it is assigned to that tick. extend
+ * this class for cutscenes and title scenes
+ */
+class ScriptScene extends Scene {
+    /**
+     * the constructor takes an object of tick timestamps and functions to execute at that
+     * tick. timestamps can also have a few special values: 
+     * 'end'    will end the scene and pop it from the SceneManager. 
+     * 'loop'   will start the script over at the beginning
+     * 
+     * @param {*} context 
+     * @param {*} keyFrames object of timestamps and functions to execute at that time
+     * 
+     */
     constructor(context, keyFrames) {
         super(context);
         this.keyFrames = keyFrames;
+        //things to draw in this scene
+        this.drawables = [];
+        //things that move- pacmans, ghosts
+        this.actors = [];
+        //how many ticks has this scene been active
         this.ctr = 0;
     }
 
     tick() {
+        //increment the tick ctr
         this.ctr++;
-        //if ctr > scene length
+        //see if there's a callback to execute at this tick
         var keyFrame = this.keyFrames[this.ctr];
         if (keyFrame == 'loop') {
-            //start over
+            //this scene is looped, start over now
             this.ctr = 0;
             keyFrame = this.keyFrames[this.ctr];
         }
         if (keyFrame == 'end') {
+            //this scripted scene is done
             SceneManager.popScene();
         } else if (keyFrame) {
+            //execute the keyframe function
             keyFrame.call(this);
+        }
+        for (var i = 0; i < 2; i++) {
+            this.actors.forEach(a => a.tick());
         }
     }
 
-}class SceneManager {
+
+    draw() {
+        Scene.prototype.draw.call(this);
+        this.drawables.forEach(d => d.draw());
+    }
+
+}/**
+ * holds a list of scenes. will only update the scene
+ * on the top of the stack (current scene)
+ */
+class SceneManager {
+    //list of scenes
     static stack = [];
 
+    /**
+     * put a scene on top of the stack. becomes the current scene
+     * @param {*} scene 
+     */
     static pushScene(scene) {
         this.stack.push(scene);
     }
 
+    /**
+     * remove the current scene. the scene "below" it becomes 
+     * current
+     */
     static popScene() {
         this.stack.pop();
     }
 
+    /**
+     * remove the current scene from the stack and add a new one to it
+     * @param {*} scene 
+     */
     static replaceScene(scene) {
         this.popScene();
         this.pushScene(scene);
     }
 
+    /**
+     * return the last scene in the stack
+     */
     static currentScene() {
         if (this.stack.length) {
             return this.stack[this.stack.length-1]
@@ -648,8 +771,10 @@ class Vector {
         }
     }
 
+    /**
+     * ticks and draws the current scene
+     */
     static update() {
-        Input.watch();
         var scene = this.currentScene();
         if (scene) {
             scene.tick();
@@ -678,6 +803,7 @@ class Vector {
 
         this.canSelectGame = true;
 
+        //set up the marquee
         this.pellets = [];
         for (var i = 4; i <= 24; i++) {
             this.pellets.push(new Pellet(this, i * 8, 4 * 8));
@@ -698,6 +824,7 @@ class Vector {
     }
 
     tick() {
+        //do the color changing thing on the marquee
         this.colorCounter++;
         if (this.colorCounter == 2) {
             this.colorCounter = 0;
@@ -738,6 +865,7 @@ class Vector {
             return;
         }
         
+        //flips between selections whenever a key is down
         if ((Input.lastKey == 38 || Input.lastKey == 40) && this.canSelectGame) {
             Game.GAME_MODE = (Game.GAME_MODE + 1) % 2;
             this.canSelectGame = false;
@@ -775,7 +903,10 @@ class Vector {
         this.pacmanText.draw();
         this.pressEnter.draw();
     }
-}class GameScene extends Scene {
+}/**
+ * the GameScene is where all the game play action occurs
+ */
+class GameScene extends Scene {
 
     //these correspond to the static ghost modes scatter/chase
     static MODE_CHASE = 0;
@@ -823,8 +954,6 @@ class Vector {
         ];
 
         this.curPlayer = 0;
-        //level will get incremented in nextLevel call at end of constructor
-        this.level = 1;
         //pellet arrays
         this.pellets = [];
         this.energizers = [];
@@ -867,29 +996,47 @@ class Vector {
 
     }
 
+    /**
+     * count of pellets and energizers eaten this level
+     */
     get pelletsEaten() {
         var totalPellets = this.mazeClass.tiles.filter(t => t.pellet).length + this.mazeClass.tiles.filter(t => t.energizer).length;
         return totalPellets - this.pelletsLeft;
     }
 
+    /**
+     * count pellets and energizers remaining on the maze board
+     */
     get pelletsLeft() {
         return this.pellets.length + this.energizers.length;
     }
 
+    /**
+     * the high score for the current GAME_MODE
+     */
     get highScore() {
         var score = parseInt(localStorage['highscore_' + Game.GAME_MODE]||'0');
         return !score?"":score;
     }
 
+
+    /**
+     * sets the current player. if two player mode, load their last set of 
+     * remaining pellets on to the maze.
+     * 
+     * @param {int} player index of player to load (0: player 1, 1: player 2)
+     */
     loadPlayer(player) {
         this.curPlayer = player;
         this.pacman = this.players[player];
         this.playerLabel.text = 'PLAYER ' + (!player?"ONE":"TWO");
         this.level = this.pacman.level;
         if (this.level < 1) {
+            //only play song when level is 0. it will come in as -1 for player 2
+            var newGame = !this.level; 
             this.level = 1;
             this.pacman.level = 1;
-            this.nextLevel(true); //only play song on first ever start
+            this.nextLevel(newGame);
         } else {
             //load in cached pellets
             this.pellets = this.pacman.pellets;
@@ -898,6 +1045,13 @@ class Vector {
         }
     }
 
+
+    /**
+     * called after level is completed or when starting a new game on level 1.
+     * this loads pellets from the wall map.
+     * 
+     * @param {*} newGame are we coming into level 1?
+     */
     nextLevel(newGame) {
         Sound.resetSiren();
         this.levelStarting = true;
@@ -927,6 +1081,11 @@ class Vector {
         }
     }
 
+
+    /**
+     * if pacman dies, come here. this resets actors. also called
+     * after loading a new level.
+     */
     resetLevel() {
         this.levelStarting = true;
         Ghost.NUM_EATEN = 0;
@@ -948,9 +1107,8 @@ class Vector {
         this.frightenFlashTimer.stop();
         this.frightenTimer.stop();
 
-        this.energizers.forEach(e => {
-            e.freeze();
-        });
+        this.energizers.forEach(e => e.freeze());
+
         this.startLevelTimer.start(1.25 * 60, () => {
             this.levelComplete = false;
             this.readyText.hide();
@@ -972,12 +1130,16 @@ class Vector {
         });
 
         this.scatterChase.reset();
-        //hack to catch copy actual game... need to address this
+        //hack to copy actual game... need to address this
         this.scatterChase.tick();
         this.scatterChase.tick();
     }
 
 
+    /**
+     * called when all pellets are eaten and level is complete. mostly animation
+     * timers. check for cutscenes after levels 2, 5, and 9. go on to next level
+     */
     endLevel() {
         this.levelComplete = true;
         Ghost.NUM_EATEN = 0;
@@ -1013,34 +1175,40 @@ class Vector {
         //wait for the start level timer before doing anything
         if (this.startLevelTimer.tick()) return;
 
-        //don't freeze eyes when freeze timer is on
+        //update eyes now in case freeze timer is active, do other ghosts later- after freeze timer code
         var updateGhostsLater = this.ghosts.filter(ghost => !(ghost.isEaten && !ghost.hidden));
         if (!this.levelComplete) {
+            //don't freeze eyes even when freeze timer is on
             for (var i = 0; i < 2; i++) {
                 this.ghosts.filter(ghost => ghost.isEaten && !ghost.hidden).forEach(ghost => ghost.tick());
             }
         }
         
         if (this.freezeTimer.tick()) {
+            //if game play is frozen, stop the siren sound and bail the tick
             Sound.stop('siren');
             return;
         }
         if (this.levelComplete || this.levelStarting) {
+            //if before or after level, make sure to stop all sounds
             Sound.stopAll();
             return;
         }
 
-        //sound check - if there are retreating ghosts play retreat
+        //sound checks
         if (this.pacman.isAlive) {
             if (Ghost.NUM_EATEN > 0) {
+                // if there are retreating ghosts play retreat
                 Sound.stop('power_pellet');
                 Sound.playLoop('retreating');
             } else {
                 Sound.stop('retreating');
                 if (Ghost.NUM_FRIGHTENED > 0) {
+                    //are there frigthened ghosts? play power pellet sound
                     Sound.stop('siren');
                     Sound.playLoop('power_pellet');
                 } else {
+                    //else go back to playing the siren
                     Sound.stop('power_pellet');
                     Sound.playLoop('siren');
                 }
@@ -1048,21 +1216,25 @@ class Vector {
         }
 
         if (this.eatenGhosts.length) {
-            //who'd pacman eat last tick
+            //who'd pacman eat last tick? eat one now and go to next tick
+            //the prevents pacman from eating two ghosts in the same tick
             this.eatGhost(this.eatenGhosts.pop());
             return;
         }
 
+        //check for game over scenarios
         if (this.pacman.isDead) {
+            //pacman is dead, start a timer and restart level, go to next player, or end game
             this.freezeTimer.start(60, () => {
                 var otherPlayer = (this.curPlayer+1)%this.numPlayers;
                 if (this.pacman.lives < 0) {
-                    //gloabls updates
-                    Game.LAST_SCORES[Game.GAME_MODE][this.curPlayer] = this.pacman.score;
-                    Game.CREDITS--;
                     //game over for this player
+                    //save last score to this game_mode and player #
+                    Game.LAST_SCORES[Game.GAME_MODE][this.curPlayer] = this.pacman.score;
+                    //take away a credit
+                    Game.CREDITS--;
                     if (this.numPlayers == 2) {
-                        //if two players and other player has lives, show playerlabel text
+                        //if two players and other player has lives, show playerlabel text for game over
                         if (this.players[otherPlayer].lives >= 0) {
                             this.playerLabel.text = "PLAYER " + (this.curPlayer?"TWO":"ONE");
                             this.playerLabel.show();
@@ -1071,9 +1243,11 @@ class Vector {
                                 this.gameOverText.hide();
                                 this.loadPlayer(otherPlayer);
                             });
-                            return; //not done yet
+                            //not done yet, other player's turn
+                            return; 
                         }
                     }
+                    //game over
                     this.gameOverText.show();
 
                     //show the credits before exiting game scene
@@ -1081,7 +1255,7 @@ class Vector {
                     this.credits.text = ""+Game.CREDITS;
                     this.credits.show();
 
-                    this.freezeTimer.start(60, () => {
+                    this.freezeTimer.start(90, () => {
                         if (!Game.CREDITS) {
                             //out of credits, go to title screen
                             SceneManager.replaceScene(new TitleScene(this.context));
@@ -1095,14 +1269,14 @@ class Vector {
                     //switch players if other player has lives
                     this.loadPlayer(otherPlayer);    
                 } else {
-                    //only one player or one player left
+                    //only one player playing
                     this.resetLevel();
                 }
             });
             return;
         }
 
-        //update behavior
+        //update ghost behavior
         this.scatterChase.tick();
 
         //update the frighten timers if they're running
@@ -1110,7 +1284,7 @@ class Vector {
         this.frightenFlashTimer.tick();
 
         //point sprites from fruit
-        if (this.pointSprite) this.pointSprite.tick()
+        if (this.pointSprite) this.pointSprite.tick();
 
         //update actors twice per pick
         for (var i = 0; i < 2; i++) {
@@ -1163,7 +1337,7 @@ class Vector {
     /**
      * called twice per tick. collision occurs between ghosts when pacman and
      * a ghost occupy the same tile. collision with items occurs when their
-     * bboxes overlap
+     * hitboxes overlap
      */
     collisionDetect() {
         //no point in collision detected if pacman just kicked the bucket
@@ -1179,7 +1353,7 @@ class Vector {
             }
         }
         for (var i = 0; i < this.energizers.length; i++) {
-            //if center of pellet is in pacman hitbox, then eat
+            //if center of pellet is inside pacman hitbox, then eat
             if (this.pacman.collideItem(this.energizers[i])) {
                 this.ateEnergizer = this.energizers[i];
                 this.energizers.splice(i, 1);
@@ -1189,31 +1363,34 @@ class Vector {
 
         //fruit collision
         if (this.fruit && this.fruit.collide(this.pacman)) {
-            //put a point sprite here
-            this.pointSprite = new Points(this, this.fruit.position.x, this.fruit.position.y, this.fruit.points, 0);
+            //put a point sprite at this location
+            this.pointSprite = new Points(this, this.fruit, this.fruit.points);
+            //feed it to pacman
             this.pacman.eatItem(this.fruit);
         }
 
-        //ghosts with collision and/or free if personal pelletLimit is met
+        //pacman/ghosts collision
         for (var i = 0; i < this.ghosts.length; i++) {
-            var ghost = this.ghosts[i]; //must be in a for-loop so we can break out if a ghost is eaten
+            var ghost = this.ghosts[i];
             if (ghost.collide(this.pacman)) {
                 if (ghost.isFrightened && !ghost.isEaten) {
                     //pac man eats a frightened ghost- pause game for 1 second and hide ghost+pacman to reveal score
                     this.eatenGhosts.push(ghost);
                     ghost.eaten();
                     // make sure two ghosts aren't eaten in the same frame.
-                    // bail out here and wait until next frame to eat next ghost
+                    // jump out here and wait until next frame to eat next ghost
                     return;
                 } else if (!ghost.isEaten) {
-                    // return; 
-                    // //pac man dies. RIP pac man we hardly knew ye
+                    if (Game.GOD_MODE) return; 
+                    // ghost was patrolling, pac man dies. RIP pac man we hardly knew ye
+                    //everything stops for a little under a second
                     this.ghosts.forEach(ghost => ghost.stop());
                     if (this.fruit && this.fruit.stop) this.fruit.stop(); //ms pacman
                     this.pacman.freeze();
                     this.pacman.stop();
                     Sound.stopAll();
                     this.freezeTimer.start(45, () => {
+                        //ghosts disappear and pacman starts die animation
                         this.ghosts.forEach(ghost => ghost.hide());
                         this.pacman.die();
                     });
@@ -1223,6 +1400,12 @@ class Vector {
     }
 
 
+    /**
+     * check to see if it's time to release a ghost from the house
+     * 
+     * @param {*} reason possible values are 'timeup' from the lastPelletEaten timer or 
+     *                   'pellet' to check pelletCounters of the ghosts
+     */
     releaseNextGhost(reason) {
         for (var i = 3; i >= 0; i--) {
             var ghost = this.ghosts[i];
@@ -1249,7 +1432,12 @@ class Vector {
         }
     }
 
-    //ghost functions
+
+    /**
+     * put the ghosts into a frightened state. this reverses their direction,
+     * slows them down, and suspends the scatter/chase behavior. frightened period
+     * ends when timer runs out or all four ghosts have been devoured
+     */
     frightenGhosts() {
         this.ghosts.forEach(ghost => ghost.frighten());
         //reset eaten counter
@@ -1260,8 +1448,9 @@ class Vector {
         //suspend scatter/chase behavior while frigthened
         this.scatterChase.suspend();
         //set up timers based on duration and # flashes for current level
-        var duration = this.pacman.energizedDuration.ticks,
-            numFlashes = this.pacman.energizedDuration.flashes,
+        var fright = Ghost.getFrightenDuration(this.level),
+            duration = fright.ticks,
+            numFlashes = fright.flashes,
             flashDuration = numFlashes * 7 * 4;   //7 ticksPerFrame of flash animation, 4 is the numFrames
         this.frightenTimer.start(duration - flashDuration, () => {
             this.ghosts.forEach(ghost => {
@@ -1293,12 +1482,20 @@ class Vector {
     }
 
 
+    /**
+     * when a ghost is eaten, a score should be displayed with points increasing
+     * by a multiplier base on how many were eaten in this frightened period.
+     * 1 = 200, 2 = 400, 3 = 800, 4 = 1600. if all ghosts are eaten, the frightened
+     * period ends.
+     * 
+     * @param {*} ghost ghost that was eaten
+     */
     eatGhost(ghost) {
         Sound.playOnce('eat_ghost');
         //when pacman eats a ghost, hide pacman and freeze other ghosts for a second
         this.pacman.hide();
         //immediately display the score
-        this.ghostScore = new Points(this, ghost.position.x, ghost.position.y, this.numGhostsEaten, 1);
+        this.ghostScore = new Points(this, ghost, this.numGhostsEaten);
         this.ghosts.forEach(g => {
             if (g != ghost && !g.isEaten) {
                 g.freeze();
@@ -1324,7 +1521,15 @@ class Vector {
     }
 
 
+    /**
+     * feed the pellet to pacman to award points and/or energize. reset
+     * the last pellet eaten timer and update the global pellet counter.
+     * check to see if a ghost can be released by the global counter.
+     * 
+     * @param {*} pellet pellet that was eaten
+     */
     eatPellet(pellet) {
+        //feed to pacman and reset the last pellet eaten timer
         this.pacman.eatItem(pellet);
         this.lastPelletEatenTimer.reset(this.lastPelletEatenTimeout + 1);
         this.globalPelletCounter++;
@@ -1369,6 +1574,7 @@ class Vector {
         this.oneUpLabel.flash = this.curPlayer == 0;
         this.twoUpLabel.flash = this.curPlayer == 1;
 
+        //draw the background maze image
         this.maze.draw();
 
         //draw hud
@@ -1378,19 +1584,21 @@ class Vector {
         this.levelSprite.draw();
         this.livesSprite.draw();
 
-        //draw point/score sprites
+        //draw fruit point score sprites
         if (this.pointSprite) this.pointSprite.draw();
 
         //draw items
         this.pellets.forEach(p => p.draw());
         this.energizers.forEach(e => e.draw());
 
+        //if there's a fruit, draw it
         if (this.fruit) this.fruit.draw();
 
-        //actors
+        //draw actors
         this.pacman.draw();
         this.ghosts.forEach(g => g.draw());
 
+        //if there's a ghost score, draw it
         if (this.ghostScore) this.ghostScore.draw();
     }
 }//after level 2
@@ -1473,6 +1681,7 @@ class MsPacmanCutScene1 extends ScriptScene {
                 this.mspacman.y = 16*8;
                 this.mspacman.direction = Vector.RIGHT;
                 this.pacman.y = 16*8;
+                this.pacman.x = 29*8;
                 this.pacman.direction = Vector.LEFT;
             }, 
 
@@ -1579,7 +1788,11 @@ class MsPacmanCutScene1 extends ScriptScene {
             this.mspacman,
             this.pinky,
             this.inky
-        ]
+        ];
+
+        this.actors = [
+            this.pacman, this.mspacman, this.pinky, this.inky
+        ];
     }
 
     get bounce() {
@@ -1592,12 +1805,6 @@ class MsPacmanCutScene1 extends ScriptScene {
 
     tick() {
         ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.mspacman.tick();
-            this.inky.tick();
-            this.pinky.tick();
-        }
         if (this.pinkyBounce > -1) {
             var move = this.bounce[this.pinkyBounce];
             this.pinky.x -= move[0];
@@ -1614,7 +1821,6 @@ class MsPacmanCutScene1 extends ScriptScene {
 
     draw() {
         ScriptScene.prototype.draw.call(this);
-        this.drawables.forEach(d => d.draw());
         var context = this.context;
         if (this.showHeart) {
             context.drawImage(RESOURCE.mspacman,
@@ -1714,17 +1920,19 @@ class MsPacmanCutScene1 extends ScriptScene {
                 this.pacman.y = 8.5*8;
                 this.pacman.direction = {x: -5, y: 0};
             },
-            1110: () => {
+            1120: () => {
+                //and back the other way, pacman first
                 this.pacman.direction = {x: 5, y: 0};
                 this.pacman.x = -1.5 * 8;
                 this.pacman.y = 28.5 * 8;
             },
-            1125: () => {
+            1135: () => {
+                //finally ms pacman
                 this.mspacman.direction = {x: 5, y: 0};
                 this.mspacman.x = -1.5 * 8;
                 this.mspacman.y = 28.5 * 8;
             },
-            1350: 'end'
+            1355: 'end'
         });
         this.levelSprite = new MsPacmanLevelSprite(this);
         this.level = 5;
@@ -1736,7 +1944,6 @@ class MsPacmanCutScene1 extends ScriptScene {
         this.pacman = new Pacman(this, -1.5 * 8, 8.5 * 8);
         this.mspacman = new MsPacman(this, -1.5 * 8, 8.5 * 8);
 
-
         this.drawables = [
             this.act,
             this.theChase,
@@ -1744,24 +1951,16 @@ class MsPacmanCutScene1 extends ScriptScene {
             this.mspacman,
             this.pacman
         ];
+
+        this.actors = [this.pacman, this.mspacman];
     }
     
 
-    tick() {
-        ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.mspacman.tick();
-        }
-    }
-
     draw() {
         ScriptScene.prototype.draw.call(this)
-        this.drawables.forEach(d => d.draw());
         if (this.take) {
-            var takeOffset = (this.take-1) * 32,
-                context = this.context;
-            context.drawImage(RESOURCE.mspacman,
+            var takeOffset = (this.take-1) * 32;
+            this.context.drawImage(RESOURCE.mspacman,
                 456 + takeOffset, 208, 32, 32, (6*8) + 2, (13*8) + 1, 32, 32
             );    
         }
@@ -1854,6 +2053,7 @@ class MsPacmanCutScene3 extends ScriptScene {
     }
     
 
+    //the baby bounce pattern
     get bounce() {
         return [
             [0,0],[0,0],[0,0],[0,-1],[-1,-1],[0,-1],[0,-1],[-1,-1],[0,0],[0,0],[-1,1],[0,1],[0,0],[0,1],[0,0],[0,1],[-1,0],[0,1],[0,1],
@@ -1881,7 +2081,6 @@ class MsPacmanCutScene3 extends ScriptScene {
 
     draw() {
         ScriptScene.prototype.draw.call(this)
-        this.drawables.forEach(d => d.draw());
         var context = this.context;
         if (this.take) {
             var takeOffset = (this.take-1) * 32;
@@ -1917,6 +2116,8 @@ class MsPacmanCutScene3 extends ScriptScene {
         this.pushStartButton = new Text(this, "PUSH START BUTTON", 'orange', 5*8, 16*8);
         this.onePlayerOnly = new Text(this, "1 PLAYER ONLY", 'orange', 7*8, 18*8);
         this.twoPlayers = new Text(this, "1 OR 2 PLAYERS", 'orange', 7*8, 18*8);
+        this.twoPlayerMode = new Text(this, 'PRESS 2 KEY', 'yellow', 9*8, 20*8);
+        this.twoPlayerMode.hide();
         // this.twoPlayers.hide();
         this.bonusPacman = new Text(this, "ADDITIONAL    AT 10000 pts", 'orange', 1*8, 24*8);
         this.copyright = new Text(this, "c MIDWAY MFG CO", 'red', 10*8, 29*8);
@@ -1933,6 +2134,7 @@ class MsPacmanCutScene3 extends ScriptScene {
             SceneManager.replaceScene(new GameScene(this.context, 1));
             return;
         } else if (Game.CREDITS > 1 && keyPress == 50) { //#2
+            console.log('two players')
             SceneManager.replaceScene(new GameScene(this.context, 2));
             return;
         } else if (keyPress == 27) {
@@ -1947,8 +2149,10 @@ class MsPacmanCutScene3 extends ScriptScene {
         this.credits.text = ""+Game.CREDITS;
         if (Game.CREDITS > 1) {
             this.twoPlayers.show();
+            this.twoPlayerMode.show();
             this.onePlayerOnly.hide();
         } else {
+            this.twoPlayerMode.hide();
             this.twoPlayers.hide();
             this.onePlayerOnly.show();
         }
@@ -1966,6 +2170,7 @@ class MsPacmanCutScene3 extends ScriptScene {
         this.pushStartButton.draw();
         this.onePlayerOnly.draw();
         this.twoPlayers.draw();
+        this.twoPlayerMode.draw();
         this.bonusPacman.draw();
         this.copyright.draw();
         this.dates.draw();
@@ -2207,12 +2412,15 @@ class MsPacmanCutScene3 extends ScriptScene {
         this.creditLabel.draw();
         this.credits.draw();
     }
-}//after level 2
+}/**
+ * after level 2
+ * Blinky chases pacman from right to left off the screen. blinky comes back
+ * left to right, frightened. pacman appears chasing him and is giant sized
+ */
 class PacmanCutScene1 extends ScriptScene {
     constructor(context) {
         super(context, {
             1: () => {
-
                 this.pacman.hide();
                 this.pacman.animation = Pacman.ANIM_NORMAL;
                 this.pacman.direction = Vector.LEFT;
@@ -2230,7 +2438,6 @@ class PacmanCutScene1 extends ScriptScene {
             },
             100: () => {
                 Sound.playOnce('intermission')
-
 
                 this.pacman.show();
                 this.pacman.start();
@@ -2276,26 +2483,18 @@ class PacmanCutScene1 extends ScriptScene {
         this.pacman = new Pacman(this, 27.75 * 8, 19.5 * 8);
         this.blinky = new Blinky(this, 31 * 8, 19.5 * 8);
         this.levelSprite = new PacmanLevelSprite(this);
+        this.drawables = [
+            this.pacman, this.blinky, this.levelSprite
+        ];
+        this.actors = [this.pacman, this.blinky];
         this.level = 2;
         this.pelletsLeft = 1; //engage cruise elroy 2
     }
-    
-
-    tick() {
-        ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.blinky.tick();
-        }
-    }
-
-    draw() {
-        ScriptScene.prototype.draw.call(this)
-        this.pacman.draw();
-        this.blinky.draw();
-        this.levelSprite.draw();
-    }
-}//after level 5 https://www.youtube.com/watch?v=v8BT43ZWSTY
+}/**
+ * after level 5
+ * blinky chases pacman right to left. blinky's sheet gets caught on a nail
+ * his sheet gets torn
+ */
 class PacmanCutScene2 extends ScriptScene {
     constructor(context) {
         super(context, {
@@ -2391,34 +2590,31 @@ class PacmanCutScene2 extends ScriptScene {
 
         this.pacman = new Pacman(this, 27.75 * 8, 19.5 * 8);
         this.blinky = new Blinky(this, 31 * 8, 19.5 * 8);
+        this.actors = [this.pacman, this.blinky];
         this.levelSprite = new PacmanLevelSprite(this);
         this.level = 5;
-
-    }
-
-    tick() {
-        ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.blinky.tick();
-        }
     }
 
     draw() {
+        //don't use drawables because order is important
         ScriptScene.prototype.draw.call(this)
         this.pacman.draw();
         //draw the nail
-        context.drawImage(RESOURCE.pacman,
+        this.context.drawImage(RESOURCE.pacman,
             584, 96, 16, 16, 14*8, (19.5*8)-1, 16, 16
         );
         if (this.rip) {
-            context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 600 + ((this.rip-1) * 16), 96, 16, 16, 14*8, (19.5*8)-1, 16, 16
             );    
         }
         this.blinky.draw();
         this.levelSprite.draw();
-    }}//after level 9
+    }}/**
+ * after level 9
+ * blinky chases pacman again right to left. he slinks back across
+ * the screen naked, pulling his sheet behind him.
+ */
 class PacmanCutScene3 extends ScriptScene {
     constructor(context) {
         super(context, {
@@ -2474,7 +2670,7 @@ class PacmanCutScene3 extends ScriptScene {
                 this.blinky.start();
             },
             430: () => { Sound.playOnce('intermission'); },
-            582: () => {
+            590: () => {
                 this.blinky.hide();
                 this.blinky.stop();
             },
@@ -2485,24 +2681,15 @@ class PacmanCutScene3 extends ScriptScene {
         this.pacman = new Pacman(this, 27.75 * 8, 19.5 * 8);
         this.blinky = new Blinky(this, 31 * 8, 19.5 * 8);
         this.levelSprite = new PacmanLevelSprite(this);
+
+        this.drawables = [
+            this.pacman, this.blinky, this.levelSprite
+        ];
+        this.actors = [
+            this.pacman, this.blinky
+        ];
         this.level = 9;
         this.pelletsLeft = 1;
-
-    }
-
-    tick() {
-        ScriptScene.prototype.tick.call(this);
-        for (var i = 0; i < 2; i++) {
-            this.pacman.tick();
-            this.blinky.tick();
-        }
-    }
-
-    draw() {
-        ScriptScene.prototype.draw.call(this)
-        this.pacman.draw();
-        this.blinky.draw();
-        this.levelSprite.draw();
     }
 }class PacmanStartScene extends Scene {
     constructor(context) {
@@ -2780,10 +2967,7 @@ class PacmanCutScene3 extends ScriptScene {
 
         //two updates per tick for actors
         for (var i = 0; i < 2; i++) {
-            this.a_ghosts.forEach(g => {
-                g.tick();
-            });
-
+            this.a_ghosts.forEach(g => g.tick());
             this.pacman.tick();
 
             if (!this.a_energizer.hidden && this.pacman.collide(this.a_energizer)) {
@@ -2803,7 +2987,7 @@ class PacmanCutScene3 extends ScriptScene {
                     g.hide();
                     g.stop();
                     this.pacman.hide();
-                    this.ghostScore = new PacmanPoints(this, g.position.x, g.position.y, this.ghostsEaten)
+                    this.ghostScore = new PacmanPoints(this, g, this.ghostsEaten)
                     this.ghostsEaten++;
                     this.a_ghosts.forEach(gg => {
                         gg.freeze();
@@ -2871,24 +3055,85 @@ class PacmanCutScene3 extends ScriptScene {
         this.pacman.draw();
         if (this.ghostScore) this.ghostScore.draw();
     }
+}/**
+ * a Tile represents one 8x8 pixel tile of the Maze
+ * 
+    //from Maze.wallMap
+    //. = wall
+    //0 = open, but nothing on it
+    //1 = pellet
+    //2 = pellet + decision
+    //3 = energizer
+    //4 = decision only
+    //5 = tunnel
+    //6 = house
+ */
+class Tile {
+    /**
+     * 
+     * @param {*} x tile X coordinate
+     * @param {*} y tile Y coordinate
+     * @param {*} type type of tile. see above for definitions of possible values
+     *                 values are:  .,0,1,2,3,4,5,6
+     */
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+    }
+    //maze wall
+    get wall() {
+        return this.type == '.';
+    }
+    //open tile. no pellets or anythign else on it
+    get open() {
+        return this.type == '0';
+    }
+    get pellet() {
+        return this.type == '1' || this.type == '2';
+    }
+    get energizer() {
+        return this.type == '3';
+    }
+    //tunnel tile - slows the ghosts
+    get tunnel() {
+        return this.type == '5';
+    }
+    //ghost house tile - slows the ghosts
+    get house() {
+        return this.type == '6';
+    }
+    //decision tiles are where the ghosts make their next move depending on their AI
+    //these occur at most (but not all) intersections in the maze
+    get decision() {
+        return this.type == '4' || this.type == '2';
+    }
+    //true if pac-man can move over this tile
+    get walkable() {
+        return !this.house && !this.wall;
+    }
 }class Maze {
 
-    static getMazeIndex(scene) {
-        //get the version of the maze based on the current level
+    /**
+     * get the version of the maze based on the current level
+     * 
+     * @param {int} level current level of game
+     */
+    static getMazeIndex(level) {
         if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
-            if (scene.level <= 2) {
+            if (level <= 2) {
                 return 0;
-            } else if (scene.level <= 5) {
+            } else if (level <= 5) {
                 return 1;
-            } else if (scene.level <= 9) {
+            } else if (level <= 9) {
                 return 2;
-            } else if (scene.level <= 13) {
+            } else if (level <= 13) {
                 return 3;
-            } else if (scene.level == 14) {
+            } else if (level == 14) {
                 return 2;
             } else {
-                //rotate based on level
-                if (scene.level % 2) {
+                //rotate colors of mazes based on level
+                if (level % 2) {
                     return 2;
                 } else {
                     return 3;
@@ -2900,10 +3145,16 @@ class PacmanCutScene3 extends ScriptScene {
         }
     }
 
+    /**
+     * get a maze instance for the current level. only ms pacman
+     * will return different mazes. pacman just uses the same maze
+     * for every level
+     * 
+     * @param {*} scene the game scene
+     */
     static getMaze(scene) {
         if (Game.GAME_MODE == Game.GAME_MSPACMAN) {
-            //based on level, create a maze instance and return it
-            switch (Maze.getMazeIndex(scene)) {
+            switch (Maze.getMazeIndex(scene.level)) {
                 case 0:
                     return new MsPacman1(scene);
                 case 1:
@@ -2933,6 +3184,11 @@ class PacmanCutScene3 extends ScriptScene {
         }
     }
 
+
+
+    /**
+     * helper functions for inspecting the Tile instance type
+     */
     static isTileType(t, attr) {
         try {
             return this.tileHash[t.x + ',' + t.y][attr];
@@ -2981,6 +3237,7 @@ class PacmanCutScene3 extends ScriptScene {
 
 
 
+
     constructor(scene, resource) {
         this.scene = scene;
         this.resource = resource;
@@ -3003,23 +3260,36 @@ class PacmanCutScene3 extends ScriptScene {
         return this.scene.level <= 4 ? 240 : 180;
     }
 
+    /**
+     * check the fruit release values. if pellets eaten is equal to one of those, release
+     * a fruit.
+     */
     isFruitReady() {
         //make sure a fruit isn't already on the board
         return this.fruitRelease.indexOf(this.scene.pelletsEaten) >= 0;
     }
 
+    /**
+     * Ms Pacman only. choose a random warp tile for the fruit to appear
+     */
     chooseRandomFruitEntry() {
         var cls = this.constructor,
             choice = Math.floor(Math.random() * cls.WARP_TILES.length);
         return [cls.WARP_TILES[choice]].concat(cls.ENTER_TARGETS[choice]);
     }
 
+    /**
+     * Ms Pacman only. choose a random warp tile for the fruit to exit on
+     */
     chooseRandomFruitExit() {
         var cls = this.constructor,
             choice = Math.floor(Math.random() * cls.WARP_TILES.length);
-        return cls.EXIT_TARGETS[choice].concat(cls.WARP_TILES[choice])
+        return cls.EXIT_TARGETS[choice].concat(cls.WARP_TILES[choice]);
     }
 
+    /**
+     * called when the maze should start flashing animation
+     */
     finish() {
         this.flashing = true; 
     }
@@ -3035,12 +3305,13 @@ class PacmanCutScene3 extends ScriptScene {
                 this.flashAnimation.curFrame++;
                 this.flashAnimation.curFrameTicks = 0;
                 if (this.flashAnimation.curFrame > this.flashAnimation.frames) {
+                    //flashing is done
                     this.complete = true;
                 }
             }
             if (this.flashAnimation.curFrame % 2) {
                 //show black and white version
-                offsety = Maze.getMazeIndex(this.scene) * 248;
+                offsety = Maze.getMazeIndex(this.scene.level) * 248;
                 offsetx = 0;
             }
         }
@@ -3127,14 +3398,15 @@ class PacmanCutScene3 extends ScriptScene {
 
     get textureOffset() {
         //depends on level
-        var pacman = this.scene.pacman;
-        if (this.scene.level <= 1 && (pacman.lives >= 2 || (!pacman.isAlive && pacman.lives == 1))) {
+        var scene = this.scene, 
+            pacman = scene.pacman;
+        if (scene.numPlayers == 1 && scene.level == 1 && (pacman.lives >= 2 || (!pacman.isAlive && pacman.lives == 1))) {
+            //bug where maze is blue and red on first play for one player
             return {x: 0, y: 992};
         } else {
             return {x: 228, y: 0};
         }
     }
-
 }
 //inherit statics and load map
 Object.assign(MsPacman1, Maze);
@@ -3261,25 +3533,19 @@ MsPacman2.initialize();class MsPacman3 extends Maze {
     //warp tiles (could find these programmatically)
     static WARP_TILES = [
         {x: -1, y: 11.5},
-        {x: -1, y: 11.5},
-        {x: 28, y: 11.5},
         {x: 28, y: 11.5}
     ];
 
     //fruit entrance sequences- are there only two entry sequences
     static ENTER_TARGETS = [
         [{x: 10, y: 14}], // left
-        [{x: 10, y: 14}], // left
-        [{x: 26, y: 14}, {x: 16, y: 20}], // right
         [{x: 26, y: 14}, {x: 16, y: 20}] // right
     ];
 
-    //fruit exit sequences are there only two exit sequences?
+    //fruit exit sequences are there only two exit sequences
     static EXIT_TARGETS = [
         [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
-        [{x: 12, y: 20}, {x: 8, y: 26}, {x: 1, y:23}], // left
-        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}], // right
-        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 18, y: 17}] // right
+        [{x: 15, y: 20}, {x: 19, y: 26}, {x: 26, y: 23}] // right
     ];
 
     constructor(board) {
@@ -3469,7 +3735,10 @@ class Pacman1 extends Maze {
 }
 //inherit statics and load map
 Object.assign(Pacman1, Maze);
-Pacman1.initialize();class Sprite {
+Pacman1.initialize();/**
+ * base class for just about anything drawn on the canvas- except the maze backgrounds
+ */
+class Sprite {
     constructor(scene, x, y, width, height) {
         this.scene = scene;
         this.context = scene.context;
@@ -3477,17 +3746,38 @@ Pacman1.initialize();class Sprite {
         this.y = y;
         this.width = width;
         this.height = height;
+
+        /**
+         * an animation is a json object containing up to 6 values:
+         * i.e.{ frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 }
+         * 
+         * frames           - total number of frames that make up this animation
+         * ticksPerFrame    - number of ticks to display a single from of the animation before moving on to the next frame
+         * curFrame         - the frame that this animation is currently on
+         * curFrameTicks    - counter for the number ticks of the current animation frame
+         * textureX         - X texture coordinate on the sprite sheet resource of the first frame of this animation
+         * textureY         - Y texture coordinate on the sprite sheet resource of the first frame of this animation
+         * 
+         * textures for each frame are assumed to be horizontally lined up on the sprite sheet with each frame
+         * being the same width (this.width). If the there is no texture (like with the Energizer pellets), the texture
+         * coordinates can be omitted
+         * 
+         */
         this.animations = [];
+        //the pointer to the current animation in the this.animations array
         this.currentAnimation = 0;
     }
 
+    //return pixel position on the screen
     get position() {
         return {x: this.x, y: this.y};
     }
+    //set x and y in one go
     set position(position) {
         this.x = position.x;
         this.y = position.y;
     }
+    //mid point of the sprite rectangle
     get centerPixel() {
         return {x: this.position.x + (this.width/2), y: this.position.y + (this.height/2)}; 
     }
@@ -3534,21 +3824,23 @@ Pacman1.initialize();class Sprite {
     }
 
 
+    /**
+     * nothing is really drawn here, but the current animation (if there is one) has its
+     * counter updated.
+     */
     draw() {
         //don't animate if hidden or frozen
         if (this.hidden || this.frozen) return;
         // update animation counters if there this is animated
         if (this.animations.length) {
             var currentAnimation = this.animations[this.currentAnimation];
-            //if animating...
-            var ticksPerFrame = typeof(currentAnimation.ticksPerFrame) == 'number'?
-                currentAnimation.ticksPerFrame:currentAnimation.ticksPerFrame[currentAnimation.curFrame];
-            if (ticksPerFrame > 0 && currentAnimation.frames > 1) {
+            //if animating
+            if (currentAnimation.ticksPerFrame > 0 && currentAnimation.frames > 1) {
                 //increment time spent on the current frame (milliseconds)
                 currentAnimation.curFrameTicks++;
                 //convert secPerFrame to milliseconds for comparison
                 //is the time on the current frame more than secPerFrame? if so, time to move on to next frame
-                if (currentAnimation.curFrameTicks >= ticksPerFrame) {
+                if (currentAnimation.curFrameTicks >= currentAnimation.ticksPerFrame) {
                     //go to the next frame in the animation
                     currentAnimation.curFrame = (currentAnimation.curFrame + 1) % currentAnimation.frames;
                     currentAnimation.curFrameTicks = 0;
@@ -3556,25 +3848,53 @@ Pacman1.initialize();class Sprite {
             }
         }
     }
-}class Text extends Sprite {
+}/**
+ * render text strings to the canvas in various colors. 
+ * 
+ * see res/text.png for sprite sheet
+ */
+
+class Text extends Sprite {
+    //this string mirrors the placement of letters in res/text.png
     static TEXT_MAP = [
         "ABCDEFGHIJKLMNO ",
-        "PQRSTUVWXYZ!cpts",
+        "PQRSTUVWXYZ!cpts", //c is copyright symbol and pts is the "pts" (points) abbreviation
         '0123456789/-".'
     ]
+
+    /**
+     * 
+     * @param {*} scene scene to render the text on
+     * @param {*} text string of text to render
+     * @param {*} color color of rendered text. values are: red, pink, blue, orange, peach, yellow
+     * @param {*} x pixel location to render text
+     * @param {*} y pixel location to render text
+     * @param {*} align alignment of text: values are left (default) and right
+     */
     constructor(scene, text, color, x, y, align) {
         super(scene, x, y);
         this.text = text;
         this.color = color;
         this.align = align || 'left';
-
+        //a simple counter for flash "animation" instead of using animations array
         this.flashCtr = 0;
     }
 
+    /**
+     * the Y offset of the text.png texture that corresponds to the color
+     * of the text
+     */
     get colorOffset() {
         return (['red','pink','blue','orange','peach','yellow'].indexOf(this.color) + 1) * 32;
     }
 
+    /**
+     * by finding the location of the letter in the textmap string, this calculates the x,y 
+     * coordinate of the given letter as it appears on res/text.png
+     * 
+     * @param {*} letter find the x,y coordinate on sprite sheet of this letter. 
+     *                   Y coord is added with color offset later
+     */
     getLetterCoordinates(letter) {
         for (var i = 0; i < Text.TEXT_MAP.length; i++) {
             var letterIndex = Text.TEXT_MAP[i].indexOf(letter);
@@ -3586,41 +3906,56 @@ Pacman1.initialize();class Sprite {
 
     draw() {
         if (this.hidden) return;
-
+        //flashing is used for the 1/2 player scores only. 
         if (this.flashCtr < 16) {
-            var context = this.context;
+            //flash on for 16 frames, then off for 16
             for (var i = 0; i < this.text.length; i++) {
+                //go through this.text letter by letter and find the corresponding sprite
                 var letterCoords = this.getLetterCoordinates(this.text[i]),
                     alignX = 0;
+                //calculate text alignment offset for this letter
                 if (this.align == 'right') {
                     alignX = ((this.text.length - 1) * 8);
                 }
-                context.drawImage(RESOURCE.text,
+                //draw the letter in sequence
+                this.context.drawImage(RESOURCE.text,
                     letterCoords.x, letterCoords.y + this.colorOffset, 8, 8,
                     this.x + (i * 8) - alignX, this.y, 8, 8
                 );
             }
         }
+        //cycle the flash counter if flash flag is true
         if (this.flash) {
             this.flashCtr = (this.flashCtr + 1) % 32;
         } else {
+            //other wise leave counter at zero so text always gets drawn
             this.flashCtr = 0;
         }
     }
 }/**
  *  points sprite shows up in spot where pacman eats a ghost or fruit
  * */
-class MsPacmanPoints extends Sprite {
-    static TYPE_FRUIT = 0;
-    static TYPE_GHOST = 1;
-    constructor (scene, x, y, score, type) {
-        super(scene, x, y, 16, 16); //always appear below ghost house
-        this.textureOffset = {x: 504, y: 16};
-        this.type = type;
-        this.ticksToLive = 60; //TODO: what should this value be?
-        this.score = score;        
+class PacmanPoints extends Sprite {
+    /**
+     * 
+     * @param {*} scene 
+     * @param {*} item thing that was eaten (fruit or ghost)
+     * @param {*} score if fruit, the actual score, if ghost, the number of ghosts eaten 
+     *                  during energized/fright period
+     */
+    constructor (scene, item, score) {
+        super(scene, item.x, item.y, 16, 16); //always appear below ghost house
+        this.textureOffset = {x: 456, y: 144};
+        //keep on the board for 2 seconds
+        this.ticksToLive = 80; 
+        this.score = score;  
+        this.item = item;      
     }
 
+    /**
+     * if eaten, just set ticksToLive to zero so it doesn't draw, and then
+     * gets deleted from the maze in the next tick
+     */
     eaten() {
         this.ticksToLive = 0;
     }
@@ -3633,64 +3968,10 @@ class MsPacmanPoints extends Sprite {
         }
     }
 
-    get textureOffsets() {
-        if (this.type == MsPacmanPoints.TYPE_FRUIT) {
-            switch(this.score) {
-                //fruit
-                case 100:
-                    return {x: 0, y: 0};
-                case 200:
-                    return {x: 16, y: 0};
-                case 500:
-                    return {x: 32, y: 0};
-                case 700:
-                    return {x: 48, y: 0};
-                case 1000:
-                    return {x: 64, y: 0};
-                case 2000:
-                    return {x: 80, y: 0};
-                case 5000:
-                    return {x: 96, y: 0};
-            }
-        } else {
-            //ghost scores
-            return {x: -16 * (3-this.score), y: 112};
-        }
-    }
-
-    draw() {
-        if (this.ticksToLive > 0) {
-            //do x/y offset based on scene.level
-            var offset = this.textureOffsets;
-            this.scene.context.drawImage(RESOURCE.mspacman,
-                this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, 16, 16,
-                this.position.x, this.position.y, 16, 16  
-            );
-        }
-    }
-}/**
- *  points sprite shows up in spot where pacman eats a ghost or fruit
- * */
-class PacmanPoints extends Sprite {
-    constructor (scene, x, y, score) {
-        super(scene, x, y, 16, 16); //always appear below ghost house
-        this.textureOffset = {x: 456, y: 144};
-        this.ticksToLive = 120; 
-        this.score = score;        
-    }
-
-    eaten() {
-        this.ticksToLive = 0;
-    }
-
-    tick() {
-        this.ticksToLive--;
-        if (this.ticksToLive < 0) {
-            //pull self from the scene
-            delete this.hide()
-        }
-    }
-
+    /**
+     * find the points value sprite on the sprite sheet. some score sprites
+     * are wider than 16 pixels, so take that into account
+     */
     get textureOffsets() {
         switch(this.score) {
             //fruit
@@ -3714,114 +3995,180 @@ class PacmanPoints extends Sprite {
                 //ghosts 1,2,3, or 4
                 return {x: 16 * this.score, y: -16, w: 16};
         }
+    }
 
+    /**
+     * as long as this sprite has ticksToLive, draw it
+     */
+    draw() {
+        if (this.ticksToLive > 0) {
+            //do x/y offset based on board.level
+            var offset = this.textureOffsets;
+            this.context.drawImage(RESOURCE.pacman,
+                this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, offset.w, 16,
+                this.x - ((offset.w - 16) / 2), this.y, offset.w, 16  
+            );
+        }
+    }
+}/**
+ *  points sprite shows up in spot where pacman eats a ghost or fruit
+ * */
+class MsPacmanPoints extends PacmanPoints {
+
+    constructor (scene, item, score) {
+        super(scene, item, score); //always appear below ghost house
+        this.textureOffset = {x: 504, y: 16};
+    }
+
+    /**
+     * find the coordinates of the points value sprite on the sprite sheet.
+     */
+    get textureOffsets() {
+        if (this.item.fruit) {
+            switch(this.score) {
+                //fruit
+                case 100:
+                    return {x: 0, y: 0};
+                case 200:
+                    return {x: 16, y: 0};
+                case 500:
+                    return {x: 32, y: 0};
+                case 700:
+                    return {x: 48, y: 0};
+                case 1000:
+                    return {x: 64, y: 0};
+                case 2000:
+                    return {x: 80, y: 0};
+                case 5000:
+                    return {x: 96, y: 0};
+            }
+        } else {
+            //ghost scores
+            return {x: -16 * (3-this.score), y: 112};
+        }
+    }
+
+    /**
+     * as long as this sprite has ticksToLive, draw it
+     */
+    draw() {
+        if (this.ticksToLive > 0) {
+            var offset = this.textureOffsets;
+            this.context.drawImage(RESOURCE.mspacman,
+                this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, 16, 16,
+                this.x, this.y, 16, 16  
+            );
+        }
+    }
+}/** 
+* the row of pacmans or ms pacmans that appear below the maze indicating 
+* how many lives the player has remaining. maxes out at 5
+*/
+class LivesSprite extends Sprite {
+    constructor(scene) {
+        super(scene, 0, 0, 16, 16);
+        if (Game.GAME_MODE == Game.GAME_PACMAN) {
+            this.resource = RESOURCE.pacman;
+            this.textureOffset = { x: 587, y: 16 };
+        } else {
+            this.resource = RESOURCE.mspacman;
+            this.textureOffset = { x: 472, y: 0 };
+        }
     }
 
     draw() {
-        if (this.ticksToLive > 0) {
-            var context = this.scene.context;
-            //do x/y offset based on board.level
-            var offset = this.textureOffsets;
-            context.drawImage(RESOURCE.pacman,
-                this.textureOffset.x + offset.x, this.textureOffset.y + offset.y, offset.w, 16,
-                this.position.x - ((offset.w - 16) / 2), this.position.y, offset.w, 16  
+        //can only draw a maximum of 5 pacman lives
+        for (var i = 0; i < Math.min(this.scene.pacman.lives, 5); i++) {
+            this.context.drawImage(this.resource,
+                this.textureOffset.x, this.textureOffset.y, this.width, this.height,
+                (i + 1) * this.width, 272, this.width, this.height
             );
         }
     }
 }/*
-the row of (ms) pacmans that appear below the maze indicating 
-how many tries the player has remaining
-*/
-
-class LivesSprite extends Sprite {
-    constructor(scene) {
-        super(scene);
-        this.resource = Game.GAME_MODE == Game.GAME_PACMAN?RESOURCE.pacman:RESOURCE.mspacman;
-        if (Game.GAME_MODE == Game.GAME_PACMAN) {
-            this.textureOffset = {x: 587, y: 16};
-        } else {
-            this.textureOffset = {x: 472, y: 0}
-        }
-        this.width = 16;
-        this.height = 16;
-    }
-
-    draw() {
-        var context = this.scene.context;
-        if (this.scene.pacman.lives > 0) {
-            for (var i = 0; i < Math.min(this.scene.pacman.lives, 5); i++) {
-                context.drawImage(this.resource,
-                    this.textureOffset.x, this.textureOffset.y, this.width, this.height,
-                    (i+1) * this.width, 272, this.width, this.height  
-                );
-            }
-        }
-    }
-}/*
-the row of fruit that appears below the maze indicating which level
-the player is on
+* the row of fruit that appears below the maze indicating which level
+* the player is on.
+*
+* the order of appearance of fruit in ms pacman starting at level 1:
+* cherry, strawberry, orange, pretzel, apple, pear, banana
+*
+* unlike pacman fruits are not pushed off the board as levels progress.
+* after banana (level 7) the MsPacmanLevelSprite fruits do not change
 */
 
 class MsPacmanLevelSprite extends Sprite {
     constructor(scene) {
-        super(scene);
+        super(scene, 0, 0, 16, 16);
         this.textureOffset = {x: 504, y: 0};
-        this.width = 16;
-        this.height = 16;
     }
 
     draw() {
-        var context = this.scene.context;
+        //ms pacman doesn't repeat fruit, and doesn't push earlier fruit off screen
         for (var i = 0; i < Math.min(Math.max(this.scene.level,1), 7); i++) {
-            context.drawImage(RESOURCE.mspacman,
+            this.context.drawImage(RESOURCE.mspacman,
                 this.textureOffset.x + (i * 16), this.textureOffset.y, this.width, this.height,
                 196 - (i * 16), 272, this.width, this.height  
             );
         }
     }
-}/*
-the row of fruit that appears below the maze indicating which level
-the player is on
+}/**
+* the row of fruit that appears below the maze indicating which level
+* the player is on. 
+*
+* the order of fruit appearance in pacman starting at level 1 is:
+* cherry, strawberry, orange, orange, apple, apple, pineapple, pineapple,
+* galaxian boss, galaxian boss, bell, bell, keys until forever
+*
+* as levels progress, earlier fruit is pushed off the board. a
+* maximum of 7 fruits are displayed at one time
 */
 
 class PacmanLevelSprite extends Sprite {
     constructor(scene) {
-        super(scene);
+        super(scene, 0, 0, 16, 16);
         this.textureOffset = {x: 488, y: 48};
-        this.width = 16;
-        this.height = 16;
     }
 
     draw() {
-        var context = this.scene.context,
-            fruits = [],
+        var fruits = [],
             level = Math.max(this.scene.level, 1);
+        // pacman differs from ms pacman here. it pushes earlier fruit off the screen
         for (var i = level; i >= level-6; i--) {
             if (i < 1) break;
-            var fruitIdx = PacmanFruit.getFruitIndex(i);
-            fruits.unshift(fruitIdx);
+            fruits.unshift(PacmanFruit.getFruitIndex(i));
         }
+        //play math games to line the fruit up nicely on the bottom of the screen
         for (var i = 0; i < fruits.length; i++) {
             var offsetX = fruits[i] * 16,
                 dstX = (24 - (2*i)) * 8;
-            context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offsetX, this.textureOffset.y, this.width, this.height,
                 dstX, 272, this.width, this.height  
             );
         }
     }
-}class Actor extends Sprite {
+}/**
+ * base class for pacmans, ghosts, and ms pacman fruit. actor is
+ * a base class for anything that moves around a scene
+ */
+class Actor extends Sprite {
 
     //turn preferences priority list- used by ghosts and ms pacman fruit.
     //if there's a tie for which valid turns to make at a decision point, choose the first 
     //one of the matches in this list
     static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
-    constructor(board, x, y, width, height) {
-        super(board, x, y, width, height);
+    constructor(scene, x, y, width, height) {
+        super(scene, x, y, width, height);
+        this.startPosition = { x: x, y: y };
+        //frame counter keeps track of which value to select from speedControl string
+        //this gets incremented twice per tick and loops back to zero after 31
         this.frameCtr = 0;
     }
 
+    /**
+     * return the actor to it's starting place
+     */
     reset() {
         this.show();
         this.freeze();
@@ -3838,7 +4185,7 @@ class PacmanLevelSprite extends Sprite {
     calculateNextInstruction(atTile) {
         var choice = -1,
             closest = Infinity,
-            validChoices = [];    //keep track of non-wall hitting moves for random selection (frightened mode)
+            validChoices = [];    //keep track of non-wall hitting moves for random selection (i.e. frightened mode)
         //cycle through the turn preferences list: UP, LEFT, DOWN, RIGHT
         for (var i = 0; i < Actor.TURN_PREFERENCE.length; i++) {
             var testDirection = Actor.TURN_PREFERENCE[i];
@@ -3868,9 +4215,7 @@ class PacmanLevelSprite extends Sprite {
     
     //is this actor centered on a tile?
     get isTileCenter() {
-        var tile = this.tile,
-            pixel = this.position;
-        return tile.x*8 == pixel.x+4 && tile.y*8 == pixel.y+4;
+        return this.tile.x*8 == this.x+4 && this.tile.y*8 == this.y+4;
     }
 
     //start and stop movement (but not animation)
@@ -3881,6 +4226,9 @@ class PacmanLevelSprite extends Sprite {
         this.stopped = false;
     }
 
+    /**
+     * this gets called twice per frame.
+     */
     tick() {
         if (!this.stopped) {
             //update position of actor
@@ -3890,15 +4238,20 @@ class PacmanLevelSprite extends Sprite {
             //counter used for speed control
             this.frameCtr = (this.frameCtr+1) % 32;
 
-            //warp tunnel wrap-around- if actor goes through tunnel, make them loop out from the other side
-            if (this.tile.x == 29 && this.direction.x == 1) {
-                this.x = (-2 * 8);
+            //warp tunnel wrap-around- if actor goes through tunnel, 
+            // make them loop out from the other side
+            if (this.tile.x == 30 && this.direction.x == 1) {
+                this.x = (-3 * 8)+2;
             } else if (this.tile.x == -2 && this.direction.x == -1) {
-                this.x = (29 * 8);
+                this.x = (30 * 8)-2;
             }
         }
     }
 
+    /**
+     * get the value at index:frameCtr from the speedControl string. this will be how
+     * many pixels the actor should move next half tick
+     */
     get speed() {
         try {
             return parseInt(this.speedControl[this.frameCtr]);
@@ -3906,25 +4259,34 @@ class PacmanLevelSprite extends Sprite {
             return 0;
         }
     }
-
 }class Pacman extends Actor {
+    //STATUS INDICATORS
+    //normal movement around maze
     static MODE_PATROL = 0;
+    //after eating an energizer
     static MODE_ENERGIZED = 1;
+    //in the process of dying where he folds up into nothing
     static MODE_DYING = 2;
+    //all done dying
     static MODE_DEAD = 3;
 
+    //ANIMATIONS
+    //normal maze chomping
     static ANIM_NORMAL = 0;
+    //folding up and disappearing
     static ANIM_DIE = 1;
+    //used for cutscene 1 in pacman where he's pacman becomes a giant for some reason
     static ANIM_GIANT = 2;
+    //used for menu and cut scene. slows mouth chomping animation to half-speed
     static ANIM_SLOMO = 3;
 
     constructor(scene, x, y) {
         super(scene, x, y, 16, 16);
+        //always starts facing left
         this.startDirection = Vector.LEFT;
-        this.startPosition = { x: x, y: y };
         this.animations = [
-            //normal
-            { frames: 4, ticksPerFrame: [3,2,2,2], curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
+            //normal --TODO: it seems chopming animations are dependent on speed control
+            { frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
             //die
             { frames: 14, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 504, textureY: 0 },
             //giant 32 x 32
@@ -3933,7 +4295,6 @@ class PacmanLevelSprite extends Sprite {
             { frames: 4, ticksPerFrame: 4, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 }
         ];
         this.score = 0;
-        this.energizeTimer = new Timer();
         this.reset();
     }
 
@@ -3951,24 +4312,28 @@ class PacmanLevelSprite extends Sprite {
     }
 
     get centerPixel() {
-        return { x: this.position.x + 7, y: this.position.y + 7 };
+        return { x: this.x + 7, y: this.y + 7 };
     }
 
+    /**
+     * see if pacman collided with a pellet
+     * 
+     * @param {*} pellet test hitbox against pacman
+     */
     collideItem(pellet) {
         var pelletHitbox = pellet.hitBox;
-        if ((pelletHitbox.x > this.hitBox.x && pelletHitbox.x + pelletHitbox.w < this.hitBox.x + this.hitBox.w) &&
-            (pelletHitbox.y > this.hitBox.y + 1 && pelletHitbox.y + pelletHitbox.h < this.hitBox.y + this.hitBox.h)) {
-            return true;
-        }
-        return false;
+        return ((pelletHitbox.x > this.hitBox.x && pelletHitbox.x + pelletHitbox.w < this.hitBox.x + this.hitBox.w) &&
+            (pelletHitbox.y > this.hitBox.y + 1 && pelletHitbox.y + pelletHitbox.h < this.hitBox.y + this.hitBox.h));
     }
 
     /**
      * pacman is out in the maze and there is no fright timer.
      */
     patrol() {
-        this.animation = Pacman.ANIM_NORMAL;
-        this.mode = Pacman.MODE_PATROL;
+        if (this.isAlive) {
+            this.animation = Pacman.ANIM_NORMAL;
+            this.mode = Pacman.MODE_PATROL;    
+        }
     }
     get isPatrolling() {
         return this.mode == Pacman.MODE_PATROL;
@@ -3979,7 +4344,7 @@ class PacmanLevelSprite extends Sprite {
      * pacman eats an item such as a pellet, energizer, or fruit. when eating a pellet, pacman
      * freezes for one frame, and freezes for 3 when eating an energizer. The freeze delay counter
      * is because the freeze happens after one tick.
-     * @param {*} item 
+     * @param {*} item the thing that pacman ate
      */
     eatItem(item) {
         if (item.pellet) {
@@ -3998,11 +4363,16 @@ class PacmanLevelSprite extends Sprite {
         }
         this.addPoints(item.points);
     }
-
     get isEnergized() {
         return this.mode == Pacman.MODE_ENERGIZED;
     }
 
+
+    /**
+     * add points to pac-man's score. check for extra life.
+     * extra life every 10k points
+     * @param {*} points 
+     */
     addPoints(points) {
         var prevScore = Math.floor(this.score / 10000);
         this.score += points;
@@ -4019,8 +4389,13 @@ class PacmanLevelSprite extends Sprite {
     }
 
 
+    /**
+     * kill the pac-man. stores the current maze's pellet arrays
+     * to pac-man and then begins die animation
+     */
     die() {
         //point up and open mouth to begin die animation
+        this.freeze();
         this.animation.curFrame = 2;
         this.direction = Vector.UP;
         //cache the scene's pellets/energizer in side this pacman instance
@@ -4064,50 +4439,44 @@ class PacmanLevelSprite extends Sprite {
             this.freezeDelay--;
         }
 
-        //two updates per tick for a moving Actor
-        if (!this.stopped) {
-            Actor.prototype.tick.call(this);
-        }
+        Actor.prototype.tick.call(this);
 
-        if (!this.scene.maze) return;  //we're scripting, no maze stuff here
-        if (this.isDying) return; //ignore inputs if pacman is dying
+        //scripting or dead, no maze stuff here
+        if (!this.scene.maze || !this.isAlive) return;  
+
         //get the direction for this frame by reading the input buffer or continue current direction if no input
         var inputDirection = Input.readBuffer() || this.direction;
         //check for wall contact
         //look at 5 pixels over from center point in direction pac-man is moving. if it is a wall tile, then stop
         var centerPoint = this.centerPixel,
             nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 },
-            testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-        //this move would hit a wall, try to continue in same direction of travel
-        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+            nextTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
+        if (!this.scene.mazeClass.isWalkableTile(nextTile)) {
+            //this move would hit a wall, try to continue in same direction of travel
             inputDirection = this.direction;
         } else {
+            //path is open, start moving again
             this.unfreeze();
             this.start();
         }
 
         //try again with original direction - if there's a wall here too, stop
         nextPixel = { x: centerPoint.x + inputDirection.x * 5, y: centerPoint.y + inputDirection.y * 5 };
-        testTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
-        //this move would hit a wall, try to continue in same direction of travel
-        if (!this.scene.mazeClass.isWalkableTile(testTile)) {
+        nextTile = { x: Math.floor(nextPixel.x / 8), y: Math.floor(nextPixel.y / 8) };
+        if (!this.scene.mazeClass.isWalkableTile(nextTile)) {
+            //this move would hit a wall, try to continue in same direction of travel
             this.freeze();
             this.stop();
-            //another interesting fact- pac man never seems to stop with his mouth closed
-            if (this.animation.curFrame == 0) {
+            //pac man never stops with his mouth closed. ms pacman does, though
+            if (this.animation.curFrame == 0 && Game.GAME_MODE == Game.GAME_PACMAN) {
                 this.animation.curFrame = 2;
             }
         }
-        var changeDirection = !Vector.equals(inputDirection, this.direction),
-            oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
+
+        var oppositeDirection = Vector.equals(inputDirection, Vector.inverse(this.direction));
         this.direction = inputDirection;
 
-        //when going up... movement is '01111121'
-        if (changeDirection && !oppositeDirection && Vector.equals(this.direction, Vector.DOWN)) {
-            this.y++;
-        }
-
-        //pause for a frame when changing direction
+        //make sure to keep pacman centered in the maze path
         if (!this.stopped && !oppositeDirection) {
 
             //get the coordinate of center lane
@@ -4115,7 +4484,8 @@ class PacmanLevelSprite extends Sprite {
                 centerY = (this.tile.y * 8) + 3;
 
             //keep pac-man in his lane. fudge over to center line depending on direction of travel
-            //this code re-aligns pacman to the center of the maze lane after cutting a corner
+            //this code re-aligns pacman to the center of the maze lane after cutting a corner.
+            //have to use half pixels (0.5) because of the two updates per tick thing
             if (this.direction.x) {
                 if (this.centerPixel.y > centerY) {
                     this.y -= 0.5;
@@ -4133,44 +4503,56 @@ class PacmanLevelSprite extends Sprite {
         }
     }
 
-    //clip apart the sprite sheet at res/pacman/pacman.png
+
+    /**
+     * offset on sprite sheet according to which direction pac-man
+     * is facing
+     */
+    get directionalOffsetY() {
+        //right, left, up, down
+        if (this.direction.x >= 1) {
+            return 0;
+        } else if (this.direction.x <= -1) {
+            return 16;
+        } else if (this.direction.y <= -1) {
+            return 32;
+        } else if (this.direction.y >= 1) {
+            return 48;
+        }
+    }
+
+
+    /**
+     * offset on sprite sheet for the frame pac-man is
+     * on in his eating animation
+     */
+    get frameOffsetX() {
+        switch(this.animation.curFrame) {
+            case 3:
+                return -1;
+            default:
+                return -this.animation.curFrame;
+        }
+    }
+
+
     draw() {
         if (this.hidden) return;
         Actor.prototype.draw.call(this);
-        var context = this.scene.context,
+        var context = this.context,
             animation = this.animation;
 
-        if (!this.isDying) {
+        if (this.isAlive) {
+            //draw chomping animation
             var curFrame = animation.curFrame,
-                frameOffsetX = 0,
-                directionalOffsetY = 0,
-                width = 15,
-                height = 15;
+                frameOffsetX = this.frameOffsetX,
+                directionalOffsetY = this.directionalOffsetY,
+                width = this.width,
+                height = this.height;
 
             if (curFrame == 0) {
                 //closed mouth uses only one texture, no matter direction
                 directionalOffsetY = 0;
-            } else {
-                //right, left, up, down
-                if (this.direction.x >= 1) {
-                    directionalOffsetY = 0;
-                } else if (this.direction.x <= -1) {
-                    directionalOffsetY = 16;
-                } else if (this.direction.y <= -1) {
-                    directionalOffsetY = 32;
-                } else if (this.direction.y >= 1) {
-                    directionalOffsetY = 48;
-                }
-            }
-
-            if (curFrame == 0) {
-                frameOffsetX = 0
-            } else if (curFrame == 1) {
-                frameOffsetX = -1;
-            } else if (curFrame == 2) {
-                frameOffsetX = -2;
-            } else if (curFrame == 3) {
-                frameOffsetX = -1;
             }
 
             if (this.isGiant) {
@@ -4184,19 +4566,17 @@ class PacmanLevelSprite extends Sprite {
             //do directional stuff and modular back and forth for animation
             context.drawImage(RESOURCE.pacman,
                 animation.textureX + frameOffsetX, directionalOffsetY, width, height,
-                this.position.x, this.position.y, width, height
+                this.x, this.y, width, height
             );
         } else {
             //dying animation
             context.drawImage(RESOURCE.pacman,
                 animation.textureX + (animation.curFrame * 16), 0, 16, 16,
-                this.position.x, this.position.y, 16, 16
+                this.x, this.y, 16, 16
             );
             if (animation.curFrame == 13) {
                 //dead
-                this.stop();
                 this.freeze();
-                this.hide();
                 this.mode = Pacman.MODE_DEAD;
             }
         }
@@ -4204,12 +4584,135 @@ class PacmanLevelSprite extends Sprite {
 
 
     /**
+     * these strings indicate how many pixels to move pacman at a given tick. two consecutive digits are applied
+     * each tick, allowing for sub tick granularity with respect to movement. 
+     * i.e. on level 1 if pacman is patrolling, in one tick he will update his positiong twice moving 0 pixels in the first
+     * half tick and 1 pixel in the next, for a total of 1 pixel in the tick. as the game speeds up, this
+     * allows for pac-man (and ghosts) to move more than 1 pixel per tick without flying off the rails.
+     * 
+     * for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
+     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
+     */
+    get speedControl() {
+        // TODO: something odd going on when pacman moves up. doesn't follow these patterns. pixel rounding??
+        //on average I think it works out, but not pixel perfect
+        if (this.stopped || !this.isAlive) {
+            return '00000000000000000000000000000000';
+        } else if (this.isPatrolling) {
+            if (this.scene.level == 1) {
+                return '01010101010101010101010101010101'; //16/32 = 60 px/sec
+            } else if (this.scene.level <= 4) {
+                return '11010101011010101101010101101010'; //18/32 = 67.5 px/sec
+            } else if (this.scene.level <= 20) {
+                return '01101101011011010110110101101101'; //20/32 = 75
+            } else {
+                return '11010101011010101101010101101010'; //18/32 = 67.5
+            }
+        } else if (this.isEnergized) {
+            if (this.scene.level == 1) {
+                return '11010101011010101101010101101010'; //18/32 = 67.5
+            } else if (this.scene.level <= 4) {
+                return '11010110010110101010110110110101'; //19/32 = 71.25
+            } else if (this.scene.level <= 20) {
+                return '01101101011011010110110101101101'; //20/32 = 75
+            } else {
+                //there is no "energized" state for pacman at this point as the 
+                //energizers don't frighten the ghosts- just use patrolling speed
+                return '11010101011010101101010101101010'; //not ever used
+            }
+        }
+    }
+}/**
+ * Ms Pac-man's class. See Pacman.js
+ */
+class MsPacman extends Pacman {
+    constructor(scene, x, y) {
+        super(scene, x, y, 16, 16);
+        this.animations = [
+            //normal
+            { frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
+            //die
+            { frames: 11, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 472, textureY: 48 },
+            //giant 32 x 32 --pacman only
+            { },
+            //slo-mo - same as normal but don't chomp so fast
+            { frames: 4, ticksPerFrame: 4, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 }
+        ];
+    }
+
+    /**
+     * ms pacman starts die animation pointing down
+     */
+    die() {
+        Pacman.prototype.die.call(this);
+        this.animation.curFrameTicks = 0;
+        this.animation.curFrame = 1;
+        this.direction = Vector.DOWN;
+        this.nextDirection = Vector.DOWN;
+    }
+
+    draw() {
+        if (this.hidden) return;
+        Actor.prototype.draw.call(this);
+        var context = this.context,
+            animation = this.animation;
+
+        if (this.isAlive) {
+            //chomping animation
+            context.drawImage(RESOURCE.mspacman,
+                animation.textureX + (this.frameOffsetX * 16), this.directionalOffsetY, 16, 16,
+                this.x, this.y, 16, 16
+            );
+        } else {
+            //dying animation- should spin, down,left,up,right, down,left,up,right, down,left,up
+            this.direction = Actor.TURN_PREFERENCE[animation.curFrame % 4];
+            context.drawImage(RESOURCE.mspacman,
+                animation.textureX, this.directionalOffsetY, 16, 16,
+                this.x, this.y, 16, 16
+            );
+            if (animation.curFrame == 9) {
+                //dead - stop animating
+                this.freeze();
+                this.mode = Pacman.MODE_DEAD;
+            }
+        }
+    }
+}// https://www.youtube.com/watch?v=sQK7PmR8kpQ ms pacman ghost ai
+//ghost movement https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
+class Ghost extends Actor {
+    static MODE_CHASE = 0;
+    static MODE_SCATTER = 1;
+    static MODE_FRIGHT = 2;
+    static MODE_EATEN = 3;
+
+    static STATUS_LEAVE_HOME = 0;
+    static STATUS_ENTER_HOME = 1;
+    static STATUS_HOME = 2;
+    static STATUS_PATROL = 3;
+
+    static ANIM_SCATTER_CHASE = 0;
+    static ANIM_FRIGHT = 1;
+    static ANIM_FRIGHT_FLASH = 2;
+    static ANIM_EATEN = 3;
+
+    //global counters to keep track during one frighten period
+    static NUM_EATEN = 0;
+    static NUM_FRIGHTENED = 0;
+
+    //entrance and exit to the ghost house
+    static HOUSE_DOOR = { x: 13, y: 14 };
+    static LEAVE_TARGET = { x: 13 * 8, y: 13.5 * 8 };
+
+
+    /**
+     * total duration of energize/frighten. time is in seconds, flashes are 
+     * 28 ticks each-- 4 frames, 7 ticks per frame. on most later levels, ghosts 
+     * never frighten and only reverse direction
      * 
      * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2456
      */
-    get energizedDuration() {
+    static getFrightenDuration(level) {
         var time = 0,
-            level = this.scene.level,
             flashes = 0;
         if (level <= 5) {
             time = 7 - level;
@@ -4236,143 +4739,11 @@ class PacmanLevelSprite extends Sprite {
         }
     }
 
-    // for info on pacman speeds, etc see: https://www.gamasutra.com/db_area/images/feature/3938/tablea1.png
-    get speedControl() {
-        // TODO: something odd going on when pacman moves up. doesn't follow these patterns. pixel rounding??
-        //on average I think it works out, but not pixel perfect
-        if (this.stopped || this.isDying) {
-            return '00000000000000000000000000000000';
-        } else if (this.isPatrolling) {
-            if (this.scene.level == 1) {
-                return '01010101010101010101010101010101';
-            } else if (this.scene.level <= 4) {
-                return '11010101011010101101010101101010' //18/32
-            } else if (this.scene.level <= 20) {
-                return '01101101011011010110110101101101'; //20/32
-            } else {
-                return '11010101011010101101010101101010';
-            }
-        } else if (this.isEnergized) {
-            if (this.scene.level == 1) {
-                return '11010101011010101101010101101010';
-            } else if (this.scene.level <= 4) {
-                return '11010110010110101010110110110101';
-            } else if (this.scene.level <= 20) {
-                return '01101101011011010110110101101101';
-            } else {
-                //there is no "energized" state for pacman at this point as the 
-                //energizers don't frighten the ghosts- just use patrolling speed
-                return '11010101011010101101010101101010';
-            }
-        }
-    }
-}class MsPacman extends Pacman {
     constructor(scene, x, y) {
         super(scene, x, y, 16, 16);
-        this.animations = [
-            //normal
-            { frames: 4, ticksPerFrame: 2, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 },
-            //die
-            { frames: 11, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 472, textureY: 48 },
-            //giant 32 x 32 --pacman only
-            { },
-            //slo-mo - same as normal but don't chomp so fast
-            { frames: 4, ticksPerFrame: 4, curFrame: 0, curFrameTicks: 0, textureX: 488, textureY: 0 }
-            
-        ];
-    }
-
-    die() {
-        Pacman.prototype.die.call(this);
-        this.animation.curFrame = 1;
-        this.direction = Vector.DOWN;
-        this.nextDirection = Vector.DOWN;
-    }
-
-    draw() {
-        if (this.hidden) return;
-        Actor.prototype.draw.call(this);
-        var context = this.scene.context,
-            animation = this.animation,
-            directionalOffsetY = 0;
-
-        //right, left, up, down
-        if (this.direction.x >= 1) {
-            directionalOffsetY = 0;
-        } else if (this.direction.x <= -1) {
-            directionalOffsetY = 16;
-        } else if (this.direction.y <= -1) {
-            directionalOffsetY = 32;
-        } else if (this.direction.y >= 1) {
-            directionalOffsetY = 48;
-        }
-
-        if (!this.isDying) {
-            var curFrame = animation.curFrame,
-                frameOffsetX = 0;
-
-            if (curFrame == 0) {
-                frameOffsetX = 0
-            } else if (curFrame == 1) {
-                frameOffsetX = -1;
-            } else if (curFrame == 2) {
-                frameOffsetX = -2;
-            } else if (curFrame == 3) {
-                frameOffsetX = -1;
-            }
-
-            //do directional stuff and modular back and forth for animation
-            context.drawImage(RESOURCE.mspacman,
-                animation.textureX + (frameOffsetX * 16), directionalOffsetY, 15, 15,
-                this.position.x, this.position.y, 15, 15
-            );
-        } else {
-            //dying animation- should spin, down,left,up,right, down,left,up,right, down,left,up
-            this.direction = Actor.TURN_PREFERENCE[animation.curFrame % 4];
-            context.drawImage(RESOURCE.mspacman,
-                animation.textureX, directionalOffsetY, 16, 16,
-                this.position.x, this.position.y, 16, 16
-            );
-            if (animation.curFrame == 9) {
-                //dead
-                this.stop();
-                this.freeze();
-                this.mode = Pacman.MODE_DEAD;
-            }
-        }
-    }
-}// https://www.youtube.com/watch?v=sQK7PmR8kpQ ms pacman ghost ai
-//ghost movement https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
-class Ghost extends Actor {
-    static MODE_CHASE = 0;
-    static MODE_SCATTER = 1;
-    static MODE_FRIGHT = 2;
-    static MODE_EATEN = 3;
-
-    static STATUS_LEAVE_HOME = 0;
-    static STATUS_ENTER_HOME = 1;
-    static STATUS_HOME = 2;
-    static STATUS_PATROL = 3;
-
-    static ANIM_SCATTER_CHASE = 0;
-    static ANIM_FRIGHT = 1;
-    static ANIM_FRIGHT_FLASH = 2;
-    static ANIM_EATEN = 3;
-
-    static NUM_EATEN = 0;
-    static NUM_FRIGHTENED = 0;
-
-
-    //entrance and exit to the ghost house
-    static HOUSE_DOOR = { x: 13, y: 14 };
-    static LEAVE_TARGET = { x: 13 * 8, y: 13.5 * 8 };
-
-    constructor(scene, x, y, name) {
-        super(scene, x, y, 16, 16);
-        this.scene = scene;
-        this.name = name;
-        this.startPosition = { x: x, y: y };
-
+        
+        //when eaten, ghosts should return to their houseTarget (usually their startPosition, except Blinky)
+        this.houseTarget = this.startPosition;
         this.animations = [
             //normal movement
             { frames: 2, ticksPerFrame: 8, curFrame: 0, curFrameTicks: 0, textureX: 456, textureY: 64 },
@@ -4381,13 +4752,17 @@ class Ghost extends Actor {
             //frighten (flash blue / white)
             { frames: 4, ticksPerFrame: 7, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 64 },
             //eaten (eyes)
-            { frames: 1, ticksPerFrame: 0, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 80 },
+            { frames: 1, ticksPerFrame: 0, curFrame: 0, curFrameTicks: 0, textureX: 584, textureY: 80 }
         ];
         this.currentAnimation = 0;
+        //pellet counter for release from ghost house
         this.pelletCounter = 0;
     }
 
 
+    /**
+     * return ghosts to their starting positions and states
+     */
     reset() {
         Actor.prototype.reset.call(this);
         this.nextInstruction = Vector.clone(this.direction);
@@ -4396,18 +4771,21 @@ class Ghost extends Actor {
         this.animation = Ghost.ANIM_SCATTER_CHASE;
         this.targetTile = this.calculateTargetTile();
         delete this.reverseInstruction;
-
     }
 
     /**
-     * number of pellets that must be eaten before this ghost
-     * can leave the house
+     * when not using global pellet count, use this as a personal ghost counter.
+     * it is number of pellets that must be eaten before this ghost can leave the house
+     * only clyde and inky have values here. see their subclasses
      */
     get pelletLimit() {
         return 0;
     }
 
 
+    /**
+     * check to see if ghost is on a tunnel tile
+     */
     get inTunnel() {
         try {
             return this.scene.mazeClass.isTunnelTile(this.tile);
@@ -4416,18 +4794,13 @@ class Ghost extends Actor {
         }
     }
 
-    get isSlow() {
-        return this.isHome || this.isLeavingHome || this.inTunnel;
-    }
-
     /**
      * frighten the ghosts if they're not eaten. frightened ghosts
      * get a reverse instruction.
      */
     frighten() {
-        //tag the instruction as a reverse
-        this.reverseInstruction = Vector.inverse(this.direction);
-        this.reverseInstruction.reverse = true;
+        //reverse the ghost, even if they're eaten (eyes)
+        this.reverse();
         if (!this.isEaten) {
             //eaten ghosts (eyes) can't be frightened
             this.mode = Ghost.MODE_FRIGHT;
@@ -4435,6 +4808,9 @@ class Ghost extends Actor {
             Ghost.NUM_FRIGHTENED++;
         }
     }
+    /**
+     * start the flashin'
+     */
     frightenFlash() {
         this.animation = Ghost.ANIM_FRIGHT_FLASH;
     }
@@ -4442,26 +4818,23 @@ class Ghost extends Actor {
         return this.mode == Ghost.MODE_FRIGHT;
     }
 
+
     /**
      * turn the ghost around at the next tile center, if possible
      */
     reverse() {
-        var reverse = Vector.inverse(this.direction);
-        this.reverseInstruction = reverse;
+        this.reverseInstruction = Vector.inverse(this.direction);;
+        //tag as a reverse instruction so we know later when it becomes the next instruction
         this.reverseInstruction.reverse = true;
     }
 
 
     /**
      * make the ghost scatter pacman. called by the scatterchase instance
-     * @param {*} noReverse sometimes scatter needs to be called without the reverse instruction
      */
-
-    scatter(noReverse) {
+    scatter() {
         if (!this.isEaten) {
-            if (!noReverse) {
-                this.reverse();
-            }
+            this.reverse();
             this.mode = Ghost.MODE_SCATTER;
             this.animation = Ghost.ANIM_SCATTER_CHASE;
             //point to this ghost's scatter target
@@ -4477,6 +4850,7 @@ class Ghost extends Actor {
     /**
      * make the ghost chase pacman. called by the scatterchase instance
      * @param {*} noReverse sometimes chase needs to be called without the reverse instruction
+     *                      i.e. when frigthen state ends
      */
     chase(noReverse) {
         if (!this.isEaten) {
@@ -4509,8 +4883,6 @@ class Ghost extends Actor {
     }
 
 
-
-    //ghost house stuff vvvv
     /**
      * direct the ghost to leave the house. if they are not already home
      * point the ghost in the direction of the exit point (x axis first)
@@ -4561,12 +4933,11 @@ class Ghost extends Actor {
 
 
     /**
-     * one tick of the game. this is where the meat of the ghosts' game mechanics lies. this tells
+     * one (half) tick of the game. this is where the meat of the ghosts' game mechanics lies. this tells
      * the ghost how to move based on its location, mode, and status. for instance, if the ghost is 
      * leaving home, it's pointed to the LEAVE_TARGET and gradually moves there with each tick of the game.
      */
     tick() {
-        //the ghost's "speed" determines how many pixels it moves in this game tick. see "get speedControl()" below
         Actor.prototype.tick.call(this);
         if (!this.scene.maze) return;
         if (this.isHome) {
@@ -4587,7 +4958,7 @@ class Ghost extends Actor {
             } else if (this.position.x > this.houseTarget.x) {
                 this.direction = Vector.LEFT;
             } else {
-                //back to home target
+                //back on the home target- turn back to ghost
                 this.status = Ghost.STATUS_HOME;
                 this.animation = Ghost.ANIM_SCATTER_CHASE;
                 this.direction = Vector.UP;
@@ -4633,7 +5004,7 @@ class Ghost extends Actor {
             this.madeInstruction = true;    //clear this after leaving tileCenter
             // execute pending instruction
             if (this.reverseInstruction) {
-                //check validity of move, if not valid, go back in the previous direciton
+                //check validity of move, if not valid, go back in the previous direction
                 var nextTile = Vector.add(this.tile, this.reverseInstruction);
                 if (this.scene.mazeClass.isWallTile(nextTile)) {
                     this.nextInstruction = Vector.inverse(this.lastDirection);
@@ -4645,16 +5016,14 @@ class Ghost extends Actor {
             this.lastDirection = Vector.clone(this.direction);
             this.direction = Vector.clone(this.nextInstruction);
             // look ahead to next tile and calculate next instruction from there
-            this.targetTile = this.calculateTargetTile();
             var nextTile = Vector.add(this.tile, this.direction),
                 futureTile = Vector.add(nextTile, this.direction);
-            if (this.scene.mazeClass.isDecisionTile(nextTile)) {
-                this.nextInstruction = this.calculateNextInstruction(nextTile);
-            } else if (this.scene.mazeClass.isWallTile(futureTile)) {
+            if (this.scene.mazeClass.isDecisionTile(nextTile) || this.scene.mazeClass.isWallTile(futureTile)) {
                 this.nextInstruction = this.calculateNextInstruction(nextTile);
             }
             if (!this.nextInstruction) {
                 //the above did not generate a valid move. could happen due to a reverse instruction at an inopportune time
+                //calculate a next move from this tile, or just keep the current direction
                 var nextDirection = this.calculateNextInstruction(this.tile) || this.direction;
                 this.nextInstruction = Vector.clone(nextDirection);
             }
@@ -4674,7 +5043,7 @@ class Ghost extends Actor {
                     this.status = Ghost.STATUS_ENTER_HOME;
                 }
             } else if (this.exitingHouse) {
-                //now that the ghost has popped out of the house, make sure its position is snapped to the maze lanes
+                //now that the ghost has popped out of the house, make sure its y position is snapped to the maze lane
                 this.y = ((this.tile.y - 1) * 8) + 4;
                 this.exitingHouse = false;
             }
@@ -4687,25 +5056,28 @@ class Ghost extends Actor {
     /**
      * the interesting thing here is that the ghosts telegraph their turn a few pixels
      * before the execute the turn. the draw method takes into account a pending instruction
-     * and moves the ghost's eyes in that direction while the ghost is patrolling
+     * and moves the ghost's eyes in that direction while it is patrolling the maze.
      */
     draw() {
         if (this.hidden) return;
         Actor.prototype.draw.call(this);
         //figure out texture sheet offsets then draw
-        var context = this.scene.context, //canvas 2d context for drawing
+        var context = this.context, //canvas 2d context for drawing
             animation = this.animation,
-            directionalOffsetX = 0,
+            directionalOffsetX = 0, //could potentially share these values with pacman 
             offsetY = 0;
         //non-frighten animations move eyes in the nextDirection. ghosts' eyes move first before they make a turn
         if (!this.isFrightened) {
             offsetY = this.textureOffsetY;
             var eyes;
             if (this.isHome || this.isLeavingHome) {
+                //eyes agree with the ghosts direction
                 eyes = this.direction;
             } else if (this.madeInstruction || this.nextInstruction.reverse) {
+                //eyes should agree with direction
                 eyes = this.direction;
             } else {
+                //eyes look in the ghost's next move direction
                 eyes = this.nextInstruction || this.direction;
             }
             //add an x offset to the textureX to point eyes frames
@@ -4724,8 +5096,9 @@ class Ghost extends Actor {
         }
         //draw to canvas
         context.drawImage(RESOURCE.pacman,
-            animation.textureX + directionalOffsetX + (animation.curFrame * this.width), animation.textureY + offsetY, this.width, this.height, //clip from source
-            this.position.x, this.position.y, this.width, this.height
+            animation.textureX + directionalOffsetX + (animation.curFrame * this.width), 
+            animation.textureY + offsetY, this.width, this.height, //clip from source
+            this.x, this.y, this.width, this.height
         );
     }
 
@@ -4733,22 +5106,22 @@ class Ghost extends Actor {
      * these strings represent the amount of pixels a ghost should move per half tick during
      * a period of 16 ticks (two updates per tick).  this.frameCtr keeps track of the position in the speed control
      * string. this.frameCtr gets incremented in tick() each executed (unfrozen) frame
-     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      * 
+     * see #330F on https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
      */
     get speedControl() {
 
         try {
             if (this.isEaten) {
-                return '11111111111111111111111111111111'
-            } else if (this.isSlow) {
+                return '11111111111111111111111111111111';
+            } else if (this.isHome||this.isLeavingHome) {
+                return '00010001000100010001000100010001';
+            } else if (this.inTunnel) {
                 //tunnel, home
                 if (this.scene.level == 1) {
                     return '00100010001000100010001000100010';
                 } else if (this.scene.level <= 4) {
                     return '01001000001001000010001010010001';
-                } else if (this.scene.level <= 20) {
-                    return '10010010001001001001001000100100';
                 } else {
                     return '10010010001001001001001000100100';
                 }
@@ -4770,8 +5143,6 @@ class Ghost extends Actor {
                     return '10101010101010101010101010101010';
                 } else if (this.scene.level <= 4) {
                     return '11010101011010101101010101101010';
-                } else if (this.scene.level <= 20) {
-                    return '01101101011011010110110101101101';
                 } else {
                     return '01101101011011010110110101101101';
                 }
@@ -4781,8 +5152,6 @@ class Ghost extends Actor {
                     return '101010100110101001010101110101010';
                 } else if (this.scene.level <= 4) {
                     return '101101011001011010101011011011010';
-                } else if (this.scene.level <= 20) {
-                    return '101101100110110101101101110110110';
                 } else {
                     return '101101100110110101101101110110110';
                 }
@@ -4803,8 +5172,11 @@ class Ghost extends Actor {
             return '11010110010110101010110110110101';
         }
     }
-}//TODO:  on reversal there is a ms pacman patch that makes blinky go after ms pacman to "avoid parking"
-
+}/**
+ * Blinky is a special ghost. He appears in the pac-man cut scenes with his own
+ * animations. he also has a "cruise elroy" state where he speeds up when there
+ * are few pellets left on the maze.
+ */
 class Blinky extends Ghost {
     //extra animations for cut scenes
     static ANIM_RIP = 4;
@@ -4812,7 +5184,8 @@ class Blinky extends Ghost {
     static ANIM_NAKED = 6;
     
     constructor(scene, x, y) {
-        super(scene, x, y, 'Blinky');
+        super(scene, x, y);
+        //since blinky doesn't start in the house, need to assign him a target inside
         this.houseTarget = { x: 13 * 8, y: 16.5 * 8 };
         this.startDirection = Vector.LEFT;
         this.scatterTargetTile = { x: 25, y: 0 };
@@ -4829,9 +5202,12 @@ class Blinky extends Ghost {
         this.reset();
     }
 
+
+    /**
+     * blinky starts outside of the house on reset
+     */
     reset() {
         Ghost.prototype.reset.call(this);
-        //blinky starts outside of the house
         this.status = Ghost.STATUS_PATROL;
     }
 
@@ -4854,8 +5230,11 @@ class Blinky extends Ghost {
         }
     }
 
+
+    /**
+     * blinky should always leave home immediately
+     */
     tick() {
-        //blinky should always leave home immediately
         if (this.isHome) {
             this.leaveHouse()
         }
@@ -4865,9 +5244,10 @@ class Blinky extends Ghost {
 
     draw() {
         if (this.currentAnimation == Blinky.ANIM_NAKED) {
-            Actor.prototype.draw.call(this);
+            //this is for the third cutscene of pacman. just update animation without any maze logic
+            Sprite.prototype.draw.call(this);
             var animation = this.animation;
-            context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 animation.textureX + (animation.curFrame * 32), animation.textureY, 32, this.height, //clip from source
                 this.position.x-16, this.position.y, 32, this.height
             );
@@ -4884,7 +5264,6 @@ class Blinky extends Ghost {
      * https://github.com/BleuLlama/GameDocs/blob/master/disassemble/mspac.asm#L2439
      */
     get elroy() {
-        //cruise elroy for Blinky only
         if (this.scene.pelletsLeft > 0) {
             if (this.scene.pelletsLeft <= this.elroy2PelletsLeft) {
                 return 2;
@@ -4896,6 +5275,9 @@ class Blinky extends Ghost {
     }
 
 
+    /**
+     * elroy1 threshold is double elroy2
+     */
     get elroy1PelletsLeft() {
         return this.elroy2PelletsLeft * 2;
     }
@@ -4920,8 +5302,7 @@ class Blinky extends Ghost {
     }
 }class Pinky extends Ghost {
     constructor(scene, x ,y) {
-        super(scene, x, y, 'Pinky');
-        this.houseTarget = this.startPosition;
+        super(scene, x, y);
         this.startDirection = Vector.DOWN;
         this.textureOffsetY = 16;
         this.scatterTargetTile = { x: 2, y: 0 };
@@ -4937,7 +5318,7 @@ class Blinky extends Ghost {
 
     /**
      * Pinky targets four tiles in front of the pacman in pacman's direction of travel. Also
-     * takes into account a bug with the targeting scheme in the original arcade game.s
+     * takes into account a bug with the targeting scheme in the original arcade game.
      */
     calculateTargetTile() {
         if (this.isChasing) {
@@ -4953,16 +5334,14 @@ class Blinky extends Ghost {
                     targetTile.x -= 4;
                 }
             }
-            return Vector.clone(targetTile);
+            return targetTile;
         } else {
             return Ghost.prototype.calculateTargetTile.call(this);
         }
     }
-
 }class Inky extends Ghost {
     constructor(scene, x, y) {
-        super(scene, x, y, 'Inky');
-        this.houseTarget = this.startPosition;
+        super(scene, x, y);
         this.startDirection = Vector.UP;
         this.textureOffsetY = 32;
         this.scatterTargetTile = { x: 27, y: 35 };
@@ -4976,8 +5355,11 @@ class Blinky extends Ghost {
         return this.scene.level==1?30:0;
     }
 
+
+    /**
+     * inky looks two tiles in front of pacman, draws a vector from blinky to that spot and doubles it
+     */
     calculateTargetTile() {
-        //inky looks two tiles in front of pacman, draws a vector from blinky to that spot and doubles it
         if (this.isChasing) {
             var blinkyTile = this.scene.ghosts.Blinky.tile,
                 pacmanTile = this.scene.pacman.tile,
@@ -4995,7 +5377,7 @@ class Blinky extends Ghost {
             //now draw a vector from blinky to that target and double the length to get new target
             targetTile.x += (targetTile.x - blinkyTile.x);
             targetTile.y += (targetTile.y - blinkyTile.y);
-            return Vector.clone(targetTile);
+            return targetTile;
         } else {
             return Ghost.prototype.calculateTargetTile.call(this);
         }
@@ -5003,9 +5385,7 @@ class Blinky extends Ghost {
 
 }class Clyde extends Ghost {
     constructor(scene, x, y) {
-        super(scene, x, y, 'Clyde');
-        this.houseTarget = this.startPosition;
-        this.enterTarget = this.startPosition;
+        super(scene, x, y);
         this.startDirection = Vector.UP;
         this.textureOffsetY = 48;
         this.scatterTargetTile = { x: 0, y: 35 };
@@ -5027,16 +5407,15 @@ class Blinky extends Ghost {
 
     /**
      * Clyde will target pacman directly when more than 8 tiles away from him. if he
-     * gets closer, he will target his scatter tile
+     * gets closer than that, he will target his scatter tile
      */
     calculateTargetTile() {
         if (this.isChasing) {
-            var sueTile = this.tile,
-                pacmanTile = this.scene.pacman.tile,
-                distance = Vector.distance(sueTile, pacmanTile);
+            var pacmanTile = this.scene.pacman.tile,
+                distance = Vector.distance(this.tile, pacmanTile);
             if (distance > 8) {
                 // target pacman tile
-                return pacmanTile;
+                return Vector.clone(pacmanTile);
             } else {
                 // move to scatter target
                 return this.scatterTargetTile;
@@ -5045,24 +5424,28 @@ class Blinky extends Ghost {
             return Ghost.prototype.calculateTargetTile.call(this);
         }
     }
-}/*
-    this class dictates to the scene which scatter or chase phase the
-    ghosts should be in at a given moment. basically a glorified timer.
-    the durations of each scatter/chase phase are dependent on the 
-    current level
-*/
+}/**
+ * this class dictates to the scene which scatter or chase phase the
+ * ghosts should be in at a given moment. basically a glorified timer.
+ * the durations of each scatter/chase phase are dependent on the 
+ * current level
+ */
 class ScatterChase {
     constructor(scene){
         this.scene = scene;
         this.reset();
      }
 
-
+     /**
+      * phase 0 scatter in ms pacman is random movements for pinky and blinky
+      */
      get randomScatter() {
-         //only applicable for ms pacman
         return Game.GAME_MODE == Game.GAME_MSPACMAN && this.phase == 0 &&  this.phaseTimesRemaining.scatter > 0;
     }
 
+    /**
+     * reset the phase and timers
+     */
     reset() {
         this.phase = 0;
         this.setTimers();
@@ -5070,7 +5453,9 @@ class ScatterChase {
         this.scene.globalChaseMode = GameScene.MODE_SCATTER;
     }
 
-    //set the countdowns for the current phase
+    /**
+     * set the countdowns for the current phase
+     */
     setTimers() {
         var phaseTimes = this['phase'+this.phase];
         this.phaseTimesRemaining = {
@@ -5079,14 +5464,18 @@ class ScatterChase {
         };
     }
 
-    //progress to the next phase in the sequence. replenish 
-    //countdowns
+    /**
+     * progress to the next phase in the sequence. replenish countdowns
+     * 
+     */
     nextPhase() {
         this.phase++;
         this.setTimers();
     }
 
-    //scatter/chase suspends when ghosts are frightened
+    /**
+     * scatter/chase suspends when ghosts are frightened
+     */
     suspend() {
         this.suspended = true;
     }
@@ -5163,16 +5552,16 @@ class ScatterChase {
     }
 
     get hitBox() {
-        return {x: this.position.x + 3, y: this.position.y + 3, w: 2, h: 2}
+        return {x: this.x + 3, y: this.y + 3, w: 2, h: 2}
     }
 
     draw () {
         if (this.hidden) return;
         //doesn't animate, just draw
-        var context = this.scene.context;
+        var context = this.context;
         context.beginPath();
         context.fillStyle = this.pelletColor;
-        context.fillRect(this.position.x + 3, (this.position.y) + 3, 2, 2);
+        context.fillRect(this.x + 3, this.y + 3, 2, 2);
         context.fill();
 
         // context.beginPath();
@@ -5182,16 +5571,16 @@ class ScatterChase {
         // context.strokeRect(tile.x, tile.y, tile.w, tile.h);
 
     }
-}/*
-    The big pellet. Energizes pacman and frightens/reverses the ghost when eaten
-*/
+}/**
+ * The big pellet. Energizes pacman and frightens/reverses the ghost when eaten
+ */
 class Energizer extends Pellet {
     constructor(scene, x, y) {
         super(scene, x, y);
         this.animations = [
             //on texture coords. this will just be a flashing circle
             {frames: 2, ticksPerFrame: 10, curFrame: 0, curFrameTicks: 0}
-        ]
+        ];
         this.points = 50;
         this.pellet = false;
         this.energizer = true;
@@ -5201,41 +5590,43 @@ class Energizer extends Pellet {
         if (this.hidden) return;
         //animate this thing
         Sprite.prototype.draw.call(this);
-        var animation = this.animation;
         //since energizers flash, only draw when animation frame is 0
         //there is no sprite sheet / texture involved here
-        if (animation.curFrame == 0) {
+        if (this.animation.curFrame == 0) {
             //draw energizer on the canvas
-            var context = this.scene.context;
+            var context = this.context;
             context.fillStyle = this.pelletColor;
             // drawing a circle anti-aliases on canvas. doesn't fit aesthetic.. use rectangles
-            context.fillRect(this.position.x + 1, (this.position.y) + 1, 6, 6);
-            context.fillRect(this.position.x, (this.position.y) + 2, 8, 4);
-            context.fillRect(this.position.x + 2, (this.position.y), 4, 8);
-
+            context.fillRect(this.x + 1, this.y + 1, 6, 6);
+            context.fillRect(this.x, this.y + 2, 8, 4);
+            context.fillRect(this.x + 2, this.y, 4, 8);
             context.fill();
         }
     }
-}class MsPacmanFruit extends Actor {
+}/**
+ * Ms Pacman fruit behaves quite differently from Pacman fruit. It enters through
+ * a random tunnel, makes its way toward the center of the maze, does one loop
+ * around the ghost house and then chooses a random tunnel to exit through.
+ */
+class MsPacmanFruit extends Actor {
     static MODE_ENTER = 0;
     static MODE_LOOP = 1;
     static MODE_EXIT = 2;
 
+    //this is a point inside the ghost house that causes the fruit to do the lap 
+    //around the house when targeted
     static HOUSE_TARGET = { x: 13, y: 18 };
-
-    static TURN_PREFERENCE = [Vector.LEFT, Vector.UP, Vector.RIGHT, Vector.DOWN];
 
     constructor(scene) {
         super(scene, -16, -16, 16, 16);
-
+        this.fruit = true;
         this.level = this.scene.level;
         if (this.level > 7) {
             //after level 7, randomly choose fruit
-            this.level = Math.floor(Math.random() * 7) + 1;
+            this.level = Math.floor(Math.random() * 8);
         }
         this.textureOffset = { x: 504, y: 0 };
-        this.fruit = true;
-
+        //the fruit bounces up and down as it moves. this counter keeps track of that bounce
         this.bounceCtr = 0;
         //fruit enters through one of 2 or 4 set paths (depending on maze)
         this.mode = MsPacmanFruit.MODE_ENTER;
@@ -5250,10 +5641,12 @@ class Energizer extends Pellet {
         this.targetTile = this.enterSequence[this.turn];
     }
 
-
+    get speedControl() {
+        return '00100010001000100010001000100010';
+    }
 
     get hitBox() {
-        return { x: this.position.x + 4, y: this.position.y + 4, w: 8, h: 8 }
+        return { x: this.x + 4, y: this.y + 4, w: 8, h: 8 }
     }
 
     get points() {
@@ -5343,25 +5736,16 @@ class Energizer extends Pellet {
         Actor.prototype.draw.call(this);
         var offsetX = (this.level - 1) * 16,
             offsetBounce = 1.5 * Math.sin((this.bounceCtr / 16) * Math.PI) - 0.5;  //bounce the fruit up and down
-            this.scene.context.drawImage(RESOURCE.mspacman,
-                this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
-                this.position.x, this.position.y + offsetBounce, 16, 16
-            );
-
-
-        // context.beginPath();
-        // context.lineWidth = 1;
-        // context.strokeStyle = "#FF0000";
-        // var tile = this.targetTile;
-        // context.strokeRect(tile.x*8, tile.y*8, 8, 8);
-
+        this.context.drawImage(RESOURCE.mspacman,
+            this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
+            this.x, this.y + offsetBounce, 16, 16
+        );
     }
-
-    get speedControl() {
-        return '00100010001000100010001000100010';
-    }
-}//instead of making a subclass for each fruit, just jam all info into this single class for everything
-class PacmanFruit extends Sprite {
+}/**
+ * Pacman only fruit. This fruit doesn't do anything except spawn at the same
+ * place in the maze, twice per maze, and hang around for 9.33 to 10 seconds
+ */
+ class PacmanFruit extends Sprite {
     static POINTS = [100, 300, 500, 700, 1000, 2000, 3000, 5000];
     static getFruitIndex(level) {
         switch(level) {
@@ -5392,14 +5776,14 @@ class PacmanFruit extends Sprite {
     constructor (scene) {
         super(scene, 13*8, 19.5*8, 16, 16); //always appear below ghost house
         this.textureOffset = {x: 488, y: 48};
-        //60 fps == 60 ticks per sec
         //half ticks because fruit is updated twice per tick
         this.halfTicksToLive = 2 * 60 * ((Math.random() * (2/3)) + (28/3));   //10ish second timer (should be random between 9.33333 and 10)
-        // this.points = this.setPoints();
         this.fruit = true;
     }
 
-
+    /**
+     * amount of points this fruit is worth
+     */
     get points() {
         return PacmanFruit.POINTS[PacmanFruit.getFruitIndex(this.scene.level)];
     }
@@ -5408,16 +5792,25 @@ class PacmanFruit extends Sprite {
         return {x: this.position.x + 6, y: this.position.y, w: 2, h: 8}
     }
 
+    /**
+     * returns true if hitbox intersects with pacman's hitbox
+     * @param {*} pacman duh
+     */
     collide(pacman) {
         return (pacman.centerPixel.x <= this.hitBox.x+this.hitBox.w && pacman.centerPixel.x >= this.hitBox.x && 
-                pacman.centerPixel.y <= this.hitBox.y+this.hitBox.h && pacman.centerPixel.y >= this.hitBox.y)
+                pacman.centerPixel.y <= this.hitBox.y+this.hitBox.h && pacman.centerPixel.y >= this.hitBox.y);
     }
 
+    /**
+     * the fruit was eaten, leave it for dead
+     */
     eaten() {
         this.halfTicksToLive = 0;
     }
 
-
+    /**
+     * count down half ticks until it's time to remove the fruit
+     */
     tick() {
         this.halfTicksToLive--;
         if (this.halfTicksToLive < 0) {
@@ -5428,15 +5821,95 @@ class PacmanFruit extends Sprite {
 
     draw() {
         if (this.halfTicksToLive > 0) {
-            //do x/y offset based on board.level
             var offsetX = PacmanFruit.getFruitIndex(this.scene.level) * 16;
-            this.scene.context.drawImage(RESOURCE.pacman,
+            this.context.drawImage(RESOURCE.pacman,
                 this.textureOffset.x + offsetX, this.textureOffset.y, 16, 16,
-                this.position.x, this.position.y, 16, 16  
+                this.x, this.y, 16, 16  
             );
         }
     }
-}//MS PACMAN
+}/**
+ * Game class creates a canvas and fires up a game loop.
+ */
+class Game {
+    //pacman cannot die!
+    static GOD_MODE = false;
+
+    //which game mode is being played
+    static GAME_PACMAN = 0;
+    static GAME_MSPACMAN = 1;
+    static GAME_MODE = 0; //pacman
+
+    //credits to play.. for fun I guess
+    static CREDITS = 0;
+
+    //last game's scores for each player and each game mode
+    static LAST_SCORES = [
+        [0,null],   //pacman
+        [0,null]    //mspacman
+    ];
+
+    /**
+     * 
+     * @param {*} el element to attach the canvas to. defaults to document.body
+     * @param {int} scale how many times larger to make the screen. default is 2
+     */
+    constructor(el, scale) {
+        this.el = (el?document.getElementById(el):document.body)||document.body;
+
+        //pause controls. space bar will pause/unpause the game. see Input.js
+        this.pauseGame = false;
+        this.wasPaused = false;
+
+        //create the canvas and scale it so it's not so tiny
+        this.canvas = document.createElement('canvas');
+        this.context = this.canvas.getContext('2d'),
+        this.scale = scale || 2.0;
+        this.canvas.width = 224*this.scale;
+        this.canvas.height = 288*this.scale;
+        
+        //turn off antialiasing on the scaling
+        this.context.webkitImageSmoothingEnabled = false;
+        this.context.mozImageSmoothingEnabled = false;
+        this.context.imageSmoothingEnabled = false;
+        this.context.scale(this.scale, this.scale)
+        
+        //draw black background on canvas
+        this.canvas.style.background = 'black';
+        this.canvas.style.border = 'solid';
+        this.el.appendChild(this.canvas);
+
+        //set up scene manager with credits scene as initial scene
+        SceneManager.pushScene(new CreditsScene(this.context));
+
+        //start game loop
+        window.requestAnimationFrame(()=>this.loop());
+    }
+
+
+    /**
+     * the game loop. where the magic happens
+     */
+    loop() {
+        Input.watch();
+        //if not paused, play the action
+        if (!this.pauseGame) {
+            SceneManager.update();  
+        }
+        
+        //deal with sound engine when pausing
+        if (this.pauseGame && !this.wasPaused) {
+            Sound.suspend();
+        } else if (!this.pauseGame && this.wasPaused) {
+            Sound.resume();
+        }
+        this.wasPaused = this.pauseGame;
+
+        //request another frame to continue the game loop
+        window.requestAnimationFrame(()=>this.loop());
+    }
+}
+//MS PACMAN
 // http://cubeman.org/arcade-source/mspac.asm
 // https://raw.githubusercontent.com/BleuLlama/GameDocs/master/disassemble/mspac.asm
 
@@ -5466,4 +5939,4 @@ RESOURCE.mspacman.src = 'res/mspacman/mspacman.png';
 RESOURCE.pacman.src = 'res/pacman/pacman.png';
 RESOURCE.text.src = 'res/text.png';
 
-var GAME = new Game();
+var GAME = new Game(null, 2);

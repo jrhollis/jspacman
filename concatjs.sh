@@ -7,12 +7,13 @@ js/scene/CreditsScene.js \
 js/scene/GameScene.js \
 js/scene/mspacman/* \
 js/scene/pacman/* \
+js/maze/Tile.js \
 js/maze/Maze.js \
 js/maze/mazes/* \
 js/draw/Sprite.js \
 js/draw/Text.js \
-js/draw/MsPacmanPoints.js \
 js/draw/PacmanPoints.js \
+js/draw/MsPacmanPoints.js \
 js/hud/* \
 js/actors/Actor.js \
 js/actors/Pacman.js \
@@ -27,5 +28,6 @@ js/items/Pellet.js \
 js/items/Energizer.js \
 js/items/MsPacmanFruit.js \
 js/items/PacmanFruit.js \
+js/Game.js \
 js/index.js \
 > jspacman.js
