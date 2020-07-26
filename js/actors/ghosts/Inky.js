@@ -28,11 +28,10 @@ class Inky extends Ghost {
                     y: pacmanTile.y + (pacmanDirection.y * 2) 
                 };
             //emulate overflow bug where if pacman is moving up, target tile also moves left 2 tiless
-            if (pacmanDirection.y) {
-                if (pacmanDirection.y < 0) {
-                    targetTile.x -= 2;
-                }
+            if (pacmanDirection.y < 0) {
+                targetTile.x -= 2;
             }
+            this.ptile = Vector.clone(targetTile);
             //now draw a vector from blinky to that target and double the length to get new target
             targetTile.x += (targetTile.x - blinkyTile.x);
             targetTile.y += (targetTile.y - blinkyTile.y);

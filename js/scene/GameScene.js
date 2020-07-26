@@ -225,9 +225,6 @@ class GameScene extends Scene {
         });
 
         this.scatterChase.reset();
-        //hack to copy actual game... need to address this
-        this.scatterChase.tick();
-        this.scatterChase.tick();
     }
 
 

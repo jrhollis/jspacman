@@ -259,8 +259,11 @@ class Ghost extends Actor {
      * leaving home, it's pointed to the LEAVE_TARGET and gradually moves there with each tick of the game.
      */
     tick() {
+
         Actor.prototype.tick.call(this);
         if (!this.scene.maze) return;
+        this.targetTile = this.calculateTargetTile();
+
         if (this.isHome) {
             //ghost is home in the ghost house
             //bounce up and down off walls when stuck in the house
@@ -349,7 +352,7 @@ class Ghost extends Actor {
                 this.nextInstruction = Vector.clone(nextDirection);
             }
             //update the target tile
-            this.targetTile = this.calculateTargetTile();
+            // this.targetTile = this.calculateTargetTile();
         } else {
             if (!this.isTileCenter) {
                 //off center tile, unset the madeInstruction flag
@@ -369,7 +372,7 @@ class Ghost extends Actor {
                 this.exitingHouse = false;
             }
             //always update the target tile
-            this.targetTile = this.calculateTargetTile();
+            // this.targetTile = this.calculateTargetTile();
         }
     }
 

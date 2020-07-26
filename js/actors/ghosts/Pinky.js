@@ -22,15 +22,11 @@ class Pinky extends Ghost {
         if (this.isChasing) {
             var pacmanDirection = this.scene.pacman.direction,
                 targetTile = Vector.clone(this.scene.pacman.tile);
-            if (pacmanDirection.x) {
-                targetTile.x += (pacmanDirection.x * 4)
-            }
-            if (pacmanDirection.y) {
-                targetTile.y += (pacmanDirection.y * 4);
-                //emulate the overflow bug in the original arcade game where if pacman is moving up, target tile also moves left 4 tiless
-                if (pacmanDirection.y < 0) {
-                    targetTile.x -= 4;
-                }
+            targetTile.x += (pacmanDirection.x * 4)
+            targetTile.y += (pacmanDirection.y * 4);
+            //emulate the overflow bug in the original arcade game where if pacman is moving up, target tile also moves left 4 tiless
+            if (pacmanDirection.y < 0) {
+                targetTile.x -= 4;
             }
             return targetTile;
         } else {
