@@ -24,4 +24,4 @@ F: Advance Game One Frame
 
 
 I'm doing some explainer videos on youtube:
-https://www.youtube.com/channel/UCLaSf2T1z1W6y2yIZ8wszfw/playlists
+https://www.youtube.com/playlist?list=PLYcVWsOwv3wiCBwBko-ygKS6KZqs6UbeH
