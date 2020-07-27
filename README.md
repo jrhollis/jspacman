@@ -5,7 +5,7 @@ In order to play, the files must be placed on a web server and loaded in Chrome,
 
 My goal in this project was to get as close to pixel perfect as possible. And I think it's fairly close, but there are some inconsistencies still. The game includes all credit/title scenes and cut scenes for both Pac-Man and Ms Pac-Man.
 
-I've also coded in a gameboard observing algorithm for potentioal use in an A.I. implementation.
+I've also coded in a gameboard observing algorithm for potential use in an A.I. implementation.
 
 Controls are:
 ======================
@@ -21,3 +21,7 @@ Move: Arrow Keys
 Space: Pause Game
 
 F: Advance Game One Frame
+
+
+I'm doing some explainer videos on youtube:
+https://www.youtube.com/playlist?list=PLYcVWsOwv3wiCBwBko-ygKS6KZqs6UbeH
