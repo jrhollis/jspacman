@@ -269,6 +269,7 @@ class Input {
         if (e.keyCode == 70) {
             GAME.pauseGame = true;
             //render next frame
+            Input.watch();
             SceneManager.update();
             e.preventDefault();
             return false;
@@ -1130,6 +1131,8 @@ class GameScene extends Scene {
         });
 
         this.scatterChase.reset();
+        //actual game seems to lose a tick immediately before starting up
+        this.scatterChase.tick();
     }
 
 
@@ -1151,7 +1154,7 @@ class GameScene extends Scene {
             this.freezeTimer.start(96, () => {
                 //intermissions
                 if (this.level == 2) {
-                    SceneManager.pushScene(new CutScene1(this.context));
+                    // SceneManager.pushScene(new CutScene1(this.context));
                 } else if (this.level == 5) {
                     SceneManager.pushScene(new CutScene2(this.context));
                 } else if (this.level == 9) {
@@ -4933,8 +4936,8 @@ class Ghost extends Actor {
      */
     tick() {
 
-        Actor.prototype.tick.call(this);
         if (!this.scene.maze) return;
+        //update the target tile
         this.targetTile = this.calculateTargetTile();
 
         if (this.isHome) {
@@ -4988,7 +4991,6 @@ class Ghost extends Actor {
                         //inherit the current scatter/chase mode
                         this.mode = this.scene.globalChaseMode;
                     }
-                    this.targetTile = this.calculateTargetTile();
                 }
             } else {
                 //got eaten on the way out of the house, go back inside
@@ -5024,8 +5026,6 @@ class Ghost extends Actor {
                 var nextDirection = this.calculateNextInstruction(this.tile) || this.direction;
                 this.nextInstruction = Vector.clone(nextDirection);
             }
-            //update the target tile
-            // this.targetTile = this.calculateTargetTile();
         } else {
             if (!this.isTileCenter) {
                 //off center tile, unset the madeInstruction flag
@@ -5044,9 +5044,9 @@ class Ghost extends Actor {
                 this.y = ((this.tile.y - 1) * 8) + 4;
                 this.exitingHouse = false;
             }
-            //always update the target tile
-            // this.targetTile = this.calculateTargetTile();
         }
+        Actor.prototype.tick.call(this);
+
     }
 
 
@@ -5825,6 +5825,9 @@ class Game {
     //pacman cannot die!
     static GOD_MODE = false;
 
+    //pacman can't run out of lives
+    static PRACTICE_MODE = false;
+
     //which game mode is being played
     static GAME_PACMAN = 0;
     static GAME_MSPACMAN = 1;
@@ -5915,9 +5918,9 @@ class Game {
      * the game loop. where the magic happens
      */
     loop() {
-        Input.watch();
         //if not paused, play the action
         if (!this.pauseGame) {
+            Input.watch();
             SceneManager.update();  
         }
         

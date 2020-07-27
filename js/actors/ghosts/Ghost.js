@@ -258,7 +258,6 @@ class Ghost extends Actor {
      */
     tick() {
 
-        Actor.prototype.tick.call(this);
         if (!this.scene.maze) return;
         //update the target tile
         this.targetTile = this.calculateTargetTile();
@@ -368,6 +367,8 @@ class Ghost extends Actor {
                 this.exitingHouse = false;
             }
         }
+        Actor.prototype.tick.call(this);
+
     }
 
 
