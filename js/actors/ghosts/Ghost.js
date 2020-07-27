@@ -260,6 +260,7 @@ class Ghost extends Actor {
 
         Actor.prototype.tick.call(this);
         if (!this.scene.maze) return;
+        //update the target tile
         this.targetTile = this.calculateTargetTile();
 
         if (this.isHome) {
@@ -313,7 +314,6 @@ class Ghost extends Actor {
                         //inherit the current scatter/chase mode
                         this.mode = this.scene.globalChaseMode;
                     }
-                    this.targetTile = this.calculateTargetTile();
                 }
             } else {
                 //got eaten on the way out of the house, go back inside
@@ -349,8 +349,6 @@ class Ghost extends Actor {
                 var nextDirection = this.calculateNextInstruction(this.tile) || this.direction;
                 this.nextInstruction = Vector.clone(nextDirection);
             }
-            //update the target tile
-            // this.targetTile = this.calculateTargetTile();
         } else {
             if (!this.isTileCenter) {
                 //off center tile, unset the madeInstruction flag
@@ -369,8 +367,6 @@ class Ghost extends Actor {
                 this.y = ((this.tile.y - 1) * 8) + 4;
                 this.exitingHouse = false;
             }
-            //always update the target tile
-            // this.targetTile = this.calculateTargetTile();
         }
     }
 

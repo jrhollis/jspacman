@@ -42,6 +42,7 @@ class Input {
         if (e.keyCode == 70) {
             GAME.pauseGame = true;
             //render next frame
+            Input.watch();
             SceneManager.update();
             e.preventDefault();
             return false;
