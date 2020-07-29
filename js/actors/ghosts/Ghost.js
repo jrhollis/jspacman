@@ -258,7 +258,10 @@ class Ghost extends Actor {
      */
     tick() {
 
-        if (!this.scene.maze) return;
+        if (!this.scene.maze) {
+            Actor.prototype.tick.call(this);
+            return;
+        }
         //update the target tile
         this.targetTile = this.calculateTargetTile();
 
