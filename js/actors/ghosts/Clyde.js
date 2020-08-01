@@ -1,6 +1,7 @@
 class Clyde extends Ghost {
     constructor(scene, x, y) {
         super(scene, x, y);
+        this.name = 'Clyde';
         this.startDirection = Vector.UP;
         this.textureOffsetY = 48;
         this.scatterTargetTile = { x: 0, y: 35 };

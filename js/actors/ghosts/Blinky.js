@@ -11,6 +11,7 @@ class Blinky extends Ghost {
     
     constructor(scene, x, y) {
         super(scene, x, y);
+        this.name = 'Blinky';
         //since blinky doesn't start in the house, need to assign him a target inside
         this.houseTarget = { x: 13 * 8, y: 16.5 * 8 };
         this.startDirection = Vector.LEFT;

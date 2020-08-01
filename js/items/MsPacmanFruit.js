@@ -18,7 +18,7 @@ class MsPacmanFruit extends Actor {
         this.level = this.scene.level;
         if (this.level > 7) {
             //after level 7, randomly choose fruit
-            this.level = Math.floor(Math.random() * 8);
+            this.level = Math.floor(Math.random() * 7);
         }
         this.textureOffset = { x: 504, y: 0 };
         //the fruit bounces up and down as it moves. this counter keeps track of that bounce

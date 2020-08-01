@@ -18,17 +18,17 @@ class GameScene extends Scene {
         if (numPlayers == 1) {
             this.scoreTwoText.hide();
         }
-        this.oneUpLabel = new Text(this, "1UP", 'white', 3*8, 0);
-        this.highScoreLabel = new Text(this, "HIGH SCORE", 'white', 9*8, 0);
-        this.highScoreText = new Text(this, this.highScore, 'white', 16*8, 8, 'right');
-        this.twoUpLabel = new Text(this, "2UP", 'white', 22*8, 0);
-        this.playerLabel = new Text(this, 'PLAYER ONE', 'blue', 9*8, 14*8);
+        this.oneUpLabel = new Text(this, "1UP", 'white', 3 * 8, 0);
+        this.highScoreLabel = new Text(this, "HIGH SCORE", 'white', 9 * 8, 0);
+        this.highScoreText = new Text(this, this.highScore, 'white', 16 * 8, 8, 'right');
+        this.twoUpLabel = new Text(this, "2UP", 'white', 22 * 8, 0);
+        this.playerLabel = new Text(this, 'PLAYER ONE', 'blue', 9 * 8, 14 * 8);
         //credit
-        this.creditLabel = new Text(this, "CREDIT", 'white', 1*8, 35*8);
+        this.creditLabel = new Text(this, "CREDIT", 'white', 1 * 8, 35 * 8);
         this.creditLabel.hide();
-        this.credits = new Text(this, ""+Game.CREDITS, 'white', 9*8, 35*8, 'right');
+        this.credits = new Text(this, "" + Game.CREDITS, 'white', 9 * 8, 35 * 8, 'right');
         this.credits.hide();
-        
+
         this.textSprites = [
             this.readyText,
             this.gameOverText,
@@ -55,7 +55,7 @@ class GameScene extends Scene {
         //determine number of players chosen then load the first one
         this.numPlayers = numPlayers;
         this.players = [];
-        for (var i = 0; i < this.numPlayers; i++){
+        for (var i = 0; i < this.numPlayers; i++) {
             var pacman = new PacClass(this, 13.125 * 8, 25.5 * 8);
             pacman.level = -i;   //second player at level (not zero) so there's no beginning song and dance
             pacman.lives = 3; //start with three lives for first player only
@@ -111,7 +111,7 @@ class GameScene extends Scene {
      */
     get highScore() {
         var score = Game.getHighScore(Game.GAME_MODE);
-        return !score?"":score;
+        return !score ? "" : score;
     }
 
 
@@ -124,11 +124,11 @@ class GameScene extends Scene {
     loadPlayer(player) {
         this.curPlayer = player;
         this.pacman = this.players[player];
-        this.playerLabel.text = 'PLAYER ' + (!player?"ONE":"TWO");
+        this.playerLabel.text = 'PLAYER ' + (!player ? "ONE" : "TWO");
         this.level = this.pacman.level;
         if (this.level < 1) {
             //only play song when level is 0. it will come in as -1 for player 2
-            var newGame = !this.level; 
+            var newGame = !this.level;
             this.level = 1;
             this.pacman.level = 1;
             this.nextLevel(newGame);
@@ -153,6 +153,8 @@ class GameScene extends Scene {
         this.maze = Maze.getMaze(this);
         this.mazeClass = this.maze.constructor;
 
+        AI.loadMaze(this.mazeClass);
+
         this.ghosts.forEach(g => g.pelletCounter = 0);
         //populate pellets from maze data
         this.pellets = this.mazeClass.tiles.filter(t => t.pellet).map(t => new Pellet(this, t.x * 8, t.y * 8));
@@ -166,7 +168,9 @@ class GameScene extends Scene {
             this.playerLabel.show();
             this.ghosts.forEach(g => g.hide());
             this.startLevelTimer.start(3 * 60, () => {
-                this.pacman.lives--;
+                if (!Game.PRACTICE_MODE) {
+                    this.pacman.lives--;
+                }
                 this.nextLevel();
             });
         } else {
@@ -247,12 +251,14 @@ class GameScene extends Scene {
             this.maze.finish();
             this.freezeTimer.start(96, () => {
                 //intermissions
-                if (this.level == 2) {
-                    // SceneManager.pushScene(new CutScene1(this.context));
-                } else if (this.level == 5) {
-                    SceneManager.pushScene(new CutScene2(this.context));
-                } else if (this.level == 9) {
-                    SceneManager.pushScene(new CutScene3(this.context));
+                if (!Game.SKIP_CUTSCENES) {
+                    if (this.level == 2) {
+                        SceneManager.pushScene(new CutScene1(this.context));
+                    } else if (this.level == 5) {
+                        SceneManager.pushScene(new CutScene2(this.context));
+                    } else if (this.level == 9) {
+                        SceneManager.pushScene(new CutScene3(this.context));
+                    }
                 }
                 this.pacman.hide();
                 this.freezeTimer.start(15, () => {
@@ -277,7 +283,7 @@ class GameScene extends Scene {
                 this.ghosts.filter(ghost => ghost.isEaten && !ghost.hidden).forEach(ghost => ghost.tick());
             }
         }
-        
+
         if (this.freezeTimer.tick()) {
             //if game play is frozen, stop the siren sound and bail the tick
             Sound.stop('siren');
@@ -320,7 +326,7 @@ class GameScene extends Scene {
         if (this.pacman.isDead) {
             //pacman is dead, start a timer and restart level, go to next player, or end game
             this.freezeTimer.start(60, () => {
-                var otherPlayer = (this.curPlayer+1)%this.numPlayers;
+                var otherPlayer = (this.curPlayer + 1) % this.numPlayers;
                 if (this.pacman.lives < 0) {
                     //game over for this player
                     //save last score to this game_mode and player #
@@ -330,7 +336,7 @@ class GameScene extends Scene {
                     if (this.numPlayers == 2) {
                         //if two players and other player has lives, show playerlabel text for game over
                         if (this.players[otherPlayer].lives >= 0) {
-                            this.playerLabel.text = "PLAYER " + (this.curPlayer?"TWO":"ONE");
+                            this.playerLabel.text = "PLAYER " + (this.curPlayer ? "TWO" : "ONE");
                             this.playerLabel.show();
                             this.gameOverText.show();
                             this.freezeTimer.start(90, () => {
@@ -338,7 +344,7 @@ class GameScene extends Scene {
                                 this.loadPlayer(otherPlayer);
                             });
                             //not done yet, other player's turn
-                            return; 
+                            return;
                         }
                     }
                     //game over
@@ -346,7 +352,7 @@ class GameScene extends Scene {
 
                     //show the credits before exiting game scene
                     this.creditLabel.show();
-                    this.credits.text = ""+Game.CREDITS;
+                    this.credits.text = "" + Game.CREDITS;
                     this.credits.show();
 
                     this.freezeTimer.start(90, () => {
@@ -361,7 +367,7 @@ class GameScene extends Scene {
                     })
                 } else if (this.numPlayers > 1 && this.players[otherPlayer].lives >= 0) {
                     //switch players if other player has lives
-                    this.loadPlayer(otherPlayer);    
+                    this.loadPlayer(otherPlayer);
                 } else {
                     //only one player playing
                     this.resetLevel();
@@ -425,6 +431,17 @@ class GameScene extends Scene {
                 }
             });
         }
+
+
+        try {
+            if (this.pacman.isAlive) {
+                //get pacman's valid directions and evaluate the state
+                AI.evaluate(this);
+            }
+        } catch (ex) {
+            //nothing
+            console.log(ex)
+        }
     }
 
 
@@ -475,7 +492,7 @@ class GameScene extends Scene {
                     // jump out here and wait until next frame to eat next ghost
                     return;
                 } else if (!ghost.isEaten) {
-                    if (Game.GOD_MODE) return; 
+                    if (Game.GOD_MODE) return;
                     // ghost was patrolling, pac man dies. RIP pac man we hardly knew ye
                     //everything stops for a little under a second
                     this.ghosts.forEach(ghost => ghost.stop());
@@ -641,8 +658,8 @@ class GameScene extends Scene {
                 this.ghosts.Pinky.leaveHouse();
                 this.ghosts.Inky.leaveHouse();
             } else if ((this.level == 1 && this.globalPelletCounter == 92) ||
-                       (this.level == 2 && this.globalPelletCounter == 75) || 
-                       (this.level > 2 && this.globalPelletCounter == 32)) {
+                (this.level == 2 && this.globalPelletCounter == 75) ||
+                (this.level > 2 && this.globalPelletCounter == 32)) {
                 //level 1 = 92
                 //level 2 = 75
                 //then 32
@@ -671,15 +688,31 @@ class GameScene extends Scene {
         //draw the background maze image
         this.maze.draw();
 
+
+        // var context = this.context;
+        // for (var node in AI.nodes) {
+        //     var tile = AI.nodes[node];
+        //     context.beginPath();
+        //     context.lineWidth = 1;
+        //     context.strokeStyle = "#FF0000";
+        //     context.strokeRect(tile.x*8, tile.y*8, 8, 8);
+        // }
+
         //draw hud
         this.scoreText[this.curPlayer].text = "" + (this.pacman.score || "00"); //update score
-        this.highScoreText.text = ""+this.highScore; //update highscore text
+        this.highScoreText.text = "" + this.highScore; //update highscore text
         this.textSprites.forEach(t => t.draw());
         this.levelSprite.draw();
         this.livesSprite.draw();
 
         //draw fruit point score sprites
         if (this.pointSprite) this.pointSprite.draw();
+
+        if (AI.paths && !this.levelComplete) {
+            AI.drawPaths(this.context);
+        } else if (this.levelComplete) {
+            delete AI.paths;
+        }
 
         //draw items
         this.pellets.forEach(p => p.draw());

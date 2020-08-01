@@ -57,7 +57,7 @@ class Actor extends Sprite {
             }
         }
         // when ghost is frightened override turn choice with random selection from validChoices
-        if (this.isFrightened || this.randomScatter) {
+        if (!this.isEaten && (this.isFrightened || this.randomScatter)) {
             choice = validChoices[Math.floor(Math.random() * validChoices.length)];
         }
         //set next direction to be the choice the ghost just made
