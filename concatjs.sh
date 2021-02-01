@@ -1,5 +1,9 @@
 cat \
-js/etc/* \
+js/etc/Vector.js \
+js/etc/AI.js \
+js/etc/Sound.js \
+js/etc/Timer.js \
+js/etc/Input.js \
 js/scene/Scene.js \
 js/scene/ScriptScene.js \
 js/scene/SceneManager.js \

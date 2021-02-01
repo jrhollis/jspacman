@@ -1,4 +1,60 @@
 /**
+ * Vector class with some helpful vector math functions. 
+ * A Vector represents an x, y coordinate pair. could be tile 
+ * location, pixel locations, whatever. 
+ */
+class Vector {
+    //helpful vectors used for directions and tile math
+    static ZERO = {x: 0, y: 0};
+    static LEFT = {x: -1, y: 0};
+    static RIGHT = {x: 1, y: 0};
+    static UP = {x: 0, y: -1};
+    static DOWN = {x: 0, y: 1};
+    
+    /**
+     * add two coordinate pairs together
+     * 
+     * @param {*} v1 x,y coordinate pair
+     * @param {*} v2 x,y coordinate pair
+     */
+    static add(v1, v2) {
+        return { x: v1.x + v2.x, y: v1.y + v2.y };
+    }
+    /**
+     * find the euclidian distance between two coordinate pairs
+     * 
+     * @param {*} v1 x,y coordinate pair
+     * @param {*} v2 x,y coordinate pair
+     */
+    static distance(v1, v2) {
+        return Math.sqrt(Math.pow(v1.x - v2.x, 2) + Math.pow(v1.y - v2.y, 2));
+    }
+    /**
+     * invert the coordinate pair
+     * 
+     * @param {*} v x,y coordinate pair
+     */
+    static inverse(v) {
+        return { x: -v.x, y: -v.y };
+    }
+    /**
+     * create a copy of a coordinate pair
+     * 
+     * @param {*} v x,y coordinate pair
+     */
+    static clone(v) {
+        return { x: v.x, y: v.y };
+    }
+    /**
+     * see if two coordinate pairs are the same
+     * 
+     * @param {*} v1 x,y coordinate pair
+     * @param {*} v2 x,y coordinate pair
+     */
+    static equals(v1, v2) {
+        return v1.x == v2.x && v1.y == v2.y;
+    }
+}/**
  * https://github.com/AI-Repository/PACMAN-AI/blob/master/paper.pdf
  * 
  * 
@@ -528,120 +584,6 @@ class AI {
         }
     }
 }/**
- * this class reads key presses and keeps a two frame buffer 
- * since inputs appear to be delayed in the game
- */
-class Input {
-    //remember the last key pressed
-    static lastKey = null;
-    //frame delay buffer
-    static buffer = [];
-    //hash of currently pressed keys (hashkey = keycode)
-    //and their state
-    static keyState = {};
-
-    /**
-     * clear the key (frame delay) buffer
-     */
-    static reset() {
-        Input.buffer = [];
-    }
-
-    /**
-     * read key presses
-     * @param {*} e key down event
-     */
-    static onKeyDown(e) {
-        //tag this key state as pressed
-        Input.keyState[''+e.keyCode] = 1;
-        //remember the last key pressed
-        Input.lastKey = e.keyCode;
-        //if pressing arrow keys, prevent default so the web page doesn't scroll
-        if (e.keyCode >= 37 && e.keyCode <= 40) {
-            e.preventDefault();
-            return false;
-        }
-        //if space bar is pressed pause the game
-        if (e.keyCode == 32) {
-            GAME.pauseGame = !GAME.pauseGame;
-            e.preventDefault();
-            return false;
-        }
-        //if "F" key is pressed, pause and advance the game one frame
-        if (e.keyCode == 70) {
-            GAME.pauseGame = true;
-            //render next frame
-            Input.watch();
-            SceneManager.update();
-            e.preventDefault();
-            return false;
-        }
-        // console.log(e.keyCode)
-        //read the pressed key once if no keys are currently being pressed
-        if (!Input.keyDown) {
-            Input.keyPress = e.keyCode;
-        }
-        //a key is being pressed
-        Input.keyDown = true;
-    }
-
-    /**
-     * 
-     * @param {*} e key up event
-     */
-    static onKeyUp(e) {
-        delete Input.keyState[e.keyCode];
-        delete Input.lastKey;
-        //a key is no longer being pressed
-        Input.keyDown = false;
-    }
-
-    /**
-     * called every tick. keeps track of which keys
-     * are pressed at this time and queues up the next direction
-     * into the two frame delay buffer
-     */
-    static watch() {
-        var nextDirection;
-        if (Input.keyState['37']) {
-            nextDirection = Vector.LEFT;
-        } else if (Input.keyState['39']) {
-            nextDirection = Vector.RIGHT;
-        } else if (Input.keyState['38']) {
-            nextDirection = Vector.UP;
-        } else if (Input.keyState['40']) {
-            nextDirection = Vector.DOWN;
-        }
-        Input.buffer.unshift(nextDirection);
-        if (Input.buffer.length == 3) {
-            Input.buffer.pop();
-        }
-    }
-
-    /**
-     * returns the last key pressed
-     */
-    static readKeyPress() {
-        var k = this.keyPress;
-        delete this.keyPress;
-        return k;
-    }
-
-    /**
-     * reads the key press from two frames ago
-     */
-    static readBuffer() {
-        if (Input.buffer.length == 2) {
-            return Input.buffer[1];
-        } else {
-            return null;
-        }
-    }
-}
-
-//swallow the key strokes
-document.onkeydown = Input.onKeyDown;
-document.onkeyup = Input.onKeyUp;/**
  * the Sound class uses Web Audio API. One sound track for each game mode
  * contains all the sound effects for that respective game. this class
  * picks the sound track apart and plays snippets from each game's track as a
@@ -903,62 +845,120 @@ class Timer {
         return this.ticks > 0;
     }
 }/**
- * Vector class with some helpful vector math functions. 
- * A Vector represents an x, y coordinate pair. could be tile 
- * location, pixel locations, whatever. 
+ * this class reads key presses and keeps a two frame buffer 
+ * since inputs appear to be delayed in the game
  */
-class Vector {
-    //helpful vectors used for directions and tile math
-    static ZERO = {x: 0, y: 0};
-    static LEFT = {x: -1, y: 0};
-    static RIGHT = {x: 1, y: 0};
-    static UP = {x: 0, y: -1};
-    static DOWN = {x: 0, y: 1};
-    
+class Input {
+    //remember the last key pressed
+    static lastKey = null;
+    //frame delay buffer
+    static buffer = [];
+    //hash of currently pressed keys (hashkey = keycode)
+    //and their state
+    static keyState = {};
+
     /**
-     * add two coordinate pairs together
-     * 
-     * @param {*} v1 x,y coordinate pair
-     * @param {*} v2 x,y coordinate pair
+     * clear the key (frame delay) buffer
      */
-    static add(v1, v2) {
-        return { x: v1.x + v2.x, y: v1.y + v2.y };
+    static reset() {
+        Input.buffer = [];
     }
+
     /**
-     * find the euclidian distance between two coordinate pairs
-     * 
-     * @param {*} v1 x,y coordinate pair
-     * @param {*} v2 x,y coordinate pair
+     * read key presses
+     * @param {*} e key down event
      */
-    static distance(v1, v2) {
-        return Math.sqrt(Math.pow(v1.x - v2.x, 2) + Math.pow(v1.y - v2.y, 2));
+    static onKeyDown(e) {
+        //tag this key state as pressed
+        Input.keyState[''+e.keyCode] = 1;
+        //remember the last key pressed
+        Input.lastKey = e.keyCode;
+        //if pressing arrow keys, prevent default so the web page doesn't scroll
+        if (e.keyCode >= 37 && e.keyCode <= 40) {
+            e.preventDefault();
+            return false;
+        }
+        //if space bar is pressed pause the game
+        if (e.keyCode == 32) {
+            GAME.pauseGame = !GAME.pauseGame;
+            e.preventDefault();
+            return false;
+        }
+        //if "F" key is pressed, pause and advance the game one frame
+        if (e.keyCode == 70) {
+            GAME.pauseGame = true;
+            //render next frame
+            Input.watch();
+            SceneManager.update();
+            e.preventDefault();
+            return false;
+        }
+        // console.log(e.keyCode)
+        //read the pressed key once if no keys are currently being pressed
+        if (!Input.keyDown) {
+            Input.keyPress = e.keyCode;
+        }
+        //a key is being pressed
+        Input.keyDown = true;
     }
+
     /**
-     * invert the coordinate pair
      * 
-     * @param {*} v x,y coordinate pair
+     * @param {*} e key up event
      */
-    static inverse(v) {
-        return { x: -v.x, y: -v.y };
+    static onKeyUp(e) {
+        delete Input.keyState[e.keyCode];
+        delete Input.lastKey;
+        //a key is no longer being pressed
+        Input.keyDown = false;
     }
+
     /**
-     * create a copy of a coordinate pair
-     * 
-     * @param {*} v x,y coordinate pair
+     * called every tick. keeps track of which keys
+     * are pressed at this time and queues up the next direction
+     * into the two frame delay buffer
      */
-    static clone(v) {
-        return { x: v.x, y: v.y };
+    static watch() {
+        var nextDirection;
+        if (Input.keyState['37']) {
+            nextDirection = Vector.LEFT;
+        } else if (Input.keyState['39']) {
+            nextDirection = Vector.RIGHT;
+        } else if (Input.keyState['38']) {
+            nextDirection = Vector.UP;
+        } else if (Input.keyState['40']) {
+            nextDirection = Vector.DOWN;
+        }
+        Input.buffer.unshift(nextDirection);
+        if (Input.buffer.length == 3) {
+            Input.buffer.pop();
+        }
     }
+
     /**
-     * see if two coordinate pairs are the same
-     * 
-     * @param {*} v1 x,y coordinate pair
-     * @param {*} v2 x,y coordinate pair
+     * returns the last key pressed
      */
-    static equals(v1, v2) {
-        return v1.x == v2.x && v1.y == v2.y;
+    static readKeyPress() {
+        var k = this.keyPress;
+        delete this.keyPress;
+        return k;
     }
-}/**
+
+    /**
+     * reads the key press from two frames ago
+     */
+    static readBuffer() {
+        if (Input.buffer.length == 2) {
+            return Input.buffer[1];
+        } else {
+            return null;
+        }
+    }
+}
+
+//swallow the key strokes
+document.onkeydown = Input.onKeyDown;
+document.onkeyup = Input.onKeyUp;/**
  * a scene instance holds a reference to the canvas context for drawing.
  * each different "screen" in the game will be represented by a scene or
  * subclass of scene.
