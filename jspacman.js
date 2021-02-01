@@ -1154,7 +1154,7 @@ class GameScene extends Scene {
             this.freezeTimer.start(96, () => {
                 //intermissions
                 if (this.level == 2) {
-                    // SceneManager.pushScene(new CutScene1(this.context));
+                    SceneManager.pushScene(new CutScene1(this.context));
                 } else if (this.level == 5) {
                     SceneManager.pushScene(new CutScene2(this.context));
                 } else if (this.level == 9) {
