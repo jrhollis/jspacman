@@ -153,7 +153,7 @@ class GameScene extends Scene {
         this.maze = Maze.getMaze(this);
         this.mazeClass = this.maze.constructor;
 
-        AI.loadMaze(this.mazeClass);
+        // AI.loadMaze(this.mazeClass);
 
         this.ghosts.forEach(g => g.pelletCounter = 0);
         //populate pellets from maze data
@@ -433,15 +433,15 @@ class GameScene extends Scene {
         }
 
 
-        try {
-            if (this.pacman.isAlive) {
-                //get pacman's valid directions and evaluate the state
-                AI.evaluate(this);
-            }
-        } catch (ex) {
-            //nothing
-            console.log(ex)
-        }
+        // try {
+        //     if (this.pacman.isAlive) {
+        //         //get pacman's valid directions and evaluate the state
+        //         AI.evaluate(this);
+        //     }
+        // } catch (ex) {
+        //     //nothing
+        //     console.log(ex)
+        // }
     }
 
 
@@ -708,11 +708,11 @@ class GameScene extends Scene {
         //draw fruit point score sprites
         if (this.pointSprite) this.pointSprite.draw();
 
-        if (AI.paths && !this.levelComplete) {
-            AI.drawPaths(this.context);
-        } else if (this.levelComplete) {
-            delete AI.paths;
-        }
+        // if (AI.paths && !this.levelComplete) {
+        //     AI.drawPaths(this.context);
+        // } else if (this.levelComplete) {
+        //     delete AI.paths;
+        // }
 
         //draw items
         this.pellets.forEach(p => p.draw());

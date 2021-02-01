@@ -122,7 +122,7 @@ class Pacman extends Actor {
             this.lives++;
         }
         //set high score
-        if (this.score > this.scene.highScore) {
+        if (this.score > this.scene.highScore && !Game.PRACTICE_MODE) {
             Game.setHighScore(Game.GAME_MODE, this.score);
         }
     }
@@ -146,7 +146,9 @@ class Pacman extends Actor {
             this.unfreeze();
             this.mode = Pacman.MODE_DYING;
             this.animation = Pacman.ANIM_DIE;
-            Math.max(--this.lives, -1); //min lives of zero
+            if (!Game.PRACTICE_MODE) {
+                Math.max(--this.lives, -1); //min lives of zero
+            }
         });
     }
     get isDying() {

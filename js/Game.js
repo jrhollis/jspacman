@@ -4,6 +4,15 @@
 class Game {
     //pacman cannot die!
     static GOD_MODE = false;
+    // static GOD_MODE = true;
+
+    //skip cutscenes
+    static SKIP_CUTSCENES = false;
+    // static SKIP_CUTSCENES = false;
+
+    //pacman can't run out of lives
+    // static PRACTICE_MODE = true;
+    static PRACTICE_MODE = false;
 
     //which game mode is being played
     static GAME_PACMAN = 0;
@@ -95,9 +104,9 @@ class Game {
      * the game loop. where the magic happens
      */
     loop() {
-        Input.watch();
         //if not paused, play the action
         if (!this.pauseGame) {
+            Input.watch();
             SceneManager.update();  
         }
         
