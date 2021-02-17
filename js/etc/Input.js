@@ -74,13 +74,13 @@ class Input {
      */
     static watch() {
         var nextDirection;
-        if (Input.keyState['37']) {
+        if (Input.keyState['37'] || Input.keyState['65']) {
             nextDirection = Vector.LEFT;
-        } else if (Input.keyState['39']) {
+        } else if (Input.keyState['39'] || Input.keyState['68']) {
             nextDirection = Vector.RIGHT;
-        } else if (Input.keyState['38']) {
+        } else if (Input.keyState['38'] || Input.keyState['87']) {
             nextDirection = Vector.UP;
-        } else if (Input.keyState['40']) {
+        } else if (Input.keyState['40'] || Input.keyState['83']) {
             nextDirection = Vector.DOWN;
         }
         Input.buffer.unshift(nextDirection);

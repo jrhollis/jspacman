@@ -95,7 +95,9 @@ class Game {
         SceneManager.pushScene(new CreditsScene(this.context));
 
         //start game loop
-        window.requestAnimationFrame(()=>this.loop());
+        this.fpsLimit = 60;
+        this.previousDelta = 0;
+        window.requestAnimationFrame((d)=>this.loop(d));
     }
 
 
@@ -103,13 +105,21 @@ class Game {
     /**
      * the game loop. where the magic happens
      */
-    loop() {
+    loop(currentDelta) {
+        //lock to ~60fps
+        var delta = currentDelta - this.previousDelta;
+
+        if (this.fpsLimit && delta < 1000 / this.fpsLimit) {
+            window.requestAnimationFrame((d)=>this.loop(d));
+            return;
+        }
+
         //if not paused, play the action
         if (!this.pauseGame) {
             Input.watch();
             SceneManager.update();  
         }
-        
+
         //deal with sound engine when pausing
         if (this.pauseGame && !this.wasPaused) {
             Sound.suspend();
@@ -119,6 +129,7 @@ class Game {
         this.wasPaused = this.pauseGame;
 
         //request another frame to continue the game loop
-        window.requestAnimationFrame(()=>this.loop());
+        window.requestAnimationFrame((d)=>this.loop(d));
+        this.previousDelta = currentDelta;
     }
 }
