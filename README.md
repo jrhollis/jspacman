@@ -15,7 +15,7 @@ Enter: 1 Player Start
 
 2: 2 Players Start
 
-Move: Arrow Keys
+Move: Arrow Keys or WASD
 
 
 Space: Pause Game
