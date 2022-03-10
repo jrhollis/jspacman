@@ -23,5 +23,9 @@ Space: Pause Game
 F: Advance Game One Frame
 
 
+Play here:
+https://jrhollis.github.io/jspacman/
+
+
 I'm doing some explainer videos on youtube:
 https://www.youtube.com/playlist?list=PLYcVWsOwv3wiCBwBko-ygKS6KZqs6UbeH
