@@ -109,10 +109,10 @@ class Game {
         //lock to ~60fps
         var delta = currentDelta - this.previousDelta;
 
-        if (this.fpsLimit && delta < 1000 / this.fpsLimit) {
-            window.requestAnimationFrame((d)=>this.loop(d));
-            return;
-        }
+        // if (this.fpsLimit && delta < 1000 / this.fpsLimit) {
+            // window.requestAnimationFrame((d)=>this.loop(d));
+            // return;
+        // }
 
         //if not paused, play the action
         if (!this.pauseGame) {
