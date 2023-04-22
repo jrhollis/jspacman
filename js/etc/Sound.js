@@ -9,11 +9,42 @@
  */
 class Sound {
     static initialize() {
+        if (this.initialized) return;
+        this.initialized = true;
+        //safari polyfill
+        if (!window.AudioContext && window.webkitAudioContext) {
+            var oldFunc = webkitAudioContext.prototype.decodeAudioData;
+            webkitAudioContext.prototype.decodeAudioData = function (arraybuffer, cb) {
+                return new Promise((resolve, reject) => {
+                    // cb.call(this, arraybuffer, resolve, reject);
+                    oldFunc.call(this, arraybuffer, cb, reject);
+                });
+            }
+        }
         var AudioContext = window.AudioContext || window.webkitAudioContext;
         this.context = new AudioContext();
+        this.unlockAudioContext(this.context);
+        this.volume = 0.1;
         //load each sound track
-        this.loadSound('res/pacman/sfx.ogg').then(buffer => this.sfx_0 = buffer);
-        this.loadSound('res/mspacman/sfx.ogg').then(buffer => this.sfx_1 = buffer);
+        this.loadSound('res/pacman/sfx.mp3').then(buffer => this.sfx_0 = buffer);
+        this.loadSound('res/mspacman/sfx.mp3').then(buffer => this.sfx_1 = buffer);
+    }
+
+
+    static unlockAudioContext(audioCtx) {
+        if (audioCtx.state === 'suspended') {
+            var events = ['touchstart', 'touchend', 'mousedown', 'keydown'];
+            var unlock = function unlock() {
+                events.forEach(function (event) {
+                    document.body.removeEventListener(event, unlock)
+                });
+                audioCtx.resume();
+            };
+
+            events.forEach(function (event) {
+                document.body.addEventListener(event, unlock, false)
+            });
+        }
     }
 
     //list of currently running sounds. used for stopAll()
