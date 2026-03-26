@@ -1,0 +1,31 @@
+{
+	"folders": [
+		{
+			"name": "simply2",
+			"path": "../../simply2"
+		},
+		{
+			"name": "jspacman",
+			"path": ".."
+		},
+		{
+			"name": "jstetris",
+			"path": "../../jstetris"
+		},
+		{
+			"name": "jswolf3d",
+			"path": "../../jswolf3d"
+		},
+		{
+			"name": "jsmariobros",
+			"path": "../../jsmariobros"
+		},
+		{
+			"path": "../../groupmebots"
+		},
+		{
+			"path": "../../universalclock7"
+		}
+	],
+	"settings": {}
+}

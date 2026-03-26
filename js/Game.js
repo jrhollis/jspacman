@@ -94,9 +94,12 @@ class Game {
         //set up scene manager with credits scene as initial scene
         SceneManager.pushScene(new CreditsScene(this.context));
 
-        //start game loop
-        this.fpsLimit = 60;
-        this.previousDelta = 0;
+        //start game loop — fixed 60Hz sim so high-refresh displays don't run the game faster
+        this.targetFps = 60;
+        this.frameDurationMs = 1000 / this.targetFps;
+        this.accumulatorMs = 0;
+        this.lastFrameTimeMs = 0;
+        this.maxCatchUpSteps = 5;
         window.requestAnimationFrame((d)=>this.loop(d));
     }
 
@@ -106,30 +109,39 @@ class Game {
      * the game loop. where the magic happens
      */
     loop(currentDelta) {
-        //lock to ~60fps
-        var delta = currentDelta - this.previousDelta;
+        window.requestAnimationFrame((d)=>this.loop(d));
 
-        // if (this.fpsLimit && delta < 1000 / this.fpsLimit) {
-            // window.requestAnimationFrame((d)=>this.loop(d));
-            // return;
-        // }
+        if (this.lastFrameTimeMs === 0) {
+            this.lastFrameTimeMs = currentDelta;
+        } else {
+            var delta = currentDelta - this.lastFrameTimeMs;
+            this.lastFrameTimeMs = currentDelta;
+            if (delta < 0) {
+                delta = 0;
+            }
+            if (delta > 100) {
+                delta = 100;
+            }
 
-        //if not paused, play the action
-        if (!this.pauseGame) {
-            Input.watch();
-            SceneManager.update();  
+            if (!this.pauseGame) {
+                this.accumulatorMs += delta;
+                var steps = 0;
+                while (this.accumulatorMs >= this.frameDurationMs && steps < this.maxCatchUpSteps) {
+                    Input.watch();
+                    SceneManager.update();
+                    this.accumulatorMs -= this.frameDurationMs;
+                    steps++;
+                }
+            } else {
+                this.accumulatorMs = 0;
+            }
         }
 
-        //deal with sound engine when pausing
         if (this.pauseGame && !this.wasPaused) {
             Sound.suspend();
         } else if (!this.pauseGame && this.wasPaused) {
             Sound.resume();
         }
         this.wasPaused = this.pauseGame;
-
-        //request another frame to continue the game loop
-        window.requestAnimationFrame((d)=>this.loop(d));
-        this.previousDelta = currentDelta;
     }
 }
