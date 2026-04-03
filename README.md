@@ -24,6 +24,8 @@ F: Advance Game One Frame
 
 
 Play here:
+https://jrhollis.itch.io/jspacman
+or here:
 https://jrhollis.github.io/jspacman/
 
 
